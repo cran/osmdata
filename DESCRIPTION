@@ -1,5 +1,5 @@
 Package: osmdata
-Version: 0.0.0
+Version: 0.0.1
 Authors@R: c(
     person("Mark", "Padgham", email="mark.padgham@email.com", role=c("aut", "cre")),
     person("Bob", "Rudis", role="aut"),
@@ -32,7 +32,7 @@ BugReports: https://github.com/osmdatar/osmdata/issues
 Encoding: UTF-8
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
-Packaged: 2017-05-18 15:20:27 UTC; markus
+Packaged: 2017-05-19 10:27:34 UTC; markus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
@@ -42,4 +42,4 @@ Author: Mark Padgham [aut, cre],
   Finkelstein Noam [ctb, cph] (Author of included stub.R code),
   Bartnik Lukasz [ctb, cph] (Author of included stub.R code)
 Repository: CRAN
-Date/Publication: 2017-05-18 15:38:24 UTC
+Date/Publication: 2017-05-19 12:36:29 UTC
