@@ -1,5 +1,6 @@
 has_internet <- curl::has_internet ()
-is_cran <-  identical (Sys.getenv('NOT_CRAN'), 'false')
+
+is_cran <- identical (Sys.getenv ("_R_CHECK_CRAN_INCOMING_"), 'true')
 is_travis <-  identical (Sys.getenv('TRAVIS'), 'true')
 
 source ('../stub.R')
@@ -18,7 +19,7 @@ if (get_local)
     # httr::POST call, so can't be grabbed with curl_fetch_memory
     qry <- opq (bbox = c(-0.118, 51.514, -0.115, 51.517))
     qry <- add_feature (qry, key = 'highway')
-    overpass_query_result <- overpass_query (opq_to_string (qry),
+    overpass_query_result <- overpass_query (opq_string (qry),
                                              encoding = 'UTF-8')
     save (overpass_query_result, file = "../overpass_query_result.rda")
     # but then overpass_query itself needs to be tested, so fetch_memory is used
@@ -30,7 +31,7 @@ if (get_local)
           exit = function() {
               cfm_output_overpass_query <<- returnValue()
           })
-    res <- httr::POST (base_url, body = opq_to_string (qry))
+    res <- httr::POST (base_url, body = opq_string (qry))
     untrace (curl::curl_fetch_memory)
     class (cfm_output_overpass_query) <- 'response'
     save (cfm_output_overpass_query, file = '../cfm_output_overpass_query.rda')

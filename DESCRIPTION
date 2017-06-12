@@ -1,5 +1,5 @@
 Package: osmdata
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: c(
     person("Mark", "Padgham", email="mark.padgham@email.com", role=c("aut", "cre")),
     person("Bob", "Rudis", role="aut"),
@@ -13,8 +13,9 @@ Authors@R: c(
     person ("Bartnik", "Lukasz", role=c("ctb","cph"),
         comment="Author of included stub.R code"))
 Maintainer: Mark Padgham <mark.padgham@email.com>
-Title: Import OpenStreetMap Data as Simple Features or Spatial Objects
-Description: Download and import of "OpenStreetMap" ('OSM') data as 'sf' or 'sp'
+Title: Import 'OpenStreetMap' Data as Simple Features or Spatial
+        Objects
+Description: Download and import of 'OpenStreetMap' ('OSM') data as 'sf' or 'sp'
     objects.  'OSM' data are extracted from the 'Overpass' web server and
     processed with very fast 'C++' routines for return to 'R'.
 Depends: R (>= 3.2.4)
@@ -24,15 +25,14 @@ NeedsCompilation: yes
 LazyData: true
 Imports: curl, httr, lubridate, methods, Rcpp (>= 0.12.4), rvest,
         jsonlite, sp, utils, xml2
-Suggests: devtools, knitr, microbenchmark, rmarkdown, roxygen2, sf,
-        testthat
+Suggests: devtools, knitr, rmarkdown, roxygen2, sf, testthat
 LinkingTo: Rcpp
 URL: https://github.com/osmdatar/osmdata
 BugReports: https://github.com/osmdatar/osmdata/issues
 Encoding: UTF-8
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
-Packaged: 2017-05-19 10:27:34 UTC; markus
+Packaged: 2017-06-12 12:21:26 UTC; markus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
@@ -42,4 +42,4 @@ Author: Mark Padgham [aut, cre],
   Finkelstein Noam [ctb, cph] (Author of included stub.R code),
   Bartnik Lukasz [ctb, cph] (Author of included stub.R code)
 Repository: CRAN
-Date/Publication: 2017-05-19 12:36:29 UTC
+Date/Publication: 2017-06-12 12:44:33 UTC

@@ -12,7 +12,7 @@
 <meta name="author" content="Mark Padgham" />
 <meta name="author" content="Robin Lovelace" />
 
-<meta name="date" content="2017-05-19" />
+<meta name="date" content="2017-06-12" />
 
 <title></title>
 
@@ -221,7 +221,7 @@ div.tocify {
 </ol></h1>
 <h4 class="author"><em>Mark Padgham</em></h4>
 <h4 class="author"><em>Robin Lovelace</em></h4>
-<h4 class="date"><em>2017-05-19</em></h4>
+<h4 class="date"><em>2017-06-12</em></h4>
 
 </div>
 
@@ -256,8 +256,8 @@ q &lt;- add_feature(q, key = 'highway', value = 'motorway')</code></pre>
 </blockquote>
 <p>The syntax of <code>overpass</code> queries is powerful yet hard to learn. This section briefly introduces the structure of <code>overpass</code> queries in order to help construct more efficient and powerful queries. Those wanting to skip straight onto query construction in <code>osmdata</code> may safely jump ahead to the <a href="#query-example">query example below</a>.</p>
 <p><code>osmdata</code> simplifies queries so that OSM data can be extracted with very little understanding of the <code>overpass</code> query syntax, although it is still possible to submit arbitrarily complex <code>overpass</code> queries via <code>osmdata</code>. An excellent place to explore <code>overpass</code> queries specifically and OSM data in general is the online interactive query builder at <a href="http://overpass-turbo.eu/">overpass-turbo</a>, which includes a helpful corrector function for incorrectly formatted queries. Examples of its functionality in action can be found on the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_API_by_Example">OpenStreetMap wiki</a>, with full details of the <code>overpass</code> query language given in the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL">Query Language Guide</a> as well as the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide">overpass API Language Guide</a>.</p>
-<p><code>osmdata</code> queries are lists of class <code>overpass_query</code>. The actual query passed to the <code>overpass API</code> with a query can be obtained with the function <code>opq_to_string()</code>. Applied to the preceding query, this function gives:</p>
-<pre class="r"><code>opq_to_string(q)
+<p><code>osmdata</code> queries are lists of class <code>overpass_query</code>. The actual query passed to the <code>overpass API</code> with a query can be obtained with the function <code>opq_string()</code>. Applied to the preceding query, this function gives:</p>
+<pre class="r"><code>opq_string(q)
 ## [out:xml][timeout:25];
 ## (
 ##   node
@@ -271,7 +271,7 @@ q &lt;- add_feature(q, key = 'highway', value = 'motorway')</code></pre>
 ##     (51.2867602,-0.510375,51.6918741,0.3340155);
 ## );
 ## (._;&gt;);out body;</code></pre>
-<p>The resultant output may be pasted directly into the <a href="http://overpass-turbo.eu/">overpass-turbo</a> online interactive query builder. (The output of <code>opq_to_string</code> has been somewhat reformatted here to reflect the format typically used in <code>overpass-turbo</code>.)</p>
+<p>The resultant output may be pasted directly into the <a href="http://overpass-turbo.eu/">overpass-turbo</a> online interactive query builder. (The output of <code>opq_string</code> has been somewhat reformatted here to reflect the format typically used in <code>overpass-turbo</code>.)</p>
 <div id="osmdata-queries" class="section level3">
 <h3>2.1. osmdata queries</h3>
 <p>As demonstrated above, an <code>osmdata</code> query begins by specifying a bounding box with the function <code>opq()</code>, followed by specifying desired OSM features with <code>add_feature()</code>.</p>
@@ -282,15 +282,15 @@ q2 &lt;- add_feature(q1, key = 'name:en', value = 'Dian', value_exact = FALSE)</
 <p>Each successive feature added with <code>add_feature()</code> is added to previous features, so, for example, extending the previous query by an additional <code>key-value</code> pair to:</p>
 <pre class="r"><code>q3 &lt;- add_feature(q2, key = 'highway')</code></pre>
 <p>will request all objects that are both water bodies with names matching ‘Dian’ <strong>AND</strong> that are also highways. Unsurprisingly, this query returns no data, but the previous queries do: the filtering is more restrictive with each feature added with <code>add_feature()</code>.</p>
-<p>The primary <code>osmdata</code> functions <code>osmdata_sf()</code> or <code>osmdata_sp()</code> pass these queries to <code>overpass</code> and return OSM data in corresponding <code>sf</code> or <code>sp</code> format, respectively. Both of these functions also accept direct <code>overpass</code> queries, such as those produced by the <code>osmdata</code> function <code>opq_to_string()</code>, or copied directly from the <a href="overpass-turbo.eu"><code>overpass-turbo</code> query builder</a>.</p>
-<pre class="r"><code>osmdata_sf(opq_to_string(q))
+<p>The primary <code>osmdata</code> functions <code>osmdata_sf()</code> or <code>osmdata_sp()</code> pass these queries to <code>overpass</code> and return OSM data in corresponding <code>sf</code> or <code>sp</code> format, respectively. Both of these functions also accept direct <code>overpass</code> queries, such as those produced by the <code>osmdata</code> function <code>opq_string()</code>, or copied directly from the <a href="overpass-turbo.eu"><code>overpass-turbo</code> query builder</a>.</p>
+<pre class="r"><code>osmdata_sf(opq_string(q))
 ## Object of class 'osmdata' with:
 ##                  $bbox :
 ##         $overpass_call : The call submitted to the overpass API
 ##             $timestamp : [ Thurs 5 May 2017 14:33:54 ]
 ##            $osm_points : 'sf' Simple Features Collection with 360582 points
 ##            ...</code></pre>
-<p>Note that the result contains no value for <code>bbox</code>, because that information is lost when the full <code>osmdata_query</code>, <code>q</code>, is converted to a string. Nevertheless, the results of the two calls <code>osmdata_sf (opq_to_string (q))</code> and <code>osmdata_sf (q)</code> differ only in the values of <code>bbox</code> and <code>timestamp</code>, while returning otherwise identical data.</p>
+<p>Note that the result contains no value for <code>bbox</code>, because that information is lost when the full <code>osmdata_query</code>, <code>q</code>, is converted to a string. Nevertheless, the results of the two calls <code>osmdata_sf (opq_string (q))</code> and <code>osmdata_sf (q)</code> differ only in the values of <code>bbox</code> and <code>timestamp</code>, while returning otherwise identical data.</p>
 <p>In summary, <code>osmdata</code> queries are generally simplified versions of potentially more complex <code>overpass</code> queries, although arbitrarily complex <code>overpass</code> queries may be passed directly to the primary <code>osmdata</code> functions. As illustrated above, <code>osmdata</code> queries are generally constructed through initiating a query with <code>opq()</code>, and then specifying OSM features in terms of <code>key-value</code> pairs with <code>add_feeature()</code>.</p>
 <p>The simplest way to use <code>osmdata</code> is to simply request all data within a given bounding box (warning - not intended to run):</p>
 <pre class="r"><code>q &lt;- opq(bbox = 'London City, U.K.')

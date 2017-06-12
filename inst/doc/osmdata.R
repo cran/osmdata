@@ -32,7 +32,7 @@ q <- add_feature(q, key = 'highway', value = 'motorway')
 c ("4wd only", "abandoned", "abutters", "access", "addr", "addr:city")
 
 ## ---- eval=FALSE---------------------------------------------------------
-#  opq_to_string(q)
+#  opq_string(q)
 #  ## [out:xml][timeout:25];
 #  ## (
 #  ##   node
@@ -61,7 +61,7 @@ q2 <- add_feature(q1, key = 'name:en', value = 'Dian', value_exact = FALSE)
 q3 <- add_feature(q2, key = 'highway')
 
 ## ---- eval=FALSE---------------------------------------------------------
-#  osmdata_sf(opq_to_string(q))
+#  osmdata_sf(opq_string(q))
 #  ## Object of class 'osmdata' with:
 #  ##                  $bbox :
 #  ##         $overpass_call : The call submitted to the overpass API
