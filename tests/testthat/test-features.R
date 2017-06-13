@@ -1,7 +1,9 @@
 has_internet <- curl::has_internet ()
 
-is_cran <- identical (Sys.getenv ("_R_CHECK_CRAN_INCOMING_"), 'true')
-is_travis <- identical (Sys.getenv("TRAVIS"), "true")
+# test_all used to switch off tests on CRAN
+test_all <- (identical (Sys.getenv ("MPADGE_LOCAL"), "true") |
+             identical (Sys.getenv ("TRAVIS"), "true") |
+             identical (Sys.getenv ("APPVEYOR"), "True"))
 
 source ("../stub.R")
 
@@ -33,10 +35,11 @@ context ("features.R")
 test_that ("available_features", {
                expect_error (available_features (1), "unused argument")
                if (!has_internet) {
-                   expect_message (available_features (), "No internet connection")
+                   expect_message (available_features (),
+                                   "No internet connection")
                } else
                {
-                   if (is_cran)
+                   if (!test_all)
                    {
                        load ("../cfm_output_af.rda")
                        stub (available_features, 'httr::GET', function (x)
@@ -51,11 +54,11 @@ test_that ("available_tags", {
                if (!has_internet) {
                    expect_message (available_tags (), "No internet connection")
                } else {
-                   if (is_cran)
+                   if (!test_all)
                    {
-                       load("GET_available_features.rda")
+                       load ("../cfm_output_af.rda")
                        stub (available_tags, 'httr::GET', function (x)
-                             GET_available_features)
+                             cfm_output_af$content )
                    }
                    expect_that (length (available_tags ("junk")), equals (0))
                    expect_is (available_tags ("highway"), "character")

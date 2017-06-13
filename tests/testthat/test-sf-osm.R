@@ -1,6 +1,9 @@
 context ("sf-osm")
 
-is_cran <- identical (Sys.getenv ("_R_CHECK_CRAN_INCOMING_"), 'true')
+# test_all used to switch off tests on CRAN
+test_all <- (identical (Sys.getenv ("MPADGE_LOCAL"), "true") |
+             identical (Sys.getenv ("TRAVIS"), "true") |
+             identical (Sys.getenv ("APPVEYOR"), "True"))
 
 test_that ("multipolygon", {
                x_sf <- sf::st_read ("../osm-multi.osm",
@@ -33,7 +36,7 @@ test_that ("multipolygon", {
                g <- x$geometry
                g_sf <- x_sf$geometry
                attrs <- names (attributes (g))
-               if (is_cran) # the cran machines do this check for some reason
+               if (!test_all)
                    attrs <- attrs [attrs != 'crs']
                for (a in attrs)
                    expect_identical (attr (g, a), attr (g_sf, a))
@@ -64,7 +67,7 @@ test_that ("multilinestring", {
                g <- x$geometry
                g_sf <- x_sf$geometry
                attrs <- names (attributes (g))
-               if (is_cran) 
+               if (!test_all)
                    attrs <- attrs [attrs != 'crs']
                for (a in attrs)
                    expect_identical (attr (g, a), attr (g_sf, a))
@@ -97,7 +100,7 @@ test_that ("ways", {
                g <- x$geometry
                g_sf <- x_sf$geometry
                attrs <- names (attributes (g))
-               if (is_cran) 
+               if (!test_all)
                    attrs <- attrs [attrs != 'crs']
                for (a in attrs)
                    expect_identical (attr (g, a), attr (g_sf, a))
