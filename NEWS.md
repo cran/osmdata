@@ -1,4 +1,10 @@
 
+0.0.4
+===================
+- Enable alternative overpass API services through `get_overpass_url()` and
+  `set_overpass_url()` functions
+- Extend and improve vignette
+
 0.0.3
 ===================
 - Change tests only, no functional difference

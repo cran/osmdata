@@ -1,5 +1,5 @@
 Package: osmdata
-Version: 0.0.3
+Version: 0.0.4
 Authors@R: c(
     person("Mark", "Padgham", email="mark.padgham@email.com", role=c("aut", "cre")),
     person("Bob", "Rudis", role="aut"),
@@ -25,14 +25,14 @@ NeedsCompilation: yes
 LazyData: true
 Imports: curl, httr, lubridate, methods, Rcpp (>= 0.12.4), rvest,
         jsonlite, sp, utils, xml2
-Suggests: devtools, knitr, rmarkdown, roxygen2, sf, testthat
+Suggests: devtools, knitr, magrittr, rmarkdown, roxygen2, sf, testthat
 LinkingTo: Rcpp
 URL: https://github.com/osmdatar/osmdata
 BugReports: https://github.com/osmdatar/osmdata/issues
 Encoding: UTF-8
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
-Packaged: 2017-06-13 14:10:28 UTC; markus
+Packaged: 2017-06-21 14:14:43 UTC; markus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
@@ -42,4 +42,4 @@ Author: Mark Padgham [aut, cre],
   Finkelstein Noam [ctb, cph] (Author of included stub.R code),
   Bartnik Lukasz [ctb, cph] (Author of included stub.R code)
 Repository: CRAN
-Date/Publication: 2017-06-13 20:24:58 UTC
+Date/Publication: 2017-06-21 14:53:45 UTC

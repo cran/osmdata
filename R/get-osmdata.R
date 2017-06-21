@@ -54,7 +54,7 @@ osmdata_xml <- function(q, filename, quiet=TRUE, encoding) {
     if (missing (encoding))
         encoding <- 'UTF-8'
 
-    doc <- overpass_query (opq_string (q), quiet = quiet,
+    doc <- overpass_query (query = opq_string (q), quiet = quiet,
                            encoding = encoding)
     doc <- xml2::read_xml (doc, encoding = encoding)
     if (!missing (filename))
@@ -104,8 +104,9 @@ osmdata_sp <- function(q, doc, quiet=TRUE, encoding) {
 
     if (missing (doc))
     {
-        doc <- overpass_query (obj$overpass_call, quiet = quiet,
+        doc <- overpass_query (query = obj$overpass_call, quiet = quiet,
                                encoding = encoding)
+
         obj$timestamp <- get_timestamp ()
     } else
     {
@@ -154,10 +155,10 @@ make_sf <- function (...)
     else
         row.names <- seq_along (x [[sf_column]])
     df <- if (length(x) == 1) # ONLY sfc
-                data.frame(row.names = row.names)
-            else # create a data.frame from list:
-                    data.frame(x[-sf_column], row.names = row.names,
-                           stringsAsFactors = TRUE)
+        data.frame(row.names = row.names)
+    else # create a data.frame from list:
+        data.frame(x[-sf_column], row.names = row.names,
+                   stringsAsFactors = TRUE)
 
     object <- as.list(substitute(list(...)))[-1L]
     arg_nm <- sapply(object, function(x) deparse(x)) # nolint
@@ -166,7 +167,7 @@ make_sf <- function (...)
     df [[sfc_name]] <- x [[sf_column]]
     attr(df, "sf_column") <- sfc_name
     f <- factor(rep(NA_character_, length.out = ncol(df) - 1),
-               levels = c ("constant", "aggregate", "identity"))
+                levels = c ("constant", "aggregate", "identity"))
     names(f) <- names(df)[-ncol (df)]
     attr(df, "agr") <- f
     class(df) <- c("sf", class(df))
@@ -214,8 +215,9 @@ osmdata_sf <- function(q, doc, quiet=TRUE, encoding) {
 
     if (missing (doc))
     {
-        doc <- overpass_query (obj$overpass_call, quiet = quiet,
+        doc <- overpass_query (query = obj$overpass_call, quiet = quiet,
                                encoding = encoding)
+
         obj$timestamp <- get_timestamp ()
     } else
     {
@@ -228,6 +230,7 @@ osmdata_sf <- function(q, doc, quiet=TRUE, encoding) {
         obj$timestamp <- get_timestamp (doc)
         doc <- as.character (doc)
     }
+
 
     if (!quiet)
         message ('convertig OSM data to sp format')
