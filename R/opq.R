@@ -1,8 +1,10 @@
 #' Build an Overpass query
 #'
-#' @param bbox Either four numeric values specifying the maximal and minimal
-#'             longitudes and latitudes, or else a character string passed to
-#'             \link{getbb} to be converted to a numerical bounding box.
+#' @param bbox Either (i) four numeric values specifying the maximal and minimal
+#'             longitudes and latitudes; (ii) a character string passed to
+#'             \link{getbb} to be converted to a numerical bounding box; or
+#'             (iii) a matrix representing a bounding polygon as returned from
+#'             \code{getbb(..., format_out = "polygon")}.
 #'
 #' @return An \code{overpass_query} object
 #'
@@ -12,16 +14,16 @@
 #' \dontrun{
 #' q <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'             opq () %>% 
-#'             add_feature("amenity", "restaurant") %>%
-#'             add_feature("amenity", "pub") 
+#'             add_osm_feature("amenity", "restaurant") %>%
+#'             add_osm_feature("amenity", "pub") 
 #' osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
 #' q1 <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'                 opq () %>% 
-#'                 add_feature("amenity", "restaurant") 
+#'                 add_osm_feature("amenity", "restaurant") 
 #' q2 <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'                 opq () %>% 
-#'                 add_feature("amenity", "pub") 
-#' c (osmdata_sf (q1), osmdata_sf (q1)) # all objects that are restaurants OR pubs
+#'                 add_osm_feature("amenity", "pub") 
+#' c (osmdata_sf (q1), osmdata_sf (q2)) # all objects that are restaurants OR pubs
 #' }
 opq <- function (bbox = NULL)
 {
@@ -56,6 +58,8 @@ opq <- function (bbox = NULL)
 #' query submitted to the overpass API can be obtained from
 #' \link{opq_string}.
 #'
+#' @note \code{add_feature} is deprecated; please use \code{add_osm_feature}.
+#'
 #' @references \url{http://wiki.openstreetmap.org/wiki/Map_Features}
 #'
 #' @export
@@ -64,22 +68,22 @@ opq <- function (bbox = NULL)
 #' \dontrun{
 #' q <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'                 opq () %>% 
-#'                 add_feature("amenity", "restaurant") %>%
-#'                 add_feature("amenity", "pub") 
+#'                 add_osm_feature("amenity", "restaurant") %>%
+#'                 add_osm_feature("amenity", "pub") 
 #' osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
 #' q1 <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'                 opq () %>% 
-#'                 add_feature("amenity", "restaurant") 
+#'                 add_osm_feature("amenity", "restaurant") 
 #' q2 <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'                 opq () %>% 
-#'                 add_feature("amenity", "pub") 
-#' c (osmdata_sf (q1), osmdata_sf (q1)) # all objects that are restaurants OR pubs
+#'                 add_osm_feature("amenity", "pub") 
+#' c (osmdata_sf (q1), osmdata_sf (q2)) # all objects that are restaurants OR pubs
 #' # Use of negation to extract all non-primary highways
 #' q <- opq ("portsmouth uk") %>%
-#'         add_feature (key="highway", value = "!primary") 
+#'         add_osm_feature (key="highway", value = "!primary") 
 #' }
-add_feature <- function (opq, key, value, key_exact = TRUE, value_exact = TRUE,
-                         match_case = TRUE, bbox = NULL)
+add_osm_feature <- function (opq, key, value, key_exact = TRUE,
+                             value_exact = TRUE, match_case = TRUE, bbox = NULL)
 {
     if (missing (key))
         stop ('key must be provided')
@@ -114,13 +118,17 @@ add_feature <- function (opq, key, value, key_exact = TRUE, value_exact = TRUE,
         {
             bind <- paste0 ("!", bind)
             value <- substring (value, 2, nchar (value))
+            if (key_pre == "~")
+            {
+                message ("Value negation only possible for exact keys")
+                key_pre <- ""
+            }
         }
         feature <- paste0 (sprintf (' [%s"%s"%s"%s"',
                                     key_pre, key, bind, value))
         if (!match_case)
             feature <- paste0 (feature, ",i")
         feature <- paste0 (feature, "]")
-        #feature <- paste0 (sprintf (' ["%s"%s"%s"]', key, bind, value))
     }
 
     opq$features <- c(opq$features, feature)
@@ -132,4 +140,14 @@ add_feature <- function (opq, key, value, key_exact = TRUE, value_exact = TRUE,
     # numerically sorted
 
     opq
+}
+
+#' @rdname add_osm_feature
+#' @export
+add_feature <- function (opq, key, value, key_exact = TRUE,
+                             value_exact = TRUE, match_case = TRUE, bbox = NULL)
+{
+    message ('add_feature() is deprecated; please use add_osm_feature()')
+    add_osm_feature (opq, key, value, key_exact = TRUE,
+                     value_exact = TRUE, match_case = TRUE, bbox = NULL)
 }

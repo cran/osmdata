@@ -7,9 +7,11 @@
 opq(bbox = NULL)
 }
 \arguments{
-\item{bbox}{Either four numeric values specifying the maximal and minimal
-longitudes and latitudes, or else a character string passed to
-\link{getbb} to be converted to a numerical bounding box.}
+\item{bbox}{Either (i) four numeric values specifying the maximal and minimal
+longitudes and latitudes; (ii) a character string passed to
+\link{getbb} to be converted to a numerical bounding box; or
+(iii) a matrix representing a bounding polygon as returned from
+\code{getbb(..., format_out = "polygon")}.}
 }
 \value{
 An \code{overpass_query} object
@@ -21,15 +23,15 @@ Build an Overpass query
 \dontrun{
 q <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
             opq () \%>\% 
-            add_feature("amenity", "restaurant") \%>\%
-            add_feature("amenity", "pub") 
+            add_osm_feature("amenity", "restaurant") \%>\%
+            add_osm_feature("amenity", "pub") 
 osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
 q1 <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
                 opq () \%>\% 
-                add_feature("amenity", "restaurant") 
+                add_osm_feature("amenity", "restaurant") 
 q2 <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
                 opq () \%>\% 
-                add_feature("amenity", "pub") 
-c (osmdata_sf (q1), osmdata_sf (q1)) # all objects that are restaurants OR pubs
+                add_osm_feature("amenity", "pub") 
+c (osmdata_sf (q1), osmdata_sf (q2)) # all objects that are restaurants OR pubs
 }
 }

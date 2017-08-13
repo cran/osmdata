@@ -3,7 +3,7 @@
 
 ## ----trentham, eval=FALSE------------------------------------------------
 #  q <- opq (bbox = 'Trentham, Australia')
-#  q <- add_feature (q, key = 'name') # any named objects
+#  q <- add_osm_feature (q, key = 'name') # any named objects
 #  osmdata_xml (q, 'trentham.osm')
 
 ## ---- eval=FALSE---------------------------------------------------------

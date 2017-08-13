@@ -16,7 +16,7 @@
 #' (or an unnamed vector) return a string
 #' \item \code{\link{overpass_status}}: Retrieve status of the overpass API
 #' \item \code{\link{opq}}: Build an overpass query
-#' \item \code{\link{add_feature}}: Add a feature to an overpass query
+#' \item \code{\link{add_osm_feature}}: Add a feature to an overpass query
 #' \item \code{\link{opq_string}}: Convert an osmdata query to overpass API
 #' string
 #' }
@@ -50,7 +50,8 @@
 #' @importFrom curl has_internet
 #' @importFrom httr content GET POST stop_for_status
 #' @importFrom lubridate force_tz ymd_hms wday day month year
-#' @importFrom methods is
+#' @importFrom magrittr %>%
+#' @importFrom methods is slot
 #' @importFrom Rcpp evalCpp
 #' @importFrom rvest html_attr html_nodes
 #' @importFrom utils read.table 

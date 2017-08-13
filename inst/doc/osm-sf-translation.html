@@ -11,7 +11,7 @@
 
 <meta name="author" content="Mark Padgham" />
 
-<meta name="date" content="2017-06-21" />
+<meta name="date" content="2017-08-10" />
 
 <title></title>
 
@@ -219,7 +219,7 @@ div.tocify {
 <li>Translation of OSM to Simple Features</li>
 </ol></h1>
 <h4 class="author"><em>Mark Padgham</em></h4>
-<h4 class="date"><em>2017-06-21</em></h4>
+<h4 class="date"><em>2017-08-10</em></h4>
 
 </div>
 
@@ -293,7 +293,7 @@ div.tocify {
 <a href="https://github.com/osmdatar/osmdata/blob/master/vignettes/osmdata.Rmd">main <code>osmdata</code> vignette</a>, with the same principles applying to all of the following classes of OSM data.</p>
 <p>The following three lines define a query and download the resultant data to an <code>XML</code> file.</p>
 <pre class="r"><code>q &lt;- opq (bbox = 'Trentham, Australia')
-q &lt;- add_feature (q, key = 'name') # any named objects
+q &lt;- add_osm_feature (q, key = 'name') # any named objects
 osmdata_xml (q, 'trentham.osm')</code></pre>
 <p>These data may then be converted into SF representations using either <code>R::sf</code> or <code>osmdata</code>, with OSM <code>keys</code> being the column names of the resultant <code>data.frame</code> objects.</p>
 <pre class="r"><code>names (sf::st_read ('trentham.osm', layer = 'points', quiet = TRUE))</code></pre>

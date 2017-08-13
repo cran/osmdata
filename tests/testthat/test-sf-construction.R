@@ -1,5 +1,8 @@
 context ("sf-construction")
 
+test_all <- (identical (Sys.getenv ("MPADGE_LOCAL"), "true") |
+             identical (Sys.getenv ("TRAVIS"), "true"))
+
 make_sfc <- function (x, type) {
     if (!is.list (x)) x <- list (x)
     type <- toupper (type)
@@ -13,6 +16,7 @@ make_sfc <- function (x, type) {
     yvals <- xy [, 2]
     bb <- structure(rep(NA_real_, 4), names = c("xmin", "ymin", "xmax", "ymax"))
     bb [1:4] <- c (min (xvals), min (yvals), max (xvals), max (yvals))
+    class (bb) <- "bbox"
     if (type == "POLYGON")
         x <- lapply (x, function (i) list (i))
     else if (grepl ("MULTI", type) & !is.list (x [[1]]))
@@ -26,8 +30,8 @@ make_sfc <- function (x, type) {
     attr (x, "n_empty") <- sum(vapply(x, function(x)
                                       length(x) == 0,
                                       FUN.VALUE = logical (1)))
-    class(x) <- c(paste0("sfc_", class(x[[1L]])[2L]), "sfc")
     attr(x, "precision") <- 0.0
+    class(x) <- c(paste0("sfc_", class(x[[1L]])[2L]), "sfc")
     attr(x, "bbox") <- bb
     NA_crs_ <- structure(list(epsg = NA_integer_,
                               proj4string = NA_character_), class = "crs")
@@ -68,6 +72,9 @@ make_sf <- function (...)
 # **********************************************************
 # ***                       POINTS                       ***
 # **********************************************************
+
+if (test_all)
+{
 
 test_that ("sfg-point", {
                x <- structure (1:2, class = c("XY", "POINT", "sfg"))
@@ -401,3 +408,5 @@ test_that ("sf-multipolygon-with-fields", {
                x <- make_sf (dat, x0)
                expect_identical (x, y)
 })
+
+} # end if test_all

@@ -12,7 +12,7 @@
 <meta name="author" content="Mark Padgham" />
 <meta name="author" content="Robin Lovelace" />
 
-<meta name="date" content="2017-06-21" />
+<meta name="date" content="2017-08-10" />
 
 <title></title>
 
@@ -221,7 +221,7 @@ div.tocify {
 </ol></h1>
 <h4 class="author"><em>Mark Padgham</em></h4>
 <h4 class="author"><em>Robin Lovelace</em></h4>
-<h4 class="date"><em>2017-06-21</em></h4>
+<h4 class="date"><em>2017-08-10</em></h4>
 
 </div>
 
@@ -229,7 +229,8 @@ div.tocify {
 <div id="introduction" class="section level2">
 <h2>1. Introduction</h2>
 <p><code>osmdata</code> is an R package for downloading and using data from OpenStreetMap (<a href="www.openstreetmap.org/">OSM</a>). OSM is a global open access mapping project, which is free and open under the <a href="http://www.openstreetmap.org/copyright">ODbL licence</a> <span class="citation">(OpenStreetMap contributors 2017)</span>. This has many benefits, ensuring transparent data provenance and ownership, enabling real-time evolution of the database and, by allowing anyone to contribute, encouraging democratic decision making and citizen science <span class="citation">(Johnson 2017)</span>. See the <a href="http://wiki.openstreetmap.org/wiki/Contribute_map_data">OSM wiki</a> to find out how to contribute to the world’s open geographical data commons.</p>
-<p>The <code>osmdata</code> R package can be installed from CRAN with</p>
+<p>Unlike the <a href="https://cran.r-project.org/package=OpenStreetMap"><code>OpenStreetMap</code></a> package, which facilitates the download of raster tiles, <code>osmdata</code> provides access to the vector data underlying OSM.</p>
+<p><code>osmdata</code> can be installed from CRAN with</p>
 <pre class="r"><code>install.packages(&quot;osmdata&quot;)</code></pre>
 <p>and then loaded in the usual way:</p>
 <pre class="r"><code>library(osmdata)</code></pre>
@@ -241,13 +242,18 @@ div.tocify {
 <p><code>osmdata</code> uses the <a href="http://overpass-api.de"><code>overpass</code> API</a> to download OpenStreetMap (OSM) data and can convert the results to either Simple Features (typically of class <code>sf</code>) or Spatial objects (e.g. <code>SpatialPointsDataFrame</code>), as defined by the packages <a href="https://cran.r-project.org/package=sf"><code>sf</code></a> and <a href="https://cran.r-project.org/package=sp"><code>sp</code></a> packages respectively.</p>
 <p><code>overpass</code> is a C++ library that serves OSM data over the web. All <code>overpass</code> queries begin with a bounding box, defined in <code>osmdata</code> with the function <code>opq()</code>:</p>
 <pre class="r"><code>q &lt;- opq(bbox = c(51.1, 0.1, 51.2, 0.2))</code></pre>
-<p>Bounding boxes may also be defined by simply passing the name of a desired area, which does not have be precise:</p>
-<pre class="r"><code>q &lt;- opq(bbox = 'Greater London, U.K.')
-identical(opq(bbox = 'Greater London, U.K.'), opq(bbox = 'greater london uk'))</code></pre>
-<pre><code>## [1] TRUE</code></pre>
+<p>Bounding boxes may also be defined by simply passing the name of a desired area - if <code>bbox</code> is a text string <code>opq()</code> uses the helper function <code>getbb()</code> to convert it into a bounding box:</p>
+<pre class="r"><code>bb = getbb('Greater London, U.K.')
+q &lt;- opq(bbox = bb)</code></pre>
+<p>Note that the text string is not case sensitive, and that you can avoid the intermediate step of using <code>getbb()</code> by placing a text string directly into the <code>bbox</code> argument of <code>opq()</code>:</p>
+<pre class="r"><code>identical(q, opq(bbox = 'greater london uk'))
+## TRUE</code></pre>
+<p>Note also that <code>getbb()</code> can return a data frame reporting multiple matches or matrices representing bounding polygons of matches:</p>
+<pre class="r"><code>bb_df = getbb(place_name = &quot;london&quot;, format_out = &quot;data.frame&quot;)
+bb_poly = getbb(place_name = &quot;london&quot;, format_out = &quot;polygon&quot;)</code></pre>
 <p>Following the initial <code>opq()</code> call, <code>osmdata</code> queries are built by adding one or more ‘features’, which are specified in terms of <code>key-value</code> pairs. For example, all paths, ways, and roads are designated in OSM with <code>key=highway</code>, so that a query all motorways in greater London (UK) can be constructed as follows:</p>
 <pre class="r"><code>q &lt;- opq(bbox = 'greater london uk') %&gt;%
-    add_feature(key = 'highway', value = 'motorway')</code></pre>
+    add_osm_feature(key = 'highway', value = 'motorway')</code></pre>
 <p>A detailed description of features is provided at the <a href="https://wiki.openstreetmap.org/wiki/Category:Keys">OSM wiki</a>, or the <code>osmdata</code> function <code>available_features()</code> can be used to retrive the comprehensive list of feature keys currently used in OSM.</p>
 <pre class="r"><code>head (available_features ())</code></pre>
 <pre><code>## [1] &quot;4wd only&quot;  &quot;abandoned&quot; &quot;abutters&quot;  &quot;access&quot;    &quot;addr&quot;      &quot;addr:city&quot;</code></pre>
@@ -261,11 +267,14 @@ identical(opq(bbox = 'Greater London, U.K.'), opq(bbox = 'greater london uk'))</
 </blockquote>
 <p>The syntax of <code>overpass</code> queries is powerful yet hard to learn. This section briefly introduces the structure of <code>overpass</code> queries in order to help construct more efficient and powerful queries. Those wanting to skip straight onto query construction in <code>osmdata</code> may safely jump ahead to the <a href="#query-example">query example below</a>.</p>
 <p><code>osmdata</code> simplifies queries so that OSM data can be extracted with very little understanding of the <code>overpass</code> query syntax, although it is still possible to submit arbitrarily complex <code>overpass</code> queries via <code>osmdata</code>. An excellent place to explore <code>overpass</code> queries specifically and OSM data in general is the online interactive query builder at <a href="http://overpass-turbo.eu/">overpass-turbo</a>, which includes a helpful corrector function for incorrectly formatted queries. Examples of its functionality in action can be found on the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_API_by_Example">OpenStreetMap wiki</a>, with full details of the <code>overpass</code> query language given in the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL">Query Language Guide</a> as well as the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide">overpass API Language Guide</a>.</p>
+<p>By default, <code>osmdata</code> sends queries to <code>http://overpass-api.de/api/interpreter</code> but other servers can be used, thanks to functions that <em>get</em> and <em>set</em> the base url:</p>
+<pre class="r"><code>get_overpass_url()</code></pre>
+<pre><code>## [1] &quot;http://overpass-api.de/api/interpreter&quot;</code></pre>
+<pre class="r"><code>new_url &lt;- &quot;http://overpass.openstreetmap.ie/api/interpreter&quot;</code></pre>
+<pre class="r"><code>set_overpass_url(new_url) # reset the base url (not run)</code></pre>
 <p><code>osmdata</code> queries are lists of class <code>overpass_query</code>. The actual query passed to the <code>overpass API</code> with a query can be obtained with the function <code>opq_string()</code>. Applied to the preceding query, this function gives:</p>
-<pre class="r"><code>opq_string(q)</code></pre>
-<pre><code>## [1] &quot;[out:xml][timeout:25];\n(\n node  [\&quot;highway\&quot;=\&quot;motorway\&quot;] (-0.510375,51.2867602,0.3340155,51.6918741);\n way  [\&quot;highway\&quot;=\&quot;motorway\&quot;] (-0.510375,51.2867602,0.3340155,51.6918741);\n relation  [\&quot;highway\&quot;=\&quot;motorway\&quot;] (-0.510375,51.2867602,0.3340155,51.6918741);\n\n);\n(._;&gt;);\nout body;&quot;</code></pre>
-<p>The resultant output may be pasted directly into the <a href="http://overpass-turbo.eu/">overpass-turbo</a> online interactive query builder. This query is perhaps easier to understand through reformatting to reflect the format typically used in <code>overpass-turbo</code>:</p>
-<pre class="r"><code>## [out:xml][timeout:25];
+<pre class="r"><code>opq_string(q)
+## [out:xml][timeout:25];
 ## (
 ##   node
 ##     [&quot;highway&quot;=&quot;motorway&quot;]
@@ -278,29 +287,23 @@ identical(opq(bbox = 'Greater London, U.K.'), opq(bbox = 'greater london uk'))</
 ##     (51.2867602,-0.510375,51.6918741,0.3340155);
 ## );
 ## (._;&gt;);out body;</code></pre>
-<div id="different-overpass-api-servers" class="section level3">
-<h3>2.1 Different <code>overpass</code> API servers</h3>
-<p>By default, <code>osmdata</code> uses the main <code>overpass</code> API server at <code>http://overpass-api.de/api/interpreter</code>. This default is set when the <code>osmdata</code> package is loaded into the current <code>R</code> workspace. A list of available servers is maintained at <a href="http://wiki.openstreetmap.org/wiki/Overpass_API" class="uri">http://wiki.openstreetmap.org/wiki/Overpass_API</a>. Alternative servers may be set using <code>set_overpass_url()</code>, for example,</p>
-<pre class="r"><code>set_overpass_url ('http://overpass.osm.rambler.ru/cgi/interpreter')</code></pre>
-<p>All subsequent usage of <code>osmdata</code> within the same <code>R</code> session will then utilise the nominated overpass API server. A list of alternative servers is also given in the documentation for <code>set_overpass_url()</code> - see <code>?set_overpass_url</code>.</p>
-</div>
-</div>
-<div id="osmdata-queries" class="section level2">
-<h2>3. <code>osmdata</code> queries</h2>
+<p>The resultant output may be pasted directly into the <a href="http://overpass-turbo.eu/">overpass-turbo</a> online interactive query builder. (The output of <code>opq_string</code> has been somewhat reformatted here to reflect the format typically used in <code>overpass-turbo</code>.)</p>
+<div id="osmdata-queries" class="section level3">
+<h3>2.1. osmdata queries</h3>
 <p>As demonstrated above, an <code>osmdata</code> query begins by specifying a bounding box with the function <code>opq()</code>, followed by specifying desired OSM features with <code>add_feature()</code>.</p>
 <pre class="r"><code>q &lt;- opq(bbox = 'Kunming, China') %&gt;%
-    add_feature(key = 'natural', value = 'water')</code></pre>
-<p>This query will request all natural water water bodies in Kunming, China. A particular water body may be requested through appending a further call to <code>add_feature()</code>:</p>
+    add_osm_feature(key = 'natural', value = 'water')</code></pre>
+<p>This query will request all natural water water bodies in Kunming, China. A particular water body may be requested through appending a further call to <code>add_osm_feature()</code>:</p>
 <pre class="r"><code>q &lt;- opq(bbox = 'Kunming, China') %&gt;%
-    add_feature(key = 'natural', value = 'water') %&gt;%
-    add_feature(key = 'name:en', value = 'Dian', value_exact = FALSE)</code></pre>
-<p>Each successive call to <code>add_feature()</code> <strong>adds</strong> features to a query. This query is thus a request for all bodies of natural water <strong>and</strong> those with English names that include ‘Dian’. The requested data may be extracted through calling one of the <code>osmdata_xml/sp/sf()</code> functions.</p>
+    add_osm_feature(key = 'natural', value = 'water') %&gt;%
+    add_osm_feature(key = 'name:en', value = 'Dian', value_exact = FALSE)</code></pre>
+<p>Each successive call to <code>add_osm_feature()</code> <strong>adds</strong> features to a query. This query is thus a request for all bodies of natural water <strong>and</strong> those with English names that include ‘Dian’. The requested data may be extracted through calling one of the <code>osmdata_xml/sp/sf()</code> functions.</p>
 <p>Single queries are always constructed through <strong>adding</strong> features, and therefore correspond to logical <strong>AND</strong> operations: natural water bodies <strong>AND</strong> those whose names include ‘Dian’. The equivalent <strong>OR</strong> combination requires extracting separate data sets and combining then with the inbuilt <code>c</code> operator of <code>osmdata</code>. The following code demonstrates this with <code>osmdata_sf()</code>:</p>
 <pre class="r"><code>dat1 &lt;- opq(bbox = 'Kunming, China') %&gt;%
-    add_feature(key = 'natural', value = 'water') %&gt;%
+    add_osm_feature(key = 'natural', value = 'water') %&gt;%
     osmdata_sf ()
 dat2 &lt;- opq(bbox = 'Kunming, China') %&gt;%
-    add_feature(key = 'name:en', value = 'Dian', value_exact = FALSE) %&gt;%
+    add_osm_feature(key = 'name:en', value = 'Dian', value_exact = FALSE) %&gt;%
     osmdata_sf ()
 dat &lt;- c (dat1, dat2)</code></pre>
 <p>The following code extracted numbers of objects returned in each case (where the fourth-to-eighth items of an <code>osmdata</code> object are those containing the actual spatial data)</p>
@@ -324,159 +327,158 @@ unlist (lapply (dat, nrow) [4:8])</code></pre>
 ## osm_multipolygons 
 ##                 1</code></pre>
 <p>And there are, for example, the considerably lower number of 2,029 points describing objects in Kunming that are <strong>both</strong> natural waterbodies <strong>and</strong> that include ‘Dian’ in their English name.</p>
-<div id="key-value-matching" class="section level3">
-<h3>3.1 <code>key-value</code> matching</h3>
+<p>Each successive feature added with <code>add_feature()</code> is added to previous features, so, for example, extending the previous query by an additional <code>key-value</code> pair to:</p>
 <p>Both <code>key</code> and <code>value</code> fields may be matched either exactly or approximately. The previous query is repeated here for convenience:</p>
 <pre class="r"><code>q &lt;- opq(bbox = 'Kunming, China') %&gt;%
-    add_feature(key = 'natural', value = 'water') %&gt;%
-    add_feature(key = 'name:en', value = 'Dian', value_exact = FALSE)</code></pre>
-<p>The parameter <code>value_exact = FALSE</code> controls the two ways of matching the specified <code>value</code> in <code>osmdata</code>: Either exactly and entirely, or through a partial string match. With the default <code>value_exact=TRUE</code>, this query would only return objects named ‘Dian’, and not, for example, any named ‘Lake Dian’. Using <code>value_exact = FALSE</code> will return ‘Lake Dian’ through just specifying <code>value='Dian'</code>.</p>
-<p>In addtion to <code>value_exact</code>, <code>add_feature</code> also offers the additional two options of <code>key_exact</code> and <code>match_case</code>. The former functions just like <code>value_exact</code>, but is applied to the specified <code>key</code> parameter, while <code>match_case</code> (default <code>TRUE</code>) specifies whether case should also be matched. These options allow the above query to be rewritten,</p>
+    add_osm_feature(key = 'natural', value = 'water') %&gt;%
+    add_osm_feature(key = 'name:en', value = 'Dian', value_exact = FALSE)</code></pre>
+<p>In addtion to <code>value_exact</code>, <code>add_osm_feature</code> also offers the additional two options of <code>key_exact</code> and <code>match_case</code>. The former functions just like <code>value_exact</code>, but is applied to the specified <code>key</code> parameter, while <code>match_case</code> (default <code>TRUE</code>) specifies whether case should also be matched. These options allow the above query to be rewritten,</p>
 <pre class="r"><code>q &lt;- opq(bbox = 'Kunming, China') %&gt;%
-    add_feature(key = 'natural', value = 'water') %&gt;%
-    add_feature(key = 'name', value = 'dian', key_exact = FALSE,
+    add_osm_feature(key = 'natural', value = 'water') %&gt;%
+    add_osm_feature(key = 'name', value = 'dian', key_exact = FALSE,
                 value_exact = FALSE, match_case = FALSE)</code></pre>
 </div>
 <div id="extracting-osm-data-from-a-query" class="section level3">
 <h3>3.2 Extracting <code>OSM</code> data from a query</h3>
 <p>The primary <code>osmdata</code> functions <code>osmdata_sf()</code> or <code>osmdata_sp()</code> pass these queries to <code>overpass</code> and return OSM data in corresponding <code>sf</code> or <code>sp</code> format, respectively. Both of these functions also accept direct <code>overpass</code> queries, such as those produced by the <code>osmdata</code> function <code>opq_string()</code>, or copied directly from the <a href="overpass-turbo.eu"><code>overpass-turbo</code> query builder</a>.</p>
-<pre class="r"><code>osmdata_sf(opq_string(q))</code></pre>
-<pre><code>## Object of class 'osmdata' with:
-##                   $bbox :
-##          $overpass_call : The call submitted to the overpass API
-##              $timestamp : [ Thurs 5 May 2017 14:33:54 ]
-##             $osm_points : 'sf' Simple Features Collection with 360582 points
-##             ...</code></pre>
+<pre class="r"><code>osmdata_sf(opq_string(q))
+## Object of class 'osmdata' with:
+##                  $bbox :
+##         $overpass_call : The call submitted to the overpass API
+##             $timestamp : [ Thurs 5 May 2017 14:33:54 ]
+##            $osm_points : 'sf' Simple Features Collection with 360582 points
+##            ...</code></pre>
 <p>Note that the result contains no value for <code>bbox</code>, because that information is lost when the full <code>osmdata_query</code>, <code>q</code>, is converted to a string. Nevertheless, the results of the two calls <code>osmdata_sf (opq_string (q))</code> and <code>osmdata_sf (q)</code> differ only in the values of <code>bbox</code> and <code>timestamp</code>, while returning otherwise identical data.</p>
-<p>In summary, <code>osmdata</code> queries are generally simplified versions of potentially more complex <code>overpass</code> queries, although arbitrarily complex <code>overpass</code> queries may be passed directly to the primary <code>osmdata</code> functions. As illustrated above, <code>osmdata</code> queries are generally constructed through initiating a query with <code>opq()</code>, and then specifying OSM features in terms of <code>key-value</code> pairs with <code>add_feature()</code>, along with judicious usage of the <code>key_exact</code>, <code>value_exact</code>, and <code>match_case</code> parameters.</p>
-<p>It is of course possible to simply request all data within a given bounding box (warning - not intended to run):</p>
-<pre class="r"><code>lots_of_data &lt;- opq(bbox = 'City of London, U.K.') %&gt;% osmdata_sf()</code></pre>
+<p>In summary, <code>osmdata</code> queries are generally simplified versions of potentially more complex <code>overpass</code> queries, although arbitrarily complex <code>overpass</code> queries may be passed directly to the primary <code>osmdata</code> functions. As illustrated above, <code>osmdata</code> queries are generally constructed through initiating a query with <code>opq()</code>, and then specifying OSM features in terms of <code>key-value</code> pairs with <code>add_osm_feature()</code>, along with judicious usage of the <code>key_exact</code>, <code>value_exact</code>, and <code>match_case</code> parameters.</p>
+<p>The simplest way to use <code>osmdata</code> is to simply request all data within a given bounding box (warning - not intended to run):</p>
+<pre class="r"><code>q &lt;- opq(bbox = 'London City, U.K.')
+lots_of_data &lt;- osmdata_sf(q)</code></pre>
 <p>Queries are, however, usually more useful when refined through using <code>add_feature()</code>, which minimally requires a single <code>key</code> and returns all objects specifying any value for that <code>key</code>:</p>
 <pre class="r"><code>not_so_much_data &lt;- opq(bbox = 'city of london uk') %&gt;%
-    add_feature(key = 'highway') %&gt;%
-    add_feature(key = 'name') %&gt;%
+    add_osm_feature(key = 'highway') %&gt;%
+    add_osm_feature(key = 'name') %&gt;%
     osmdata_sf()</code></pre>
 <p><code>osmdata</code> will use that query to return all named highways within the requested bounding box. Note that <code>key</code> specifications are requests for features which must include those keys, yet most features will also include many other keys, and thus <code>osmdata</code> objects generally list a large number of distinct keys, as demonstrated below.</p>
 </div>
 <div id="query-example" class="section level3">
-<h3>3.3. Query example</h3>
+<h3>2.2. Query example</h3>
 <p>To appreciate query building in more concrete terms, let’s imagine that we wanted to find all cycle paths in Seville, Spain:</p>
 <pre class="r"><code>q1 &lt;- opq('Seville') %&gt;%
-    add_feature(key = 'highway', value = 'cycleway')
+    add_osm_feature(key = 'highway', value = 'cycleway')
 cway_sev &lt;- osmdata_sp(q1)
 sp::plot(cway_sev$osm_lines)</code></pre>
 <div class="figure">
 <img src="data:image/png;base64,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jTfeSKVSp0+fLhQK1dXVTzzxxMaNG9Pp9P333//xxx//9ttvn332WbnHBKgs9nwDJNMvv/yyePHiqqqqVCqVTqcbGhpaWlrGxsaOHTv24IMP9vb2fvXVVzt27Dh79mxNTU25hwWoFJ58AyTTRx99VFNT09/fn8/n33///aampsOHD3d0dIyMjAwMDGSz2blz5zY0NOzfv7/ckwJUEE++AZKpqanpgQce+OGHH6Yv1tbWTk5Orly58uLFi6Ojo1VVVUuXLj137txfH353dHR0dHQcO3ZsxowZgVMDJJwDlwAJdOHChYGBgbfeemv6Yl9fX6FQmJycrK+vf/bZZ1etWtXf33/8+PHff/99zpw5d31De3v7qVOnbt68Kb4B/ka2nQAk0CeffFIsFrds2TJ98cCBA5lM5vHHH3/llVfy+fyrr7762muvjY2NHThwYHh4+K5vuHz5cl1d3fz58wOnBkg+T74BEujzzz9fvnx5XV3d9MXbRzCbm5tbW1tbW1tTqdS1a9dOnjx54sSJixcvLliw4M6VPT09/f39hw8fjp4bIOns+QZIoLq6uueff/7dd9+dvjhjxoxisbhp06atW7c++eST9fX1/+32pUuXzpw5s7e395+fFKCy2HYCkECjo6MPPfTQ9JVcLpdOpzOZzKOPPtre3t7Y2PjYY4/t3r17bGzsrnv37ds3MDDwwQcfBM4LUClsOwFIoFKpND4+vnfv3u7u7nw+XywWf/3114mJiaampmw2m81mC4VCT0/PN9988+eff965q6ura+/evWfOnMlms4888kgZ5wdIKttOAJLm66+/bmlpKZVKmUymsbFx3rx5VVVVJ0+enDVr1vDwcCaTWbNmzTPPPPP000/Pnz9/cnLy+vXruVzuyJEjnZ2d99133549e3bt2lXuHwGQTOIbIDmKxWJbW9t7771XLBaXL1/+008/3flocHCws7Ozubn5iy++OHr06Llz5wqFQqlUSqfTt2+sr69ftGjRjz/+eO3atUwmU74fAZBk4hsgIUZHR9etW3f+/Pk333zz6NGjV65cufeJyeHh4cuXL1dXV9fX1995peDq1asPHjy4Zs2akJEBKo493wAJkc/np6ament7V6xYMTQ09Pbbb9/7+gULFkx/veBttbW1fz2CCcDfxdtOABKisbExl8utWLEilUpt2LBhYmJicHDwf7nx1q1bV65cmZiYSKVSN27cmD179j87KEAFE98ACbRu3bpUKtXV1XWPa3p6erZv375kyZK5c+euXLly9uzZTz311KVLl6ampqLGBKg44hsggTKZzOrVq/fv3/8fP83lcs8999yWLVsaGhq+/PLLW7dujYyMjIyMtLW1PfzwwwsXLgyeFqByOHAJkEyHDh164YUXfv7557ti+sMPP3zxxRd37tyZzWa91QQgmPgGSKbx8fE5c+a8/PLLe/bsubP4+uuvv/POO52dnWvXri3jbAAVS3wDJNamTZtOnTqVz+dTqdT4+Pi2bdvOnz//6aefLlq0qNyjAVQoe74BEiubzV6/fr2np2doaGj9+vXpdPrEiRPKG6CMPPkGSLJ58+YtW7ZsaGjopZde2r17d7nHAah0/skOQJI1Nzd3d3e3t7e3traWexYAxDdAQk1NTbW1tfX19X377bdLliwp9zgApFLiGyCR/vjjj82bN9fU1Jw+fbq2trbc4wDwb+IbIIG+//77wcHBM2fOVFf7Ow/wf8SBSwAACOJVgwAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEER8AwBAEPENAABBxDcAAAQR3wAAEORfvsUsWGluPAoAAAAASUVORK5CYII=" />
 
 </div>
-<p>Now imagine we want to make a more specific query that only extracts designated cycleways or those which are bridges. As described above, combining these into one query will return only those that are designated cycleways <strong>AND</strong> that are bridges:</p>
+<p>Now imagine we want to make a more specific query that only extracts designated cycleways or those which are bridges. Combining these into one query will return only those that are designated cycleways <strong>AND</strong> that are bridges:</p>
 <pre class="r"><code>q2 &lt;- add_feature(q1, key = 'bicycle', value = 'designated')
 des_bike &lt;- osmdata_sf(q2)
 q3 &lt;- add_feature(q2, key = 'bridge', value = 'yes')
 des_bike_and_bridge &lt;- osmdata_sf(q3)
-nrow(des_bike_and_bridge$osm_points); nrow(des_bike_and_bridge$osm_lines)</code></pre>
-<pre><code>## [1] 7</code></pre>
-<pre><code>## [1] 3</code></pre>
+nrow(des_bike_and_bridge$osm_points); nrow(des_bike_and_bridge$osm_lines)
+## [1] 7
+## [1] 3</code></pre>
 <p>That query returns only 7 points and 3 lines. Designed cycleways <strong>OR</strong> bridges can be obtained through simply combining multiple <code>osmdata</code> objects with the <code>c</code> operator:</p>
 <pre class="r"><code>q4 &lt;- add_feature(q1, key = 'bridge', value = 'yes')
 bridge &lt;- osmdata_sf(q4)
 des_bike_or_bridge &lt;- c(des_bike, bridge)
-nrow(des_bike_or_bridge$osm_points); nrow(des_bike_or_bridge$osm_lines)</code></pre>
-<pre><code>## [1] 208</code></pre>
-<pre><code>## [1] 40</code></pre>
-<p>And demonstrated above, the <code>OR</code> operation produces more data than the equivalent <code>AND</code> operation.</p>
+nrow(des_bike_or_bridge$osm_points); nrow(des_bike_or_bridge$osm_lines)
+## [1] 208
+## [1] 40</code></pre>
+<p>And as expected, the <code>OR</code> operation produces more data than the equivalent <code>AND</code>, showing the utility of combining <code>osmdata</code> objects with the generic function <code>c()</code>.</p>
 </div>
 </div>
 <div id="the-osmdata-object" class="section level2">
-<h2>4. The <code>osmdata</code> object</h2>
+<h2>3. The <code>osmdata</code> object</h2>
 <p>The <code>osmdata</code> extraction functions (<code>osmdata_sf()</code> and <code>osmdata_sp()</code>), both return objects of class <code>osmdata</code>. The structure of <code>osmdata</code> objects are clear from their default print method, illustrated using the <code>bridge</code> example from the previous section:</p>
-<pre class="r"><code>bridge</code></pre>
-<pre><code>##   Object of class 'osmdata' with:
-##                     $bbox : 37.3002036,-6.0329182,37.4529579,-5.819157
-##            $overpass_call : The call submitted to the overpass API
-##                $timestamp : [ Thurs 5 May 2017 14:41:19 ]
-##               $osm_points : 'sf' Simple Features Collection with 69 points
-##                $osm_lines : 'sf' Simple Features Collection with 25 linestrings
-##             $osm_polygons : 'sf' Simple Features Collection with 0 polygons
-##           $osm_multilines : 'sf' Simple Features Collection with 0 multilinestrings
-##        $osm_multipolygons : 'sf' Simple Features Collection with 0 multipolygons</code></pre>
+<pre class="r"><code>bridge
+##  Object of class 'osmdata' with:
+##                   $bbox : 37.3002036,-6.0329182,37.4529579,-5.819157
+##          $overpass_call : The call submitted to the overpass API
+##              $timestamp : [ Thurs 5 May 2017 14:41:19 ]
+##             $osm_points : 'sf' Simple Features Collection with 69 points
+##              $osm_lines : 'sf' Simple Features Collection with 25 linestrings
+##           $osm_polygons : 'sf' Simple Features Collection with 0 polygons
+##         $osm_multilines : 'sf' Simple Features Collection with 0 multilinestrings
+##      $osm_multipolygons : 'sf' Simple Features Collection with 0 multipolygons</code></pre>
 <p>As the results show, all <code>osmdata</code> objects should contain:</p>
 <ul>
 <li>A bounding box (which can be accessed with <code>bridge$bbox</code>)</li>
 <li>A time-stamp of the query (<code>bridge$timestamp</code>, useful for checking data is up-to-date)</li>
 <li>The spatial data, consisting of <code>osm_points</code>, <code>osm_lines</code>, <code>osm_polygons</code>, <code>osm_multilines</code> and <code>osm_multipolygons</code>.</li>
 </ul>
-<p>Some or all of these can be empty: the example printed above contains only points and lines. The more complex features of <code>osm_multilines</code> and <code>osm_multipolygons</code> refer to OSM relations than contain multiple lines and polygons.</p>
+<p>hese some or all of these can be empty: the example printed above contains only points and linesThe more complex features of <code>osm_multilines</code> and <code>osm_multipolygons</code> refer to OSM relations than contain multiple lines and polygons.</p>
 <p>The actual spatial data contained in an <code>osmdata</code> object are of either <code>sp</code> format when extracted with <code>osmdata_sp()</code> or <code>sf</code> format when extracted with <code>osmdata_sf()</code>.</p>
-<pre class="r"><code>class(osmdata_sf(q)$osm_lines)</code></pre>
-<pre><code>## [1] &quot;sf&quot;         &quot;data.frame&quot;</code></pre>
-<pre class="r"><code>class(osmdata_sp(q)$osm_lines)</code></pre>
-<pre><code>##  [1] &quot;SpatialLinesDataFrame&quot;
-##  attr(,&quot;package&quot;)
-##  [1] &quot;sp&quot;</code></pre>
-<p>In addition to these two functions, <code>osmdata</code> provides a third function, <code>osmdata_xml()</code>, which allows raw OSM data to be returned and optionally saved to disk in XML format. The following code demonstrates this function, beginning with a new query for a small portion of central London, U.K.</p>
+<pre class="r"><code>class(osmdata_sf(q)$osm_lines)
+## [1] &quot;sf&quot;         &quot;data.frame&quot;</code></pre>
+<pre class="r"><code>class(osmdata_sp(q)$osm_lines)
+## [1] &quot;SpatialLinesDataFrame&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;sp&quot;</code></pre>
+<p>In addition to these two functions, <code>osmdata</code> provides a third function, <code>osmdata_xml()</code>, which allows raw OSM data to be returned and optionally saved to disk in XML format. The following code demonstrates this function, beginning with a new query.</p>
 <pre class="r"><code>dat &lt;- opq(bbox = c(-0.12, 51.51, -0.11, 51.52)) %&gt;%
-    add_feature(key = 'building') %&gt;%
+    add_osm_feature(key = 'building') %&gt;%
     osmdata_xml(file = 'buildings.osm')
-class(dat)</code></pre>
-<pre><code>## [1] &quot;xml_document&quot; &quot;xml_node&quot;</code></pre>
+class(dat)
+## [1] &quot;xml_document&quot; &quot;xml_node&quot;</code></pre>
 <p>This call both returns the same data as the object <code>dat</code> and saves them to the file <code>buildings.osm</code>. Downloaded XML data can be converted to <code>sf</code> or <code>sp</code> formats by simply passing the data to the respective <code>osmdata</code> functions, either as the name of a file or an XML object:</p>
 <pre class="r"><code>q &lt;- opq(bbox = c(-0.12, 51.51, -0.11, 51.52)) %&gt;%
-    add_feature(key = 'building')
+    add_osm_feature(key = 'building')
 doc &lt;- osmdata_xml(q, 'buildings.osm')
 dat1 &lt;- osmdata_sf(q, doc)
 dat2 &lt;- osmdata_sf(q, 'buildings.osm')
-identical(dat1, dat2)</code></pre>
-<pre><code>## [1] TRUE</code></pre>
+identical(dat1, dat2)
+## [1] TRUE</code></pre>
 <p>The following sub-sections now explore these three functions in more detail, beginning with <code>osmdata_xnl()</code>.</p>
 <div id="the-osmdata_xml-function" class="section level3">
-<h3>4.1. The <code>osmdata_xml()</code> function</h3>
+<h3>3.1. The <code>osmdata_xml()</code> function</h3>
 <p><code>osmdata_xml()</code> returns OSM data in native XML format, and also allows these data to be saved directly to disk (conventionally using the file suffix <code>.osm</code>, although any suffix may be used). The <code>XML</code> data are formatting using the <code>R</code> package <code>xml2</code>, and may be processed within <code>R</code> using any methods compatible with such data, or may be processed by any other software able to load the <code>XML</code> data directly from disk.</p>
 <p>The first few lines of the XML data downloaded above look like this:</p>
-<pre class="r"><code>readLines('buildings.osm')[1:6]</code></pre>
-<pre><code>##  [1] &quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&quot;
-##  [2] &quot;&lt;osm version=&quot;0.6&quot; generator=&quot;Overpass API&quot;&gt;&quot;
-##  [3] &quot;  &lt;note&gt;The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.&lt;/note&gt;&quot;
-##  [4] &quot;  &lt;meta osm_base=&quot;2017-03-07T09:28:03Z&quot;/&gt;&quot;
-##  [5] &quot;  &lt;node id=&quot;21593231&quot; lat=&quot;51.5149566&quot; lon=&quot;-0.1134203&quot;/&gt;&quot;
-##  [6] &quot;  &lt;node id=&quot;25378129&quot; lat=&quot;51.5135870&quot; lon=&quot;-0.1115193&quot;/&gt;&quot;</code></pre>
+<pre class="r"><code>readLines('buildings.osm')[1:6]
+## [1] &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot;?&gt;&quot;                                                                             
+## [2] &quot;&lt;osm version=\&quot;0.6\&quot; generator=\&quot;Overpass API\&quot;&gt;&quot;                                                                       
+## [3] &quot;  &lt;note&gt;The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.&lt;/note&gt;&quot;
+## [4] &quot;  &lt;meta osm_base=\&quot;2017-03-07T09:28:03Z\&quot;/&gt;&quot;                                                                            
+## [5] &quot;  &lt;node id=\&quot;21593231\&quot; lat=\&quot;51.5149566\&quot; lon=\&quot;-0.1134203\&quot;/&gt;&quot;                                            
+## [6] &quot;  &lt;node id=\&quot;25378129\&quot; lat=\&quot;51.5135870\&quot; lon=\&quot;-0.1115193\&quot;/&gt;&quot;                                                        </code></pre>
 <p>These data can be used in any other programs able to read and process XML data, such as the open source GIS <a href="http://qgis.org/en/site/">QGIS</a> or the OSM data editor <a href="http://wiki.openstreetmap.org/wiki/JOSM">JOSM</a>. The remainder of this vignette assumes that not only do you want to get OSM data using R, you also want to import and eventually process it, using R. For that you’ll need to import the data into a native R class.</p>
 <p>As demonstrated above, downloaded data can be directly processed by passing either filenames or the <code>R</code> objects containing those data to the <code>osmdata_sf/sp()</code> functions:</p>
 <pre class="r"><code>dat_sp &lt;- osmdata_sp(q, 'buildings.osm')
 dat_sf &lt;- osmdata_sf(q, 'buildings.osm')</code></pre>
 </div>
 <div id="the-osmdata_sf-function" class="section level3">
-<h3>4.2. The <code>osmdata_sf()</code> function</h3>
+<h3>3.2. The <code>osmdata_sf()</code> function</h3>
 <p><code>osmdata_sf()</code> returns OSM data in <a href="http://www.opengeospatial.org/standards/sfo">Simple Features (SF)</a> format, defined by the <a href="http://www.opengeospatial.org">Open Geospatial Consortium</a>, and implemented in the <code>R</code> package <a href="https://cran.r-project.org/package=sf"><code>sf</code></a>. This package provides a direct interface to the <code>C++</code> <a href="http://gdal.org">Graphical Data Abstraction Library (GDAL)</a> which also includes a so-called <a href="http://www.gdal.org/drv_osm.html">‘driver’ for OSM data</a>. This means that OSM data may also be read directly with <code>sf</code>, rather than using <code>osmdata</code>. In this case, data must first be saved to disk, which can be readily achieved using <code>osmdata_xml()</code> described above, or through downloading directly from the <a href="http://overpass-turbo.eu">overpass interactive query builder</a>.</p>
-<p>The following example is based on this query, which extracts all named objects and saves them in the specified file.</p>
+<p>The following example is based on this query:</p>
 <pre class="r"><code>opq(bbox = 'Trentham, Australia') %&gt;%
-    add_feature(key = 'name') %&gt;%
+    add_osm_feature(key = 'name') %&gt;%
     osmdata_xml(filename = 'trentham.osm')</code></pre>
 <p><code>sf</code> can then read such data independent of <code>osmdata</code> though:</p>
-<pre class="r"><code>sf::st_read('trentham.osm', layer = 'points')</code></pre>
-<pre><code>##  Reading layer `points' from data source `trentham.osm' using driver `OSM'
-##  Simple feature collection with 38 features and 10 fields
-##  geometry type:  POINT
-##  dimension:      XY
-##  bbox:           xmin: 144.2894 ymin: -37.4846 xmax: 144.3893 ymax: -37.36012
-##  epsg (SRID):    4326
-##  proj4string:    +proj=longlat +datum=WGS84 +no_defs</code></pre>
+<pre class="r"><code>sf::st_read('trentham.osm', layer = 'points')
+## Reading layer `points' from data source `trentham.osm' using driver `OSM'
+## Simple feature collection with 38 features and 10 fields
+## geometry type:  POINT
+## dimension:      XY
+## bbox:           xmin: 144.2894 ymin: -37.4846 xmax: 144.3893 ymax: -37.36012
+## epsg (SRID):    4326
+## proj4string:    +proj=longlat +datum=WGS84 +no_defs</code></pre>
 <p>The <code>GDAL</code> drivers used by <code>sf</code> can only load single ‘layers’ of features, for example, <code>points</code>, <code>lines</code>, or <code>polygons</code>. In contrast, <code>osmdata</code> loads all features simultaneously:</p>
-<pre class="r"><code>osmdata_sf(q, 'trentham.osm')</code></pre>
-<pre><code>##  Object of class 'osmdata' with:
-##                   $bbox : -37.4300874,144.2863388,-37.3500874,144.3663388
-##          $overpass_call : The call submitted to the overpass API
-##              $timestamp : [ Wed 4 Jun 2017 11:57:39 ]
-##             $osm_points : 'sf' Simple Features Collection with 7106 points
-##              $osm_lines : 'sf' Simple Features Collection with 263 linestrings
-##           $osm_polygons : 'sf' Simple Features Collection with 38 polygons
-##         $osm_multilines : 'sf' Simple Features Collection with 1 multilinestrings
-##      $osm_multipolygons : 'sf' Simple Features Collection with 6 multipolygons</code></pre>
+<pre class="r"><code>osmdata_sf(q, 'trentham.osm')
+## Object of class 'osmdata' with:
+##                  $bbox : -37.4300874,144.2863388,-37.3500874,144.3663388
+##         $overpass_call : The call submitted to the overpass API
+##             $timestamp : [ Thus 5 May 2017 14:42:19 ]
+##            $osm_points : 'sf' Simple Features Collection with 7106 points
+##             $osm_lines : 'sf' Simple Features Collection with 263 linestrings
+##          $osm_polygons : 'sf' Simple Features Collection with 38 polygons
+##        $osm_multilines : 'sf' Simple Features Collection with 1 multilinestrings
+##     $osm_multipolygons : 'sf' Simple Features Collection with 6 multipolygons</code></pre>
 <p>Even for spatial objects of the same type (the same ‘layers’ in <code>sf</code> terminology), <code>osmdata</code> returns considerably more objects–7,166 points compared .with just 38. The raw sizes of data returned can be compared with:</p>
 <pre class="r"><code>s1 &lt;- object.size(osmdata_sf(q, 'trentham.osm')$osm_points)
 s2 &lt;- object.size(sf::st_read('trentham.osm', layer = 'points', quiet = TRUE))
-as.numeric(s1 / s2)</code></pre>
-<pre><code>## [1] 507.1454</code></pre>
+as.numeric(s1 / s2)
+## [1] 511.4193</code></pre>
 <p>And the <code>osmdata points</code> contain over 500 times as much data. The primary difference between <code>sf/GDAL</code> and <code>osmdata</code> is that the former returns only those objects unique to each category of spatial object. Thus OSM nodes (<code>points</code> in <code>sf/osmdata</code> representations) include, in <code>sf/GDAL</code> representation, only those points which are not part of any other objects (such as lines or polygons). In contrast, the <code>osm_points</code> object returned by <code>osmdata</code> includes all points regardless of whether or not these are represented in other spatial objects. Similarly, <code>line</code> objects in <code>sf/GDAL</code> exclude any lines that are part of other objects such as <code>multipolygon</code> or <code>multiline</code> objects.</p>
 <p>This processing of data by <code>sf/GDAL</code> has two important implications:</p>
 <ol style="list-style-type: decimal">
@@ -484,47 +486,43 @@ as.numeric(s1 / s2)</code></pre>
 <li><p>All OSM are structured by giving each object a unique identifier so that the components of any given object (the nodes of a line, for example, or the lines of a multipolygon) can be described simply by giving these identifiers. This enables the components of any OSM object to be examined in detail. The <code>sf/GDAL</code> representation obviates this ability through removing these IDs and reducing everything to geometries alone (which is, after all, why it is called ‘<em>Simple</em> Features’). This means, for example, that the <code>key-value</code> pairs of the <code>line</code> or <code>polygon</code> components of <code>multipolygon</code> can never be extracted from an <code>sf/GDAL</code> representation. In contrast, <code>osmdata</code> retains all unique identifiers for all OSM objects, and so readily enables, for example, the properties of all <code>point</code> objects of a <code>line</code> to be extracted.</p></li>
 </ol>
 <p>Another reason why <code>osmdata</code> returns more data than <code>GDAL/sf</code> is that the latter extracts only a restricted list of OSM <code>keys</code>, whereas <code>osmdata</code> returns all <code>key</code> fields present in the requested data:</p>
-<pre class="r"><code>names(sf::st_read('trentham.osm', layer = 'points', quiet = TRUE)) # the keys</code></pre>
-<pre><code>##  [1] &quot;osm_id&quot;     &quot;name&quot;       &quot;barrier&quot;    &quot;highway&quot;    &quot;ref&quot;       
-##  [6] &quot;address&quot;    &quot;is_in&quot;      &quot;place&quot;      &quot;man_made&quot;   &quot;other_tags&quot;
-## [11] &quot;geometry&quot;</code></pre>
-<pre class="r"><code>names(osmdata_sf(q, 'trentham.osm')$osm_points)</code></pre>
-<pre><code>##  [1] &quot;osm_id&quot;           &quot;name&quot;             &quot;X_description_&quot;  
-##  [4] &quot;X_waypoint_&quot;      &quot;addr.city&quot;        &quot;addr.housenumber&quot;
-##  [7] &quot;addr.postcode&quot;    &quot;addr.street&quot;      &quot;amenity&quot;         
-## [10] &quot;barrier&quot;          &quot;denomination&quot;     &quot;foot&quot;            
-## [13] &quot;ford&quot;             &quot;highway&quot;          &quot;leisure&quot;         
-## [16] &quot;note_1&quot;           &quot;phone&quot;            &quot;place&quot;           
-## [19] &quot;railway&quot;          &quot;railway.historic&quot; &quot;ref&quot;             
-## [22] &quot;religion&quot;         &quot;shop&quot;             &quot;source&quot;          
-## [25] &quot;tourism&quot;          &quot;waterway&quot;         &quot;geometry&quot;</code></pre>
+<pre class="r"><code>names(sf::st_read('trentham.osm', layer = 'points', quiet = TRUE)) # the keys
+## [1] &quot;osm_id&quot;     &quot;name&quot;       &quot;barrier&quot;    &quot;highway&quot;   
+## [5] &quot;ref&quot;        &quot;address&quot;    &quot;is_in&quot;      &quot;place&quot;     
+## [9] &quot;man_made&quot;   &quot;other_tags&quot; &quot;geometry&quot;  </code></pre>
+<pre class="r"><code>names(osmdata_sf(q, 'trentham.osm')$osm_points)
+## [1] &quot;osm_id&quot;           &quot;name&quot;             &quot;X_description_&quot;   &quot;X_waypoint_&quot;     
+## [5] &quot;addr.city&quot;        &quot;addr.housenumber&quot; &quot;addr.postcode&quot;    &quot;addr.street&quot;     
+## [9] &quot;amenity&quot;          &quot;barrier&quot;          &quot;denomination&quot;     &quot;foot&quot;            
+## [13] &quot;ford&quot;             &quot;highway&quot;          &quot;leisure&quot;          &quot;note_1&quot;          
+## [17] &quot;phone&quot;            &quot;place&quot;            &quot;railway&quot;          &quot;railway.historic&quot;
+## [21] &quot;ref&quot;              &quot;religion&quot;         &quot;shop&quot;             &quot;source&quot;          
+## [25] &quot;tourism&quot;          &quot;waterway&quot;         &quot;geometry&quot; </code></pre>
 <p><code>key</code> fields which are not specified in a given set of OSM data are not returned by <code>osmdata</code>, while <code>GDAL/sf</code> returns the same <code>key</code> fields regardless of whether any values are specified.</p>
 <pre class="r"><code>addr &lt;- sf::st_read('trentham.osm', layer = 'points', quiet = TRUE)$address
-all(is.na(addr))</code></pre>
-<pre><code>## [1] TRUE</code></pre>
+all(is.na(addr))
+## TRUE</code></pre>
 <p>and <code>key=address</code> contains no data yet is still returned by <code>GDAL/sf</code>.</p>
 <p>Finally, note that <code>osmdata</code> will generally extract OSM data considerably faster than equivalent <code>sf/GDAL</code> routines (as detailed <a href="https://github.com/osmdatar/osmdata/wiki/Timing-benchmarks">here</a>).</p>
 </div>
 <div id="the-osmdata_sp-function" class="section level3">
-<h3>4.3. The <code>osmdata_sp()</code> function</h3>
+<h3>3.3. The <code>osmdata_sp()</code> function</h3>
 <p>As with <code>osmdata_sf()</code> described above, OSM data may be converted to <code>sp</code> format without using <code>osmdata</code> via the <code>sf</code> functions demonstrated below:</p>
 <pre class="r"><code>dat &lt;- sf::st_read('buildings.osm', layer = 'multipolygons', quiet = TRUE)
 dat_sp &lt;- as(dat, 'Spatial')
-class(dat_sp)</code></pre>
-<pre><code>##  [1] &quot;SpatialPolygonsDataFrame&quot;
-##  attr(,&quot;package&quot;)
-##  [1] &quot;sp&quot;</code></pre>
+class(dat_sp)
+## [1] &quot;SpatialPolygonsDataFrame&quot;\nattr(,&quot;package&quot;)\n[1] &quot;sp&quot;</code></pre>
 <p>These data are extracted using the GDAL, and so suffer all of the same shortcomings mentioned above. Note differences in the amount of data returned:</p>
-<pre class="r"><code>dim(dat_sp)</code></pre>
-<pre><code>## [1] 560  25</code></pre>
-<pre class="r"><code>dim(osmdata_sp(q, doc = 'buildings.osm')$osm_polygons)</code></pre>
-<pre><code>## [1] 566 114</code></pre>
-<pre class="r"><code>dim(osmdata_sp(q, doc = 'buildings.osm')$osm_multipolygons)</code></pre>
-<pre><code>## [1] 15 52</code></pre>
+<pre class="r"><code>dim(dat_sp)
+## [1] 560  25</code></pre>
+<pre class="r"><code>dim(osmdata_sp(q, doc = 'buildings.osm')$osm_polygons)
+## [1] 566 114</code></pre>
+<pre class="r"><code>dim(osmdata_sp(q, doc = 'buildings.osm')$osm_multipolygons)
+## [1] 15 52</code></pre>
 </div>
 </div>
 <div id="recursive-searching" class="section level2">
-<h2>5. Recursive searching</h2>
+<h2>4. Recursive searching</h2>
 <p>As described above, <code>osmdata</code> returns all data of each type and so allows the components of any given spatial object to be examined in their own right. This ability to extract, for example, all points of a line, or all polygons which include a given set of points, is referred to as <em>recursive searching</em>.</p>
 <p>Recursive searching is not possible with <code>GDAL/sf</code>, because OSM identifiers are removed, and only the unique data of each type of object are retained. To understand both recursive searching and why it is useful, note that OSM data are structured in three hierarchical levels:</p>
 <ol style="list-style-type: decimal">
@@ -542,48 +540,48 @@ class(dat_sp)</code></pre>
 </ol>
 <p>Each of these functions accepts as an argument a vector of OSM identifiers. To demonstrate these functions, we first re-create the example above of named objects from Trentham, Australia:</p>
 <pre class="r"><code>tr &lt;- opq(bbox = 'Trentham, Australia') %&gt;%
-    add_feature(key = 'name') %&gt;%
+    add_osm_feature(key = 'name') %&gt;%
     osmdata_sf()</code></pre>
 <div id="example" class="section level3">
-<h3>5.1. Example</h3>
+<h3>4.1. Example</h3>
 <p>Then imagine we are interested in the <code>osm_line</code> object describing the ‘Coliban River’:</p>
-<pre class="r"><code>coliban &lt;- which(tr$osm_lines$name == 'Coliban River') %&gt;%
-    tr$osm_lines[., ]
-coliban[which(!is.na(coliban))]</code></pre>
-<pre><code>##  Simple feature collection with 1 feature and 3 fields
-##  geometry type:  LINESTRING
-##  dimension:      XY
-##  bbox:           xmin: 144.3235 ymin: -37.37162 xmax: 144.3335 ymax: 37.36366
-##  epsg (SRID):    4326
-##  proj4string:    +proj=longlat +datum=WGS84 +no_defs
-##             osm_id          name waterway                       geometry
-##  87104907 87104907 Coliban River    river LINESTRING(144.323471069336...</code></pre>
+<pre class="r"><code>i &lt;- which(tr$osm_lines$name == 'Coliban River')
+coliban &lt;- tr$osm_lines[i, ]
+coliban[which(!is.na(coliban))]
+## Simple feature collection with 1 feature and 3 fields
+## geometry type:  LINESTRING
+## dimension:      XY
+## bbox:           xmin: 144.3235 ymin: -37.37162 xmax: 144.3335 ymax: 37.36366
+## epsg (SRID):    4326
+## proj4string:    +proj=longlat +datum=WGS84 +no_defs
+##            osm_id          name waterway                       geometry
+## 87104907 87104907 Coliban River    river LINESTRING(144.323471069336...</code></pre>
 <p>The locations of the points of this line can be extracted directly from the <code>sf</code> object with:</p>
-<pre class="r"><code>coliban$geometry[[1]]</code></pre>
-<pre><code>## LINESTRING(144.323471069336 -37.3716201782227, 144.323944091797 -37.3714790344238, 144.324356079102 -37.3709754943848, 144.324493408203 -37.3704833984375, 144.324600219727 -37.370174407959, 144.324981689453 -37.3697204589844, 144.325149536133 -37.369441986084, 144.325393676758 -37.3690567016602, 144.325714111328 -37.3686943054199, 144.326080322266 -37.3682441711426)</code></pre>
+<pre class="r"><code>coliban$geometry[[1]]
+## LINESTRING(144.323471069336 -37.3716201782227, 144.323944091797 -37.3714790344238, 144.324356079102 -37.3709754943848, 144.324493408203 -37.3704833984375, 144.324600219727 -37.370174407959, 144.324981689453 -37.3697204589844, 144.325149536133 -37.369441986084, 144.325393676758 -37.3690567016602, 144.325714111328 -37.3686943054199, 144.326080322266 -37.3682441711426)</code></pre>
 <p>The output contains nothing other than geometries (because, to reiterate, these are ‘<em>Simple</em> Features’), and no further information regarding those points can be extracted. The Coliban River has a waterfall in Trentham, and one of the <code>osm_points</code> objects describes this waterfall. The information necessary to locate this waterfall is removed from the <code>GDAL/sf</code> representation, but can be extracted with <code>osmdata</code> with the following lines, noting that the OSM ID of the line <code>coliban</code> is given by <code>rownames(coliban)</code>.</p>
 <pre class="r"><code>pts &lt;- osm_points(tr, rownames(coliban))
 wf &lt;- pts[which(pts$waterway == 'waterfall'), ]
-wf[which(!is.na(wf))]</code></pre>
-<pre><code>##  Simple feature collection with 1 feature and 4 fields
-##  geometry type:  POINT
-##  dimension:      XY
-##  bbox:           xmin: 144.3246 ymin: -37.37017 xmax: 144.3246 ymax: -37.37017
-##  epsg (SRID):    4326
-##  proj4string:    +proj=longlat +datum=WGS84 +no_defs
-##                 osm_id           name    tourism  waterway
-##  1013064837 1013064837 Trentham Falls attraction waterfall
-##                                   geometry
-##  1013064837 POINT(144.324600219727 -37....</code></pre>
+wf[which(!is.na(wf))]
+## Simple feature collection with 1 feature and 4 fields
+## geometry type:  POINT
+## dimension:      XY
+## bbox:           xmin: 144.3246 ymin: -37.37017 xmax: 144.3246 ymax: -37.37017
+## epsg (SRID):    4326
+## proj4string:    +proj=longlat +datum=WGS84 +no_defs
+##                osm_id           name    tourism  waterway
+## 1013064837 1013064837 Trentham Falls attraction waterfall
+##                                  geometry
+## 1013064837 POINT(144.324600219727 -37....</code></pre>
 <p>This point could be used as the basis for further recursive searches. For example, all <code>multipolygon</code> objects which include Trentham Falls could be extracted with:</p>
 <pre class="r"><code>mp &lt;- osm_multipolygons(tr, rownames(wf))</code></pre>
 <p>Although this returns no data in this case, it nevertheless demonstrates the usefulness and ease of recursive searching with <code>osmdata</code>.</p>
 </div>
 <div id="relation-example" class="section level3">
-<h3>5.2 Relation example</h3>
+<h3>4.2 Relation example</h3>
 <p>A special type of OSM object is a relation. These can be defined by their name, which can join many divers features into a single object. The following example extracts the London Route Network Route 9, which is composed of many (over 100) separate lines:</p>
 <pre class="r"><code>lcnr9 &lt;- opq ('greater london uk') %&gt;%
-    add_feature (key = &quot;name&quot;, value = &quot;London.Cycle.Network.Route.9&quot;,
+    add_osm_feature (key = &quot;name&quot;, value = &quot;London.Cycle.Network.Route.9&quot;,
                  value_exact = FALSE) %&gt;%
     osmdata_sp()
 sp::plot(lcnr9$osm_lines)</code></pre>
@@ -594,12 +592,12 @@ sp::plot(lcnr9$osm_lines)</code></pre>
 </div>
 </div>
 <div id="related-packages" class="section level2">
-<h2>6. Related Packages</h2>
+<h2>5. Related Packages</h2>
 <p><span class="citation">Eugster and Schlesinger (2012)</span> describe <code>osmar</code>, an R package for handling OSM data that enables visualisation, search and even rudimentary routing operations. <code>osmar</code> is not user friendly or able to download OSM data flexibly, as reported in an <a href="http://eprints.whiterose.ac.uk/77643/">early tutorial</a> comparing R and QGIS for handling OSM data <span class="citation">(Lovelace 2014)</span>.</p>
 <p><code>osmdata</code> builds on two previous R packages: <code>osmplotr</code>, a package <a href="https://cran.r-project.org/package=osmplotr">available from CRAN</a> for accessing and plotting OSM data <span class="citation">(Padgham 2016)</span> and <code>overpass</code>, a <a href="https://github.com/hrbrmstr/overpass">GitHub package</a> by Bob Rudis that provides an R interface to the <a href="http://overpass-api.de/">overpass</a> API.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
-<h2>7. References</h2>
+<h2>6. References</h2>
 <div id="refs" class="references">
 <div id="ref-eugster_osmar:_2012">
 <p>Eugster, Manuel J a, and Thomas Schlesinger. 2012. “Osmar: OpenStreetMap and R.” <em>The R Journal</em> 5 (1): 53–64.</p>
