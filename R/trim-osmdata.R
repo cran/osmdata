@@ -17,9 +17,13 @@
 #' @export
 trim_osmdata <- function (dat, bb_poly, exclude = TRUE)
 {
-    trim_to_poly_pts (dat, bb_poly, exclude = exclude) %>%
-        trim_to_poly (bb_poly = bb_poly, exclude = exclude) %>%
-        trim_to_poly_multi (bb_poly = bb_poly, exclude = exclude)
+    if (nrow (bb_poly) > 2)
+    {
+        dat <- trim_to_poly_pts (dat, bb_poly, exclude = exclude) %>%
+            trim_to_poly (bb_poly = bb_poly, exclude = exclude) %>%
+            trim_to_poly_multi (bb_poly = bb_poly, exclude = exclude)
+    }
+    return (dat)
 }
 
 trim_to_poly_pts <- function (dat, bb_poly, exclude = TRUE)
@@ -66,7 +70,10 @@ get_trim_indx <- function (g, bb, exclude)
                         else
                             return (FALSE)
                     })
-    which (unlist (indx))
+    ret <- NULL # multi objects can be empty
+    if (length (indx) > 0)
+        ret <- which (unlist (indx))
+    return (ret)
 }
 
 trim_to_poly <- function (dat, bb_poly, exclude = TRUE)
@@ -99,8 +106,14 @@ trim_to_poly_multi <- function (dat, bb_poly, exclude = TRUE)
         {
             if (nrow (dat [[g]]) > 0)
             {
-                indx <- lapply (dat [[g]]$geometry, function (gi)
-                                get_trim_indx (gi, bb_poly, exclude = exclude))
+                if (g == "osm_multilines")
+                    indx <- lapply (dat [[g]]$geometry, function (gi)
+                                    get_trim_indx (g = gi, bb = bb_poly,
+                                                   exclude = exclude))
+                else
+                    indx <- lapply (dat [[g]]$geometry, function (gi)
+                                    get_trim_indx (g = gi [[1]], bb = bb_poly,
+                                                   exclude = exclude))
                 ilens <- vapply (indx, length, 1L, USE.NAMES = FALSE)
                 glens <- vapply (dat [[g]]$geometry, length,
                                  1L, USE.NAMES = FALSE)

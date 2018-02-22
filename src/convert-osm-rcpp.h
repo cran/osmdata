@@ -38,26 +38,28 @@
 void trace_way_nmat (const Ways &ways, const Nodes &nodes, 
         const osmid_t &wayi_id, Rcpp::NumericMatrix &nmat);
 
-void get_value_mat_way (Ways::const_iterator wayi, const Ways &ways,
-        const UniqueVals &unique_vals, Rcpp::CharacterMatrix &value_arr, int rowi);
+void get_value_mat_way (Ways::const_iterator wayi,
+        const UniqueVals &unique_vals, Rcpp::CharacterMatrix &value_arr,
+        unsigned int rowi);
 
-void get_value_mat_rel (Relations::const_iterator &reli, const Relations &rels,
-        const UniqueVals &unique_vals, Rcpp::CharacterMatrix &value_arr, int rowi);
+void get_value_mat_rel (Relations::const_iterator &reli,
+        const UniqueVals &unique_vals, Rcpp::CharacterMatrix &value_arr,
+        unsigned int rowi);
 
 Rcpp::CharacterMatrix restructure_kv_mat (Rcpp::CharacterMatrix &kv, bool ls);
 
 template <typename T> Rcpp::List convert_poly_linestring_to_sf (
-        const float_arr3 &lon_arr, const float_arr3 &lat_arr, 
+        const double_arr3 &lon_arr, const double_arr3 &lat_arr, 
         const string_arr3 &rowname_arr, 
         const std::vector <std::vector <T> > &id_vec, 
         const std::vector <std::string> &rel_id, const std::string type);
 
 void convert_multipoly_to_sp (Rcpp::S4 &multipolygons, const Relations &rels,
-        const float_arr3 &lon_arr, const float_arr3 &lat_arr, 
+        const double_arr3 &lon_arr, const double_arr3 &lat_arr, 
         const string_arr3 &rowname_arr, const string_arr2 &id_vec,
         const UniqueVals &unique_vals);
 
 void convert_multiline_to_sp (Rcpp::S4 &multilines, const Relations &rels,
-        const float_arr3 &lon_arr, const float_arr3 &lat_arr, 
+        const double_arr3 &lon_arr, const double_arr3 &lat_arr, 
         const string_arr3 &rowname_arr, const osmt_arr2 &id_vec,
         const UniqueVals &unique_vals);

@@ -5,8 +5,17 @@
 #'             \link{getbb} to be converted to a numerical bounding box; or
 #'             (iii) a matrix representing a bounding polygon as returned from
 #'             \code{getbb(..., format_out = "polygon")}.
+#' @param timeout It may be necessary to ncrease this value for large queries,
+#'             because the server may time out before all data are delivered.
+#' @param memsize The default memory size for the 'overpass' server; may need to
+#'             be increased in order to handle large queries.
 #'
 #' @return An \code{overpass_query} object
+#'
+#' @note See
+#' \url{https://wiki.openstreetmap.org/wiki/Overpass_API#Resource_management_options_.28osm-script.29}
+#' for explanation of \code{timeout} and \code{memsize} (or \code{maxsize} in
+#' overpass terms).
 #'
 #' @export
 #'
@@ -25,11 +34,15 @@
 #'                 add_osm_feature("amenity", "pub") 
 #' c (osmdata_sf (q1), osmdata_sf (q2)) # all objects that are restaurants OR pubs
 #' }
-opq <- function (bbox = NULL)
+opq <- function (bbox = NULL, timeout = 25, memsize)
 {
-    # TODO: Do we really need these [out:xml][timeout] specifiers?
+    timeout <- format (timeout, scientific = FALSE)
+    prefix <- paste0 ("[out:xml][timeout:", timeout, "]")
+    if (!missing (memsize))
+        prefix <- paste0 (prefix, "[maxsize:",
+                          format (memsize, scientific = FALSE), "]")
     res <- list (bbox = bbox_to_string (bbox),
-              prefix = "[out:xml][timeout:25];\n(\n",
+              prefix = paste0 (prefix, ";\n(\n"),
               suffix = ");\n(._;>);\nout body;", features = NULL)
     class (res) <- c (class (res), "overpass_query")
     return (res)
@@ -142,6 +155,50 @@ add_osm_feature <- function (opq, key, value, key_exact = TRUE,
     opq
 }
 
+#' Add a feature specified by OSM ID to an Overpass query
+#'
+#' @param id One or more official OSM identifiers (long-form integers)
+#' @param type Type of object; must be either `node`, `way`, or `relation`
+#' @return \code{opq} object
+#' 
+#' @references
+#' \url{https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#By_element_id}
+#'
+#' @note Extracting elements by ID requires explicitly specifying the type of
+#' element. Only elements of one of the three given types can be extracted in a
+#' single query, but the results of multiple types can neverthelss be combined
+#' with the \code{c} operation of \code{osmdata}.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' id <- c (1489221200, 1489221321, 1489221491)
+#' dat1 <- opq_osm_id (type = "node", id = id) %>%
+#'     opq_string () %>%
+#'     osmdata_sf ()
+#' dat1$osm_points # the desired nodes
+#' id <- c (136190595, 136190596)
+#' dat2 <- opq_osm_id (type = "way", id = id) %>%
+#'     opq_string () %>%
+#'     osmdata_sf ()
+#' dat2$osm_lines # the desired ways
+#' dat <- c (dat1, dat2) # The node and way data combined
+#' }
+opq_osm_id <- function (id = NULL, type = NULL)
+{
+    if (is.null (type))
+        stop ('type must be specified: one of node, way, or relation')
+    type <- match.arg (tolower (type), c ('node', 'way', 'relation'))
+
+    opq <- opq (1:4)
+    opq$bbox <- NULL
+    opq$features <- NULL
+    opq$id <- list (type = type, id = id)
+
+    opq
+}
+
 #' @rdname add_osm_feature
 #' @export
 add_feature <- function (opq, key, value, key_exact = TRUE,
@@ -150,4 +207,40 @@ add_feature <- function (opq, key, value, key_exact = TRUE,
     message ('add_feature() is deprecated; please use add_osm_feature()')
     add_osm_feature (opq, key, value, key_exact = TRUE,
                      value_exact = TRUE, match_case = TRUE, bbox = NULL)
+}
+
+#' Convert an overpass query into a text string
+#'
+#' Convert an osmdata query of class opq to a character string query to
+#' be submitted to the overpass API.
+#'
+#' @param opq An \code{overpass_query} object
+#' @return Character string to be submitted to the overpass API
+#' 
+#' @export
+#' @aliases opq_to_string
+#'
+#' @examples
+#' q <- opq ("hampi india")
+#' opq_string (q)
+opq_string <- function (opq)
+{
+    res <- NULL
+    if (!is.null (opq$features))
+    {
+        features <- paste (opq$features, collapse = '')
+        features <- paste0 (sprintf (' node %s (%s);\n', features, opq$bbox),
+                            sprintf (' way %s (%s);\n', features, opq$bbox),
+                            sprintf (' relation %s (%s);\n\n', features,
+                                     opq$bbox))
+        res <- paste0 (opq$prefix, features, opq$suffix)
+    } else if (!is.null (opq$id))
+    {
+        id <- paste (opq$id$id, collapse = ',')
+        id <- sprintf(' %s(id:%s);\n', opq$id$type, id)
+        res <- paste0 (opq$prefix, id, opq$suffix)
+    }
+    if (is.null (res))
+        res <- paste0 (opq$prefix, opq$suffix) # to ensure a non-null return
+    return (res)
 }

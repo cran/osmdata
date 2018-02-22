@@ -39,35 +39,6 @@ make_sfc <- function (x, type) {
     x
 }
 
-make_sf <- function (...)
-{
-    x <- list (...)
-    sf <- vapply(x, function(i) inherits(i, "sfc"),
-                 FUN.VALUE = logical (1))
-    sf_column <- which (sf)
-    if (!is.null (names (x [[sf_column]])))
-        row.names <- names (x [[sf_column]])
-    else
-        row.names <- seq_along (x [[sf_column]])
-    df <- if (length(x) == 1) # ONLY sfc
-                data.frame(row.names = row.names)
-            else # create a data.frame from list:
-                    data.frame(x[-sf_column], row.names = row.names,
-                           stringsAsFactors = TRUE)
-
-    object <- as.list(substitute(list(...)))[-1L]
-    arg_nm <- sapply(object, function(x) deparse(x)) #nolint
-    sfc_name <- make.names(arg_nm[sf_column])
-    #sfc_name <- "geometry"
-    df [[sfc_name]] <- x [[sf_column]]
-    attr(df, "sf_column") <- sfc_name
-    f <- factor(rep(NA_character_, length.out = ncol(df) - 1),
-               levels = c ("constant", "aggregate", "identity"))
-    names(f) <- names(df)[-ncol (df)]
-    attr(df, "agr") <- f
-    class(df) <- c("sf", class(df))
-    return (df)
-}
 
 # **********************************************************
 # ***                       POINTS                       ***
@@ -90,8 +61,7 @@ test_that ("sfc-point", {
 test_that ("sf-point", {
                x <- sf::st_sfc (sf::st_point(1:2))
                expect_identical (x, make_sfc (1:2, "POINT"))
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })
@@ -143,8 +113,7 @@ test_that ("sfc-line", {
 
 test_that ("sf-line", {
                x <- make_sfc (cbind (1:4, 5:8), "LINESTRING")
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })
@@ -168,8 +137,7 @@ test_that ("sf-multiple-lines", {
                x1 <- cbind (1:4, 5:8)
                x2 <- cbind (11:13, 25:27)
                x <- make_sfc (list (x1, x2), type = "LINESTRING")
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })
@@ -212,8 +180,7 @@ test_that ("sfc-polygon", {
 test_that ("sf-polygon", {
                xy <- cbind (c (1:4, 1), c(5:8, 5))
                x <- make_sfc (xy, "POLYGON")
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })
@@ -239,8 +206,7 @@ test_that ("sf-multiple-polygons", {
                xy1 <- cbind (c (1:4, 1), c(5:8, 5))
                xy2 <- cbind (c (11:14, 11), c(15:18, 15))
                x <- make_sfc (list (xy1, xy2), type = "POLYGON")
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })
@@ -286,8 +252,7 @@ test_that ("sfc-multilinestring", {
 test_that ("sf-multilinestring", {
                x <- make_sfc (cbind (c (1:4, 1), c (5:8, 5)),
                               type = "MULTILINESTRING")
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })
@@ -314,8 +279,7 @@ test_that ("sf-multiple-multilinestring", {
                x1 <- cbind (c (1:4, 1), c (5:8, 5))
                x2 <- cbind (c (11:13, 11), c (25:27, 25))
                x <- make_sfc (list (x1, x2), type = "MULTILINESTRING")
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })
@@ -359,8 +323,7 @@ test_that ("sfc-multipolygon", {
 test_that ("sf-multipolygon", {
                x <- make_sfc (cbind (c (1:4, 1), c (5:8, 5)),
                               type = "MULTIPOLYGON")
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })
@@ -387,8 +350,7 @@ test_that ("sf-multiple-multipolygons", {
                x1 <- cbind (c (1:4, 1), c (5:8, 5))
                x2 <- cbind (c (11:13, 11), c (25:27, 25))
                x <- make_sfc (list (x1, x2), type = "MULTIPOLYGON")
-               #y <- sf::st_sf (x) # TODO: Revert for sf 0.5.0
-               y <- sf::st_sf (list ('x' = x)) # workaround for sf 0.4.3
+               y <- sf::st_sf (x)
                x <- make_sf (x)
                expect_identical (x, y)
 })

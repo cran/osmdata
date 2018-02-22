@@ -42,14 +42,14 @@
  * @param &id_vec pointer to 2D array of OSM IDs for each way in relation
  */
 void trace_multipolygon (Relations::const_iterator &itr_rel, const Ways &ways,
-        const Nodes &nodes, float_arr2 &lon_vec, float_arr2 &lat_vec,
+        const Nodes &nodes, double_arr2 &lon_vec, double_arr2 &lat_vec,
         string_arr2 &rowname_vec, std::vector <std::string> &ids)
 {
     bool closed, ptr_check;
     osmid_t node0, first_node, last_node;
     std::string this_role;
     std::stringstream this_way;
-    std::vector <float> lons, lats;
+    std::vector <double> lons, lats;
     std::vector <std::string> rownames, wayname_vec;
 
     osm_str_vec relation_ways;
@@ -97,12 +97,12 @@ void trace_multipolygon (Relations::const_iterator &itr_rel, const Ways &ways,
             {
                 if (itw->second == this_role)
                 {
-                    auto wayi = ways.find (itw->first);
-                    if (wayi == ways.end ())
+                    auto wayj = ways.find (itw->first);
+                    if (wayj == ways.end ())
                         throw std::runtime_error ("way can not be found");
                     last_node = trace_way (ways, nodes, first_node,
-                            wayi->first, lons, lats, rownames, true);
-                    this_way << "-" << std::to_string (wayi->first);
+                            wayj->first, lons, lats, rownames, true);
+                    this_way << "-" << std::to_string (wayj->first);
                     if (last_node >= 0)
                     {
                         first_node = last_node;
@@ -158,10 +158,10 @@ void trace_multipolygon (Relations::const_iterator &itr_rel, const Ways &ways,
  */
 void trace_multilinestring (Relations::const_iterator &itr_rel, 
         const std::string role, const Ways &ways, const Nodes &nodes, 
-        float_arr2 &lon_vec, float_arr2 &lat_vec, string_arr2 &rowname_vec,
+        double_arr2 &lon_vec, double_arr2 &lat_vec, string_arr2 &rowname_vec,
         std::vector <osmid_t> &ids)
 {
-    std::vector <float> lons, lats;
+    std::vector <double> lons, lats;
     std::vector <std::string> rownames;
 
     osm_str_vec relation_ways;
@@ -177,21 +177,26 @@ void trace_multilinestring (Relations::const_iterator &itr_rel,
         ids.push_back (rwi->first);
         std::string this_role = rwi->second;
         auto wayi = ways.find (rwi->first);
-        if (wayi == ways.end ())
-            throw std::runtime_error ("way can not be found");
+        //if (wayi == ways.end ())
+        //    throw std::runtime_error ("way can not be found");
+        // Non-overpass OSM data sets can have way IDs in old changelogs that no
+        // longer exist; this clause ensures that they are simply skipped but
+        // reading continues. Thanks @RobinLovelace
+        if (wayi != ways.end ())
+        {
+            osmid_t first_node = wayi->second.nodes.front ();
+            first_node = trace_way (ways, nodes, first_node, 
+                    wayi->first, lons, lats, rownames, false);
 
-        osmid_t first_node = wayi->second.nodes.front ();
-        first_node = trace_way (ways, nodes, first_node, 
-                wayi->first, lons, lats, rownames, false);
+            lon_vec.push_back (lons);
+            lat_vec.push_back (lats);
+            rowname_vec.push_back (rownames);
 
-        lon_vec.push_back (lons);
-        lat_vec.push_back (lats);
-        rowname_vec.push_back (rownames);
-
-        lons.clear ();
-        lats.clear ();
-        rownames.clear ();
-        relation_ways.erase (rwi);
+            lons.clear ();
+            lats.clear ();
+            rownames.clear ();
+            relation_ways.erase (rwi);
+        }
     } // end while relation_ways.size > 0
 }
 
@@ -215,8 +220,8 @@ void trace_multilinestring (Relations::const_iterator &itr_rel,
  *          within wayi_id
  */
 osmid_t trace_way (const Ways &ways, const Nodes &nodes, osmid_t first_node,
-        const osmid_t &wayi_id, std::vector <float> &lons, 
-        std::vector <float> &lats, std::vector <std::string> &rownames,
+        const osmid_t &wayi_id, std::vector <double> &lons, 
+        std::vector <double> &lats, std::vector <std::string> &rownames,
         const bool append)
 {
     osmid_t last_node = -1;

@@ -13,9 +13,14 @@ get_timestamp <- function (doc)
     if (!missing (doc))
     {
         tstmp <- xml2::xml_text (xml2::xml_find_all (doc, "//meta/@osm_base"))
-        tstmp <- as.POSIXct (tstmp, format = "%Y-%m-%dT%H:%M:%SZ")
+        if (length (tstmp) > 0)
+            tstmp <- as.POSIXct (tstmp, format = "%Y-%m-%dT%H:%M:%SZ")
     } else
         tstmp <- Sys.time ()
+
+    if (length (tstmp) == 0)
+        tstmp <- Sys.time ()
+
     wday_t <- lubridate::wday (tstmp, label = TRUE)
     wday <- lubridate::wday (tstmp, label = FALSE)
     mon <- lubridate::month (tstmp, label = TRUE)
@@ -54,8 +59,14 @@ osmdata_xml <- function(q, filename, quiet=TRUE, encoding) {
     if (missing (encoding))
         encoding <- 'UTF-8'
 
-    doc <- overpass_query (query = opq_string (q), quiet = quiet,
-                           encoding = encoding)
+    if (missing (q) & !quiet)
+        message ('q missing: osmdata object will not include query')
+    else if (is (q, 'overpass_query'))
+        q <- opq_string (q)
+    else if (!is.character (q))
+        stop ('q must be an overpass query or a character string')
+
+    doc <- overpass_query (query = q, quiet = quiet, encoding = encoding)
     doc <- xml2::read_xml (doc, encoding = encoding)
     if (!missing (filename))
         xml2::write_xml (doc, file = filename)
@@ -118,10 +129,8 @@ osmdata_pbf <- function(q, filename, quiet=TRUE) {
 #'             add_osm_feature (key="historic", value="ruins") %>%
 #'             osmdata_sp ()
 #' }
-osmdata_sp <- function(q, doc, quiet=TRUE, encoding) {
-    if (missing (encoding))
-        encoding <- 'UTF-8'
-
+osmdata_sp <- function(q, doc, quiet=TRUE, encoding = 'UTF-8')
+{
     obj <- osmdata () # uses class def
     if (missing (q) & !quiet)
         message ('q missing: osmdata object will not include query')
@@ -163,6 +172,8 @@ osmdata_sp <- function(q, doc, quiet=TRUE, encoding) {
     obj$osm_multilines <- res$multilines
     obj$osm_multipolygons <- res$multipolygons
 
+    class (obj) <- c (class (obj), "osmdata_sp")
+
     return (obj)
 }
 
@@ -180,7 +191,8 @@ osmdata_sp <- function(q, doc, quiet=TRUE, encoding) {
 make_sf <- function (...)
 {
     x <- list (...)
-    sf <- sapply (x, function(i) inherits(i, "sfc")) #nolint (gp() re: sapply)
+    sf <- vapply(x, function(i) inherits(i, "sfc"),
+                 FUN.VALUE = logical (1))
     sf_column <- which (sf)
     if (!is.null (names (x [[sf_column]])))
         row.names <- names (x [[sf_column]])
@@ -312,6 +324,8 @@ osmdata_sf <- function(q, doc, quiet=TRUE, encoding) {
         obj$osm_multipolygons <- make_sf (geometry, res$multipolygons_kv)
     else
         obj$osm_multipolygons <- make_sf (geometry)
+
+    class (obj) <- c (class (obj), "osmdata_sf")
 
     return (obj)
 }

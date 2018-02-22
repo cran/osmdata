@@ -7,9 +7,6 @@ library(osmdata)
 ## ----install, eval = FALSE-----------------------------------------------
 #  devtools::install_github('osmdatar/osmdata')
 
-## ---- message = FALSE----------------------------------------------------
-require (magrittr)
-
 ## ----opq1----------------------------------------------------------------
 q <- opq(bbox = c(51.1, 0.1, 51.2, 0.2))
 
@@ -32,6 +29,11 @@ q <- opq(bbox = c(51.1, 0.1, 51.2, 0.2))
 ## ---- echo = FALSE-------------------------------------------------------
 q <- opq (bbox = c (51.2867602, -0.510375, 51.6918741, 0.3340155)) %>%
     add_osm_feature(key = 'highway', value = 'motorway')
+
+## ----trim-osmdata, eval = FALSE------------------------------------------
+#  q <- opq(bbox = 'greater london uk', format_out = 'polygon') %>%
+#      add_osm_feature(key = 'highway', value = 'motorway') %>%
+#      trim_osmdata ()
 
 ## ----features, eval=FALSE------------------------------------------------
 #  head (available_features ())
@@ -145,7 +147,7 @@ dat
 #      osmdata_sf()
 
 ## ----opq-seville-plot, eval = FALSE--------------------------------------
-#  q1 <- opq('Seville') %>%
+#  q1 <- opq('Sevilla') %>%
 #      add_osm_feature(key = 'highway', value = 'cycleway')
 #  cway_sev <- osmdata_sp(q1)
 #  sp::plot(cway_sev$osm_lines)
@@ -336,7 +338,7 @@ for (f in list.files(pattern = "\\.osm"))
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  lcnr9 <- opq ('greater london uk') %>%
-#      add_osm_feature (key = "name", value = "London.Cycle.Network.Route.9",
+#      add_osm_feature (key = "name", value = "LCN 9",
 #                   value_exact = FALSE) %>%
 #      osmdata_sp()
 #  sp::plot(lcnr9$osm_lines)

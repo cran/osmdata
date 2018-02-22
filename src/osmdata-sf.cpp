@@ -74,8 +74,8 @@ Rcpp::List get_osm_relations_sf (const Relations &rels,
     Rcpp::List dimnames (0);
     Rcpp::NumericMatrix nmat (Rcpp::Dimension (0, 0));
 
-    float_arr2 lat_vec, lon_vec;
-    float_arr3 lat_arr_mp, lon_arr_mp, lon_arr_ls, lat_arr_ls;
+    double_arr2 lat_vec, lon_vec;
+    double_arr3 lat_arr_mp, lon_arr_mp, lon_arr_ls, lat_arr_ls;
     string_arr2 rowname_vec, id_vec_mp, roles_ls; 
     string_arr3 rowname_arr_mp, rowname_arr_ls;
     std::vector <osmid_t> ids_ls; 
@@ -83,7 +83,7 @@ Rcpp::List get_osm_relations_sf (const Relations &rels,
     osmt_arr2 id_vec_ls;
     std::vector <std::string> roles;
 
-    int nmp = 0, nls = 0; // number of multipolygon and multilinestringrelations
+    unsigned int nmp = 0, nls = 0; // number of multipolygon and multilinestringrelations
     for (auto itr = rels.begin (); itr != rels.end (); ++itr)
     {
         if (itr->ispoly) 
@@ -98,30 +98,36 @@ Rcpp::List get_osm_relations_sf (const Relations &rels,
             nls += roles_set.size ();
         }
     }
+    std::vector <bool> mp_okay (nmp);
+    std::fill (mp_okay.begin (), mp_okay.end (), true);
 
-    int ncol = unique_vals.k_rel.size ();
+    size_t ncol = unique_vals.k_rel.size ();
     rel_id_mp.reserve (nmp);
     rel_id_ls.reserve (nls);
 
     Rcpp::CharacterMatrix kv_mat_mp (Rcpp::Dimension (nmp, ncol)),
         kv_mat_ls (Rcpp::Dimension (nls, ncol));
-    int count_mp = 0, count_ls = 0;
+    unsigned int count_mp = 0, count_ls = 0;
 
     for (auto itr = rels.begin (); itr != rels.end (); ++itr)
     {
+        Rcpp::checkUserInterrupt ();
         if (itr->ispoly) // itr->second can only be "outer" or "inner"
         {
             trace_multipolygon (itr, ways, nodes, lon_vec, lat_vec,
                     rowname_vec, ids_mp);
-            // Store all ways in that relation and their associated roles
             rel_id_mp.push_back (std::to_string (itr->id));
             lon_arr_mp.push_back (lon_vec);
             lat_arr_mp.push_back (lat_vec);
             rowname_arr_mp.push_back (rowname_vec);
             id_vec_mp.push_back (ids_mp);
-            clean_vecs <float, float, std::string> (lon_vec, lat_vec, rowname_vec);
+
+            if (rowname_vec.size () == 0)
+                mp_okay [count_mp] = false;
+
+            clean_vecs <double, double, std::string> (lon_vec, lat_vec, rowname_vec);
             ids_mp.clear ();
-            get_value_mat_rel (itr, rels, unique_vals, kv_mat_mp, count_mp++);
+            get_value_mat_rel (itr, unique_vals, kv_mat_mp, count_mp++);
         } else // store as multilinestring
         {
             // multistrings are grouped here by roles, unlike GDAL which just
@@ -148,13 +154,46 @@ Rcpp::List get_osm_relations_sf (const Relations &rels,
                 lat_arr_ls.push_back (lat_vec);
                 rowname_arr_ls.push_back (rowname_vec);
                 id_vec_ls.push_back (ids_ls);
-                clean_vecs <float, float, std::string> (lon_vec, lat_vec, rowname_vec);
+                clean_vecs <double, double, std::string> (lon_vec, lat_vec, rowname_vec);
                 ids_ls.clear ();
-                get_value_mat_rel (itr, rels, unique_vals, kv_mat_ls, count_ls++);
+                get_value_mat_rel (itr, unique_vals, kv_mat_ls, count_ls++);
             }
             roles_ls.push_back (roles);
             roles.clear ();
         }
+    }
+
+    // Erase any multipolygon ways that are not okay. An example of these is
+    // opq("salzburg") %>% add_osm_feature (key = "highway"), for which
+    // $osm_multipolygons [[42]] with way#4108738 is not okay.
+    std::vector <std::string> not_okay_id;
+    for (size_t i = 0; i < mp_okay.size (); i++)
+        if (!mp_okay [i])
+            not_okay_id.push_back (rel_id_mp [i]);
+
+    for (std::string i: not_okay_id)
+    {
+        std::vector <std::string>::iterator it =
+            std::find (rel_id_mp.begin (), rel_id_mp.end (), i);
+        //size_t j = static_cast <size_t> (std::distance (rel_id_mp.begin (), it));
+        long int j = std::distance (rel_id_mp.begin (), it);
+        lon_arr_mp.erase (lon_arr_mp.begin () + j);
+        lat_arr_mp.erase (lat_arr_mp.begin () + j);
+        rowname_arr_mp.erase (rowname_arr_mp.begin () + j);
+        id_vec_mp.erase (id_vec_mp.begin () + j);
+        rel_id_mp.erase (rel_id_mp.begin () + j);
+
+        size_t st_nrow = static_cast <size_t> (kv_mat_mp.nrow ());
+        Rcpp::CharacterMatrix kv_mat_mp2 (Rcpp::Dimension (st_nrow - 1, ncol));
+        // k is int for type-compatible Rcpp indexing
+        for (int k = 0; k < kv_mat_mp.nrow (); k++)
+        {
+            if (k < j)
+                kv_mat_mp2 (k, Rcpp::_) = kv_mat_mp (k, Rcpp::_);
+            else if (k > j)
+                kv_mat_mp2 (k - 1, Rcpp::_) = kv_mat_mp (k, Rcpp::_);
+        }
+        kv_mat_mp = kv_mat_mp2;
     }
 
     Rcpp::List polygonList = convert_poly_linestring_to_sf <std::string>
@@ -198,8 +237,8 @@ Rcpp::List get_osm_relations_sf (const Relations &rels,
         kv_df_mp = R_NilValue;
 
     // ****** clean up *****
-    clean_arrs <float, float, std::string> (lon_arr_mp, lat_arr_mp, rowname_arr_mp);
-    clean_arrs <float, float, std::string> (lon_arr_ls, lat_arr_ls, rowname_arr_ls);
+    clean_arrs <double, double, std::string> (lon_arr_mp, lat_arr_mp, rowname_arr_mp);
+    clean_arrs <double, double, std::string> (lon_arr_ls, lat_arr_ls, rowname_arr_ls);
     clean_vecs <std::string, osmid_t> (id_vec_mp, id_vec_ls);
     rel_id_mp.clear ();
     rel_id_ls.clear ();
@@ -237,18 +276,19 @@ void get_osm_ways_sf (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
     if (!(geom_type == "POLYGON" || geom_type == "LINESTRING"))
         throw std::runtime_error ("geom_type must be POLYGON or LINESTRING");
     // NOTE that Rcpp `.size()` returns a **signed** int
-    if ((unsigned) wayList.size () != way_ids.size ())
+    if (static_cast <unsigned int> (wayList.size ()) != way_ids.size ())
         throw std::runtime_error ("ways and IDs must have same lengths");
 
-    int nrow = way_ids.size (), ncol = unique_vals.k_way.size ();
+    size_t nrow = way_ids.size (), ncol = unique_vals.k_way.size ();
     std::vector <std::string> waynames;
     waynames.reserve (way_ids.size ());
 
     Rcpp::CharacterMatrix kv_mat (Rcpp::Dimension (nrow, ncol));
     std::fill (kv_mat.begin (), kv_mat.end (), NA_STRING);
-    int count = 0;
+    unsigned int count = 0;
     for (auto wi = way_ids.begin (); wi != way_ids.end (); ++wi)
     {
+        Rcpp::checkUserInterrupt ();
         waynames.push_back (std::to_string (*wi));
         Rcpp::NumericMatrix nmat;
         trace_way_nmat (ways, nodes, (*wi), nmat);
@@ -266,7 +306,7 @@ void get_osm_ways_sf (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
             wayList [count] = polyList_temp;
         }
         auto wj = ways.find (*wi);
-        get_value_mat_way (wj, ways, unique_vals, kv_mat, count++);
+        get_value_mat_way (wj, unique_vals, kv_mat, count++);
     } // end for it over poly_ways
 
     wayList.attr ("names") = waynames;
@@ -280,13 +320,14 @@ void get_osm_ways_sf (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
     wayList.attr ("bbox") = bbox;
     wayList.attr ("crs") = crs;
 
+    kv_df = R_NilValue;
     if (way_ids.size () > 0)
     {
         kv_mat.attr ("names") = unique_vals.k_way;
         kv_mat.attr ("dimnames") = Rcpp::List::create (waynames, unique_vals.k_way);
-        kv_df = restructure_kv_mat (kv_mat, false);
-    } else
-        kv_df = R_NilValue;
+        if (kv_mat.nrow () > 0 && kv_mat.ncol () > 0)
+            kv_df = restructure_kv_mat (kv_mat, false);
+    }
 }
 
 //' get_osm_nodes_sf
@@ -305,9 +346,9 @@ void get_osm_nodes_sf (Rcpp::List &ptList, Rcpp::DataFrame &kv_df,
         const Nodes &nodes, const UniqueVals &unique_vals, 
         const Rcpp::NumericVector &bbox, const Rcpp::List &crs)
 {
-    int nrow = nodes.size (), ncol = unique_vals.k_point.size ();
+    size_t nrow = nodes.size (), ncol = unique_vals.k_point.size ();
 
-    if (ptList.size () != nrow)
+    if (static_cast <size_t> (ptList.size ()) != nrow)
         throw std::runtime_error ("points must have same size as nodes");
 
     Rcpp::CharacterMatrix kv_mat (Rcpp::Dimension (nrow, ncol));
@@ -316,9 +357,10 @@ void get_osm_nodes_sf (Rcpp::List &ptList, Rcpp::DataFrame &kv_df,
     std::vector <std::string> ptnames;
     ptnames.reserve (nodes.size ());
     // TODO: Repalce count with std::distance
-    int count = 0;
+    unsigned int count = 0;
     for (auto ni = nodes.begin (); ni != nodes.end (); ++ni)
     {
+        Rcpp::checkUserInterrupt ();
         Rcpp::NumericVector ptxy = Rcpp::NumericVector::create (NA_REAL, NA_REAL);
         ptxy.attr ("class") = Rcpp::CharacterVector::create ("XY", "POINT", "sfg");
         ptxy (0) = ni->second.lon;
@@ -329,9 +371,10 @@ void get_osm_nodes_sf (Rcpp::List &ptList, Rcpp::DataFrame &kv_df,
                 kv_iter != ni->second.key_val.end (); ++kv_iter)
         {
             const std::string &key = kv_iter->first;
-            int ni = std::distance (unique_vals.k_point.begin (),
-                    unique_vals.k_point.find (key));
-            kv_mat (count, ni) = kv_iter->second;
+            unsigned int ndi = static_cast <unsigned int> (
+                    std::distance (unique_vals.k_point.begin (),
+                    unique_vals.k_point.find (key)));
+            kv_mat (count, ndi) = kv_iter->second;
         }
         count++;
     }
@@ -388,7 +431,7 @@ Rcpp::List rcpp_osmdata_sf (const std::string& st)
     const std::vector <Relation>& rels = xml.relations ();
     const UniqueVals unique_vals = xml.unique_vals ();
 
-    std::vector <float> lons, lats;
+    std::vector <double> lons, lats;
     std::set <std::string> keyset; // must be ordered!
     Rcpp::List dimnames (0);
     Rcpp::NumericMatrix nmat (Rcpp::Dimension (0, 0));
@@ -403,7 +446,6 @@ Rcpp::List rcpp_osmdata_sf (const std::string& st)
 
     Rcpp::NumericVector bbox = rcpp_get_bbox_sf (xml.x_min (), xml.y_min (), 
                                               xml.x_max (), xml.y_max ());
-
     Rcpp::List crs = Rcpp::List::create (NA_INTEGER, 
             Rcpp::CharacterVector::create (NA_STRING));
     crs (0) = 4326;
