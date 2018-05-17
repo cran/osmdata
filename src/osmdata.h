@@ -36,7 +36,6 @@
 #include "get-bbox.h"
 #include "trace-osm.h"
 #include "convert-osm-rcpp.h"
-#include "cleanup.h"
 
 //const std::string crs = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0";
 const std::string p4s = "+proj=longlat +datum=WGS84 +no_defs";
@@ -60,11 +59,6 @@ const std::string p4s = "+proj=longlat +datum=WGS84 +no_defs";
  *      3c. get_value_mat_rel ()
  *      3d. convert_poly_linestring_to_Rcpp ()
  *      3e. restructure_kv_mat ()
- * 4. cleanup.h = Functions to check and clean C++ arrays
- *      4a. clean_vec ()
- *      4b. clear_arr ()
- *      4c. clean_vecs ()
- *      4d. clean_arrs ()
  * 4. osmdata.cpp
  *      5c. get_osm_relations ()
  *      5d. get_osm_ways ()
@@ -403,28 +397,36 @@ inline void XmlData::traverseNode (XmlNodePtr pt, RawNode& rnode)
 
 
 /*---------------------------- fn headers -----------------------------*/
-// in osmdata_sf.cpp
 
-Rcpp::List get_osm_relations_sf (const Relations &rels, 
+namespace osm_sf {
+
+Rcpp::List get_osm_relations (const Relations &rels, 
         const std::map <osmid_t, Node> &nodes,
         const std::map <osmid_t, OneWay> &ways, const UniqueVals &unique_vals,
         const Rcpp::NumericVector &bbox, const Rcpp::List &crs);
-void get_osm_ways_sf (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
+void get_osm_ways (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
         const std::set <osmid_t> way_ids, const Ways &ways, const Nodes &nodes,
         const UniqueVals &unique_vals, const std::string &geom_type,
         const Rcpp::NumericVector &bbox, const Rcpp::List &crs);
-void get_osm_nodes_sf (Rcpp::List &ptList, Rcpp::DataFrame &kv_df,
+void get_osm_nodes (Rcpp::List &ptList, Rcpp::DataFrame &kv_df,
         const Nodes &nodes, const UniqueVals &unique_vals, 
         const Rcpp::NumericVector &bbox, const Rcpp::List &crs);
+
+} // end namespace osm_sf
+
 Rcpp::List rcpp_osmdata_sf (const std::string& st);
 
-// in osmdata_sp.cpp
-void get_osm_nodes_sp (Rcpp::S4 &sp_points, const Nodes &nodes, 
+namespace osm_sp {
+
+void get_osm_nodes (Rcpp::S4 &sp_points, const Nodes &nodes, 
         const UniqueVals &unique_vals);
-void get_osm_ways_sp (Rcpp::S4 &sp_ways, 
+void get_osm_ways (Rcpp::S4 &sp_ways, 
         const std::set <osmid_t> way_ids, const Ways &ways, const Nodes &nodes,
         const UniqueVals &unique_vals, const std::string &geom_type);
-void get_osm_relations_sp (Rcpp::S4 &multilines, Rcpp::S4 &multipolygons, 
+void get_osm_relations (Rcpp::S4 &multilines, Rcpp::S4 &multipolygons, 
         const Relations &rels, const std::map <osmid_t, Node> &nodes,
         const std::map <osmid_t, OneWay> &ways, const UniqueVals &unique_vals);
+
+} // end namespace osm_sp
+
 Rcpp::List rcpp_osmdata_sp (const std::string& st);

@@ -1,3 +1,11 @@
+0.0.7.001
+===================
+
+0.0.7
+===================
+- Fix bug in `c` method so it works when `sf` not loaded
+- Fix bug in overpass query syntax to match new QL requirements
+
 0.0.6
 ===================
 - Add new function 'osm_poly2line()' to coerce the 'osmdata$odm_polygons' object
