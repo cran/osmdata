@@ -7,29 +7,31 @@
 #'             \code{getbb(..., format_out = "polygon")}.
 #' @param timeout It may be necessary to ncrease this value for large queries,
 #'             because the server may time out before all data are delivered.
-#' @param memsize The default memory size for the 'overpass' server; may need to
-#'             be increased in order to handle large queries.
+#' @param memsize The default memory size for the 'overpass' server in
+#'              \emph{bytes}; may need to be increased in order to handle large
+#'              queries. 
 #'
 #' @return An \code{overpass_query} object
 #'
 #' @note See
 #' \url{https://wiki.openstreetmap.org/wiki/Overpass_API#Resource_management_options_.28osm-script.29}
 #' for explanation of \code{timeout} and \code{memsize} (or \code{maxsize} in
-#' overpass terms).
+#' overpass terms). Note in particular the comment that queries with arbitrarily
+#' large \code{memsize} are likely to be rejeted.
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' q <- getbb ("portsmouth", display_name_contains = "United States") %>%
+#' q <- getbb ("portsmouth", display_name_contains = "USA") %>%
 #'             opq () %>% 
 #'             add_osm_feature("amenity", "restaurant") %>%
 #'             add_osm_feature("amenity", "pub") 
 #' osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
-#' q1 <- getbb ("portsmouth", display_name_contains = "United States") %>%
+#' q1 <- getbb ("portsmouth", display_name_contains = "USA") %>%
 #'                 opq () %>% 
 #'                 add_osm_feature("amenity", "restaurant") 
-#' q2 <- getbb ("portsmouth", display_name_contains = "United States") %>%
+#' q2 <- getbb ("portsmouth", display_name_contains = "USA") %>%
 #'                 opq () %>% 
 #'                 add_osm_feature("amenity", "pub") 
 #' c (osmdata_sf (q1), osmdata_sf (q2)) # all objects that are restaurants OR pubs
@@ -111,6 +113,13 @@ add_osm_feature <- function (opq, key, value, key_exact = TRUE,
     {
         bbox <- bbox_to_string (bbox)
         opq$bbox <- bbox
+    }
+
+    if (!key_exact & value_exact)
+    {
+        message ("key_exact = FALSE can only combined with value_exact = FALSE; ",
+                 "setting value_exact = FALSE")
+        value_exact = FALSE
     }
 
     if (value_exact)
