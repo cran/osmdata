@@ -24,7 +24,7 @@
  *
  *  Limitations:
  *
- *  Dependencies:       none (rapidXML header included in osmdatar)
+ *  Dependencies:       none (rapidXML header included in osmdata)
  *
  *  Compiler Options:   -std=c++11
  ***************************************************************************/
@@ -33,6 +33,10 @@
 
 #include <Rcpp.h>
 
+// Note: This code uses explicit index counters within most loops which use Rcpp
+// objects, because these otherwise require a 
+// static_cast <size_t> (std::distance (...)). This operation copies each
+// instance and can slow the loops down by several orders of magnitude!
 
 /************************************************************************
  ************************************************************************
@@ -198,6 +202,8 @@ Rcpp::List osm_sf::get_osm_relations (const Relations &rels,
         id_vec_mp.erase (id_vec_mp.begin () + j);
         rel_id_mp.erase (rel_id_mp.begin () + j);
 
+        // Retain static_cast here because there will generally be very few
+        // instances of this loop
         size_t st_nrow = static_cast <size_t> (kv_mat_mp.nrow ());
         Rcpp::CharacterMatrix kv_mat_mp2 (Rcpp::Dimension (st_nrow - 1, ncol));
         // k is int for type-compatible Rcpp indexing
@@ -296,7 +302,7 @@ Rcpp::List osm_sf::get_osm_relations (const Relations &rels,
 //' 
 //' @noRd 
 void osm_sf::get_osm_ways (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
-        const std::set <osmid_t> way_ids, const Ways &ways, const Nodes &nodes,
+        const std::set <osmid_t> &way_ids, const Ways &ways, const Nodes &nodes,
         const UniqueVals &unique_vals, const std::string &geom_type,
         const Rcpp::NumericVector &bbox, const Rcpp::List &crs)
 {
@@ -315,6 +321,8 @@ void osm_sf::get_osm_ways (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
     unsigned int count = 0;
     for (auto wi = way_ids.begin (); wi != way_ids.end (); ++wi)
     {
+        //unsigned int count = static_cast <unsigned int> (
+        //        std::distance (way_ids.begin (), wi));
         Rcpp::checkUserInterrupt ();
         waynames.push_back (std::to_string (*wi));
         Rcpp::NumericMatrix nmat;
@@ -333,8 +341,9 @@ void osm_sf::get_osm_ways (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
             wayList [count] = polyList_temp;
         }
         auto wj = ways.find (*wi);
-        osm_convert::get_value_mat_way (wj, unique_vals, kv_mat, count++);
-    } // end for it over poly_ways
+        osm_convert::get_value_mat_way (wj, unique_vals, kv_mat, count);
+        count++;
+    }
 
     wayList.attr ("names") = waynames;
     wayList.attr ("n_empty") = 0;
@@ -383,11 +392,18 @@ void osm_sf::get_osm_nodes (Rcpp::List &ptList, Rcpp::DataFrame &kv_df,
 
     std::vector <std::string> ptnames;
     ptnames.reserve (nodes.size ());
-    // TODO: Repalce count with std::distance
     unsigned int count = 0;
     for (auto ni = nodes.begin (); ni != nodes.end (); ++ni)
     {
-        Rcpp::checkUserInterrupt ();
+        // std::distance requires a static_cast which copies each instance and
+        // slows this down by lots of orders of magnitude
+        //unsigned int count = static_cast <unsigned int> (
+        //        std::distance (nodes.begin (), ni));
+        if (count % 1000 == 0)
+            Rcpp::checkUserInterrupt ();
+
+        // These are pointers and so need to be explicitly recreated each time,
+        // otherwise they all just point to the initial value.
         Rcpp::NumericVector ptxy = Rcpp::NumericVector::create (NA_REAL, NA_REAL);
         ptxy.attr ("class") = Rcpp::CharacterVector::create ("XY", "POINT", "sfg");
         ptxy (0) = ni->second.lon;
@@ -398,9 +414,7 @@ void osm_sf::get_osm_nodes (Rcpp::List &ptList, Rcpp::DataFrame &kv_df,
                 kv_iter != ni->second.key_val.end (); ++kv_iter)
         {
             const std::string &key = kv_iter->first;
-            unsigned int ndi = static_cast <unsigned int> (
-                    std::distance (unique_vals.k_point.begin (),
-                    unique_vals.k_point.find (key)));
+            unsigned int ndi = unique_vals.k_point_index.at (key);
             kv_mat (count, ndi) = kv_iter->second;
         }
         count++;
@@ -456,7 +470,7 @@ Rcpp::List rcpp_osmdata_sf (const std::string& st)
     const std::map <osmid_t, Node>& nodes = xml.nodes ();
     const std::map <osmid_t, OneWay>& ways = xml.ways ();
     const std::vector <Relation>& rels = xml.relations ();
-    const UniqueVals unique_vals = xml.unique_vals ();
+    const UniqueVals& unique_vals = xml.unique_vals ();
 
     std::vector <double> lons, lats;
     std::set <std::string> keyset; // must be ordered!

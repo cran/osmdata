@@ -3,7 +3,7 @@
 #' This function converts a bounding box into a string for use in web apis
 #' 
 #' @param bbox bounding box as character, matrix or vector. If character,
-#' numeric bbox will be extracted with \code{getbb} Unnamed vectors will be
+#' numeric bbox will be extracted with \link{getbb} Unnamed vectors will be
 #' sorted appropriately and must merely be in the order (x, y, x, y).
 #'
 #' @export
@@ -29,18 +29,22 @@ bbox_to_string <- function(bbox) {
                        max (bbox [, 1]), max (bbox [, 2]))
         }
 
-        if (all (c("x", "y") %in% rownames (bbox)) &
-            all (c("min", "max") %in% colnames (bbox)))
+        if (all (c("x", "y") %in% tolower (rownames (bbox))) &
+            all (c("min", "max") %in% tolower (colnames (bbox))))
         {
-            bbox <- c(bbox["x", "min"], bbox["y", "min"],
-                      bbox["x", "max"], bbox["y", "max"])
+            bbox <- c(bbox["y", "min"], bbox["x", "min"],
+                      bbox["y", "max"], bbox["x", "max"])
         } else if (all (c("coords.x1", "coords.x2") %in% rownames (bbox)) &
                    all (c("min", "max") %in% colnames (bbox)))
         {
-            bbox <- c (bbox["coords.x1", "min"], bbox["coords.x2", "min"],
-                       bbox["coords.x1", "max"], bbox["coords.x2", "max"])
-        } # otherwise just presume (x,y) are rows and (min,max) are cols
-        bbox <- paste0 (bbox[c(2, 1, 4, 3)], collapse = ",")
+            bbox <- c (bbox["coords.x2", "min"], bbox["coords.x1", "min"],
+                       bbox["coords.x2", "max"], bbox["coords.x1", "max"])
+        } else
+        {
+            # otherwise just presume (x,y) are columns and order the rows
+            bbox <- c (min (bbox [, 2]), min (bbox [, 1]),
+                       max (bbox [, 2]), max (bbox [, 1]))
+        }
     } else
     {
         if (length (bbox) < 4)
@@ -51,16 +55,15 @@ bbox_to_string <- function(bbox) {
         if (!is.null (names (bbox)) &
             all (names (bbox) %in% c("left", "bottom", "right", "top")))
         {
-            bbox <- paste0 (bbox[c ("bottom", "left", "top", "right")],
-                            collapse = ",")
+            bbox <- bbox[c ("bottom", "left", "top", "right")]
         } else
         {
             x <- sort (bbox [c (1, 3)])
             y <- sort (bbox [c (2, 4)])
-            bbox <- paste0 (c (y [1], x[1], y [2], x [2]), collapse = ",")
+            bbox <- c (y [1], x[1], y [2], x [2])
         }
     }
-    return(bbox)
+    return (paste0 (bbox, collapse = ","))
 }
 
 #' Get bounding box for a given place name
@@ -69,19 +72,19 @@ bbox_to_string <- function(bbox) {
 #' the bounding box (bb) associated with place names.
 #' 
 #' It was inspired by the functions
-#' \code{bbox} from the \pkg{sp} package,
-#' \code{bb} from the \pkg{tmaptools} package and
-#' \code{bb_lookup} from the github package \pkg{nominatim} package,
-#' which can be found at \url{https://github.com/hrbrmstr/nominatim}.
+#' `bbox` from the \pkg{sp} package,
+#' `bb` from the \pkg{tmaptools} package and
+#' `bb_lookup` from the github package \pkg{nominatim} package,
+#' which can be found at <https://github.com/hrbrmstr/nominatim>.
 #' 
-#' See \url{http://wiki.openstreetmap.org/wiki/Nominatim} for details.
+#' See <http://wiki.openstreetmap.org/wiki/Nominatim> for details.
 #' 
 #' @param place_name The name of the place you're searching for
 #' @param display_name_contains Text string to match with display_name field
-#' returned by \url{http://wiki.openstreetmap.org/wiki/Nominatim}
+#' returned by <http://wiki.openstreetmap.org/wiki/Nominatim>
 #' @param viewbox The bounds in which you're searching
 #' @param format_out Character string indicating output format: matrix (default),
-#' string (see \code{\link{bbox_to_string}}), data.frame (all 'hits' returned
+#' string (see [bbox_to_string()]), data.frame (all 'hits' returned
 #' by Nominatim), sf_polygon (for polygons that work with the sf package)
 #' or polygon (full polygonal bounding boxes for each match).
 #' @param base_url Base website from where data is queried
@@ -90,25 +93,25 @@ bbox_to_string <- function(bbox) {
 #' @param key The API key to use for services that require it
 #' @param silent Should the API be printed to screen? TRUE by default
 #' @param poly_num Which of matching polygons should be used?
-#' The first polygon in the first match is the default (\code{c(1, 1)}).
+#' The first polygon in the first match is the default (`c(1, 1)`).
 #'
-#' @return Unless \code{format_out = "polygon"}, a numeric bounding box as min
-#' and max of latitude and longitude. If \code{format_out = "polygon"}, one or
+#' @return Unless `format_out = "polygon"`, a numeric bounding box as min
+#' and max of latitude and longitude. If `format_out = "polygon"`, one or
 #' more two-columns matrices of polygonal longitude-latitude points. Where
-#' multiple \code{place_name} occurrences are found within \code{nominatim},
+#' multiple `place_name` occurrences are found within `nominatim`,
 #' each item of the list of coordinates may itself contain multiple coordinate
 #' matrices where multiple exact matches exist. If one one exact match exists
 #' with potentially multiple polygonal boundaries (for example, "london uk" is
 #' an exact match, but can mean either greater London or the City of London),
 #' only the first is returned. See examples below for illustration.
 #' 
-#' @note Specific values of \code{featuretype} include "street", "city",
+#' @note Specific values of `featuretype` include "street", "city",
 #" "county", "state", and "country" (see
-#' \url{http://wiki.openstreetmap.org/wiki/Nominatim} for details). The default
-#' \code{featuretype = "settlement"} combines results from all intermediate
+#' <http://wiki.openstreetmap.org/wiki/Nominatim> for details). The default
+#' `featuretype = "settlement"` combines results from all intermediate
 #' levels below "country" and above "streets". If the bounding box or polygon of
 #' a city is desired, better results will usually be obtained with
-#' \code{featuretype = "city"}.
+#' `featuretype = "city"`.
 #' 
 #' @export
 #' 

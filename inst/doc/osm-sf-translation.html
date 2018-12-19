@@ -11,7 +11,7 @@
 
 <meta name="author" content="Mark Padgham" />
 
-<meta name="date" content="2018-10-15" />
+<meta name="date" content="2018-12-14" />
 
 <title>2. Translation of OSM to Simple Features</title>
 
@@ -1372,6 +1372,9 @@ img {
 button.code-folding-btn:focus {
   outline: none;
 }
+summary {
+  display: list-item;
+}
 </style>
 
 
@@ -1379,14 +1382,74 @@ button.code-folding-btn:focus {
 <div class="container-fluid main-container">
 
 <!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
 </script>
 
 <!-- code folding -->
-
 
 
 
@@ -1493,7 +1556,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">2. Translation of OSM to Simple Features</h1>
 <h4 class="author"><em>Mark Padgham</em></h4>
-<h4 class="date"><em>2018-10-15</em></h4>
+<h4 class="date"><em>2018-12-14</em></h4>
 
 </div>
 
@@ -1557,14 +1620,14 @@ div.tocify {
 </div>
 <div id="gdal-translation-of-osm-into-simple-features" class="section level2">
 <h2>4. <code>GDAL</code> Translation of OSM into Simple Features</h2>
-<p>The <code>R</code> package <a href="https://cran.r-project.org/package=sf"><code>sf</code></a> provide an <code>R</code> implementation of Spatial Features, and provides a wrapper around GDAL for reading geospatial data. <code>GDAL</code> provides a <a href="http://www.gdal.org/drv_osm.html">‘driver’ to read OSM data</a>, and thus <code>sf</code> can also be used to read <code>OSM</code> data in <code>R</code>, <a href="https://github.com/osmdatar/osmdata/blob/master/vignettes/osmdata.Rmd">as detailed in the main <code>osmdata</code> vignette</a>. However, the <code>GDAL</code> translation of OSM data differs in several important ways from the <code>osmdata</code> translation.</p>
+<p>The <code>R</code> package <a href="https://cran.r-project.org/package=sf"><code>sf</code></a> provide an <code>R</code> implementation of Spatial Features, and provides a wrapper around GDAL for reading geospatial data. <code>GDAL</code> provides a <a href="http://www.gdal.org/drv_osm.html">‘driver’ to read OSM data</a>, and thus <code>sf</code> can also be used to read <code>OSM</code> data in <code>R</code>, <a href="https://ropensci.github.io/osmdata/articles/osmdata.html">as detailed in the main <code>osmdata</code> vignette</a>. However, the <code>GDAL</code> translation of OSM data differs in several important ways from the <code>osmdata</code> translation.</p>
 <p>The primary difference is that GDAL only returns <em>unique</em> objects of each spatial (SF) type. Thus <code>sf::POINT</code> objects consist of only those points that are not otherwise members of some ‘higher’ object (<code>line</code>, <code>polygon</code>, or <code>relation</code> objects). Although a given set of OSM data may actually contain a great many points, attempting to load these with</p>
 <pre class="r"><code>sf::st_read (file, layer = &#39;points&#39;)</code></pre>
 <p>will generally return surprisingly few points.</p>
 <div id="osm-nodes-1" class="section level3">
 <h3>4.1. OSM Nodes</h3>
 <p>Apart from the numerical difference arising through <code>osmdata</code> returning an <code>sf::POINTS</code> structure containing <strong>all</strong> nodes within a given set of OSM data, while <code>sf::st_read (file, layer=&#39;points&#39;)</code> returns only those points not represented in other structure, the representation of points remains otherwise broadly similar. The only other major difference is that <code>osmdata</code> retains all <code>key-value</code> pairs present in a given set of OSM data, whereas <code>GDAL/sf</code> only retains a select few of these. Moreover, the <code>keys</code> returned by <code>GDAL/sf</code> are pre-defined and invariant, meaning that data returned from <code>sf::st_read (...)</code> may often contain <code>key</code> columns in the resultant <code>data.frame</code> which contain no (non-<code>NA</code>) data. This difference is illustrated in an example repeated here from the<br />
-<a href="https://github.com/osmdatar/osmdata/blob/master/vignettes/osmdata.Rmd">main <code>osmdata</code> vignette</a>, with the same principles applying to all of the following classes of OSM data.</p>
+<a href="https://ropensci.github.io/osmdata/articles/osmdata.html">main <code>osmdata</code> vignette</a>, with the same principles applying to all of the following classes of OSM data.</p>
 <p>The following three lines define a query and download the resultant data to an <code>XML</code> file.</p>
 <pre class="r"><code>q &lt;- opq (bbox = &#39;Trentham, Australia&#39;)
 q &lt;- add_osm_feature (q, key = &#39;name&#39;) # any named objects

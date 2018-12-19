@@ -1,37 +1,52 @@
 #' trim_osmdata
 #'
-#' Trim an \code{osmdata} object to within a bounding polygon
+#' Trim an \link{osmdata} object to within a bounding polygon
 #'
-#' @param dat An \code{osmdata} object returned from \code{osmdata_sf()} or
-#' \code{osmdata_sp()}.
+#' @param dat An \link{osmdata} object returned from \link{osmdata_sf} or
+#' \link{osmdata_sp}.
 #' @param bb_poly A matrix representing a bounding polygon obtained with
-#' \code{getbb (..., format_out = "polygon")} (and possibly selected from
+#' `getbb (..., format_out = "polygon")` (and possibly selected from
 #' resultant list where multiple polygons are returned).
 #' @param exclude If TRUE, objects are trimmed exclusively, only retaining those
 #' strictly within the bounding polygon; otherwise all objects which partly
 #' extend within the bounding polygon are retained.
 #'
-#' @return A trimmed version of \code{dat}, reduced only to those components
+#' @return A trimmed version of `dat`, reduced only to those components
 #' lying within the bounding polygon.
 #'
 #' @note It will generally be necessary to pre-load the \pkg{sf} package for
 #' this function to work correctly.
 #'
 #' @export
+#' @examples
+#' \dontrun{
+#' dat <- opq ("colchester uk") %>%
+#'             add_osm_feature (key="highway") %>%
+#'             osmdata_sf (quiet = FALSE)
+#' bb <- getbb ("colchester uk", format_out = "polygon")
+#' library (sf) # required for this function to work
+#' dat_tr <- trim_osmdata (dat, bb)
+#' bb <- getbb ("colchester uk", format_out = "sf_polygon")
+#' class (bb) # sf data.frame
+#' dat_tr <- trim_osmdata (dat, bb)
+#' bb <- as (bb, "Spatial")
+#' class (bb) # SpatialPolygonsDataFrame
+#' dat_tr <- trim_osmdata (dat, bb)
+#' }
 trim_osmdata <- function (dat, bb_poly, exclude = TRUE)
 {
     is_sf_loaded ()
-    if (is.list (bb_poly) & length (bb_poly) > 1)
-    {
-        message ("bb_poly has more than one polygon; the first will be selected.")
-        bb_poly <- bb_poly [[1]]
-    }
-    if (nrow (bb_poly) > 2)
+    if (!is (bb_poly, "matrix"))
+        bb_poly <- bb_poly_to_mat (bb_poly)
+
+    if (nrow (bb_poly) > 1)
     {
         dat <- trim_to_poly_pts (dat, bb_poly, exclude = exclude) %>%
             trim_to_poly (bb_poly = bb_poly, exclude = exclude) %>%
             trim_to_poly_multi (bb_poly = bb_poly, exclude = exclude)
-    }
+    } else
+        message ("bb_poly must be a matrix with > 1 row; ",
+                 " data will not be trimmed.")
     return (dat)
 }
 
@@ -40,6 +55,60 @@ is_sf_loaded <- function ()
     if (!any (grepl ("package:sf", search ())))
         message ("It is generally necessary to pre-load the sf package ",
                  "for this function to work correctly")
+}
+
+bb_poly_to_mat <- function (x)
+{
+    UseMethod ("bb_poly_to_mat")
+}
+
+bb_poly_to_mat.default <- function (x)
+{
+    stop ("bb_poly is of unknown class; please use matrix or a spatial class")
+}
+
+more_than_one <- function ()
+{
+    message ("bb_poly has more than one polygon; the first will be selected.")
+}
+
+bb_poly_to_mat.sf <- function (x)
+{
+    if (nrow (x) > 1)
+    {
+        more_than_one ()
+        x <- x [1, ]
+    }
+    x <- x [[attr (x, "sf_column")]]
+    bb_poly_to_mat.sfc (x)
+}
+
+bb_poly_to_mat.sfc <- function (x)
+{
+    if (length (x) > 1)
+    {
+        more_than_one ()
+        x <- x [[1]]
+    }
+    as.matrix (x [[1]] [[1]])
+}
+
+bb_poly_to_mat.SpatialPolygonsDataFrame <- function (x)
+{
+    x <- slot (x, "polygons")
+    if (length (x) > 1)
+        more_than_one ()
+    x <- slot (x [[1]], "Polygons")
+    if (length (x) > 1)
+        more_than_one ()
+    slot (x [[1]], "coords")
+}
+
+bb_poly_to_mat.list <- function (x)
+{
+    if (length (x) > 1)
+        more_than_one ()
+    x [[1]]
 }
 
 trim_to_poly_pts <- function (dat, bb_poly, exclude = TRUE)
@@ -64,7 +133,7 @@ trim_to_poly_pts <- function (dat, bb_poly, exclude = TRUE)
 #' Index of finite objects (lines, polygons, multi*) in the list g which are
 #' contained within the polygon bb
 #'
-#' @param g An \code{sfc} list of geometries
+#' @param g An `sf::sfc` list of geometries
 #' @param bb Polygonal bounding box
 #' @param exclude binary parameter determining exclusive or inclusive inclusion
 #'      in polygon

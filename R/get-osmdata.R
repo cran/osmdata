@@ -1,10 +1,10 @@
 #' Get timestamp from system or optional OSM XML document
 #'
-#' @param doc OSM XML document. If missing, \code{Sys.time()} is used.
+#' @param doc OSM XML document. If missing, `Sys.time()` is used.
 #'
 #' @return An R timestamp object
 #'
-#' @note This defines the timestamp format for \code{osmdata} objects, which
+#' @note This defines the timestamp format for \pkg{osmdata} objects, which
 #' includes months as text to ensure umambiguous timestamps 
 #'
 #' @noRd
@@ -30,12 +30,34 @@ get_timestamp <- function (doc)
     paste ('[', wday_t, wday, mon, year, hms, ']')
 }
 
+#' Get OSM database version
+#'
+#' @param doc OSM XML document
+#'
+#' @return Single number (as character string) representing OSM database version
+#' @noRd
+get_osm_version <- function (doc)
+{
+    xml2::xml_text (xml2::xml_find_all (doc, "//osm/@version"))
+}
+
+#' Get overpass version
+#'
+#' @param doc OSM XML document
+#'
+#' @return Single number (as character string) representing overpass version
+#' @noRd
+get_overpass_version <- function (doc)
+{
+    xml2::xml_text (xml2::xml_find_all (doc, "//osm/@generator"))
+}
+
 #' Return an OSM Overpass query in XML format 
 #' Read an (XML format) OSM Overpass response from a string, a connection,
 #' or a raw vector.
 #'
-#' @param q An object of class `overpass_query` constructed with \code{opq} and
-#'        \code{add_osm_feature}.
+#' @param q An object of class `overpass_query` constructed with
+#' \link{opq} and \link{add_osm_feature}.
 #' @param filename If given, OSM data are saved to the named file
 #' @param quiet suppress status messages. 
 #' @param encoding Unless otherwise specified XML documents are assumed to be
@@ -44,8 +66,8 @@ get_timestamp <- function (doc)
 #' @return An object of class `XML::xml_document` containing the result of the
 #'         overpass API query.  
 #'
-#' @note Objects of class \code{xml_document} can be saved as \code{.xml} or
-#' \code{.osm} files with code{xml2::write_xml}.
+#' @note Objects of class `xml_document` can be saved as `.xml` or
+#' `.osm` files with `xml2::write_xml`.
 #'
 #' @export
 #'
@@ -75,14 +97,11 @@ osmdata_xml <- function(q, filename, quiet=TRUE, encoding) {
 
 #' Return an OSM Overpass query in PBF (Protocol Buffer Format).
 #'
-#' @param q An object of class `overpass_query` constructed with \code{opq} and
-#'        \code{add_osm_feature}.
-#' @param filename If given, OSM data are saved to the named file
-#' @param quiet suppress status messages. 
+#' @inheritParams osmdata_xml
 #'
 #' @return An binary Protocol Buffer Format (PBF) object.
 #'
-#' @note This function is experimental, and \code{osmdata} can currently NOT do
+#' @note This function is experimental, and \pkg{osmdata} can currently NOT do
 #' anything with PBF files.
 #'
 #' @export
@@ -105,21 +124,21 @@ osmdata_pbf <- function(q, filename, quiet=TRUE) {
     invisible (pbf)
 }
 
-#' Return an OSM Overpass query as an \code{osmdata} object in \code{sp} format.
+#' Return an OSM Overpass query as an \link{osmdata} object in \pkg{sp}
+#' format.
 #'
-#' @param q An object of class `overpass_query` constructed with \code{opq} and
-#'        \code{add_osm_feature}. May be be omitted, in which case the
-#'        \code{osmdata} object will not include the query.
-#' @param doc If missing, \code{doc} is obtained by issuing the overpass query,
-#'        \code{q}, otherwise either the name of a file from which to read data,
-#'        or an object of class \code{XML} returned from \code{osmdata_xml}. 
+#' @param q An object of class `overpass_query` constructed with
+#'      \link{opq} and \link{add_osm_feature}. May be be omitted,
+#'      in which case the \link{osmdata} object will not include the
+#'      query.
+#' @param doc If missing, `doc` is obtained by issuing the overpass query,
+#'        `q`, otherwise either the name of a file from which to read data,
+#'        or an object of class \pkg{XML} returned from
+#'        \link{osmdata_xml}. 
 #' @param quiet suppress status messages. 
-#' @param encoding Unless otherwise specified XML documents are assumed to be
-#'        encoded as UTF-8 or UTF-16. If the document is not UTF-8/16, and lacks
-#'        an explicit encoding directive, this allows you to supply a default.
 #'
 #' @return An object of class `osmdata` with the OSM components (points, lines,
-#'         and polygons) represented in \code{sp} format.
+#'         and polygons) represented in \pkg{sp} format.
 #'
 #' @export
 #'
@@ -129,7 +148,7 @@ osmdata_pbf <- function(q, filename, quiet=TRUE) {
 #'             add_osm_feature (key="historic", value="ruins") %>%
 #'             osmdata_sp ()
 #' }
-osmdata_sp <- function(q, doc, quiet=TRUE, encoding = 'UTF-8')
+osmdata_sp <- function(q, doc, quiet = TRUE)
 {
     obj <- osmdata () # uses class def
     if (missing (q) & !quiet)
@@ -143,23 +162,9 @@ osmdata_sp <- function(q, doc, quiet=TRUE, encoding = 'UTF-8')
     else
         stop ('q must be an overpass query or a character string')
 
-    if (missing (doc))
-    {
-        doc <- overpass_query (query = obj$overpass_call, quiet = quiet,
-                               encoding = encoding)
-
-        obj$timestamp <- get_timestamp ()
-    } else
-    {
-        if (is.character (doc))
-        {
-            if (!file.exists (doc))
-                stop ("file ", doc, " does not exist")
-            doc <- xml2::read_xml (doc)
-        }
-        obj$timestamp <- get_timestamp (doc)
-        doc <- as.character (doc)
-    }
+    temp <- fill_overpass_data (obj, doc, quiet = quiet)
+    obj <- temp$obj
+    doc <- temp$doc
 
     if (!quiet)
         message ('converting OSM data to sp format')
@@ -177,18 +182,56 @@ osmdata_sp <- function(q, doc, quiet=TRUE, encoding = 'UTF-8')
     return (obj)
 }
 
+#' fill osmdata object with overpass data and metadata, and return character
+#' version of OSM xml document
+#'
+#' @param obj Initial \link{osmdata} object
+#' @param doc Document contain XML-formatted version of OSM data
+#' @inheritParams osmdata_sp
+#' @return List of an \link{osmdata} object (`obj`), and XML
+#'      document (`doc`)
+#' @noRd
+fill_overpass_data <- function (obj, doc, quiet = TRUE, encoding = "UTF-8")
+{
+    if (missing (doc))
+    {
+        doc <- overpass_query (query = obj$overpass_call, quiet = quiet,
+                               encoding = encoding)
+
+        docx <- xml2::read_xml (doc)
+        obj$meta <- list (timestamp = get_timestamp (docx),
+                      OSM_version = get_osm_version (docx),
+                      overpass_version = get_overpass_version (docx))
+    } else
+    {
+        if (is.character (doc))
+        {
+            if (!file.exists (doc))
+                stop ("file ", doc, " does not exist")
+            doc <- xml2::read_xml (doc)
+        }
+        obj$meta <- list (timestamp = get_timestamp (doc),
+                      OSM_version = get_osm_version (doc),
+                      overpass_version = get_overpass_version (doc))
+        doc <- as.character (doc)
+    }
+    list (obj = obj, doc = doc)
+}
+
 #' Make an 'sf' object from an 'sfc' list and associated data matrix returned
 #' from 'rcpp_osmdata_sf'
 #'
-#' @param ... list of objects, at least on of which must be of class 'sfc'
+#' @param ... list of objects, at least one of which must be of class 'sfc'
+#' @param stringsAsFactors Should character strings in 'sf' 'data.frame' be
+#' coerced to factors?
 #' @return An object of class `sf` 
 #'
 #' @note Most of this code written by Edzer Pebesma, and taken from 
-#' \url{https://github.com/edzer/sfr/blob/master/R/agr.R} and 
-#' \url{https://github.com/edzer/sfr/blob/master/R/sfc.R}
+#' <https://github.com/edzer/sfr/blob/master/R/agr.R> and 
+#' <https://github.com/edzer/sfr/blob/master/R/sfc.R>
 #'
 #' @noRd
-make_sf <- function (...)
+make_sf <- function (..., stringsAsFactors = FALSE)
 {
     x <- list (...)
     sf <- vapply(x, function(i) inherits(i, "sfc"),
@@ -202,7 +245,7 @@ make_sf <- function (...)
         data.frame(row.names = row.names)
     else # create a data.frame from list:
         data.frame(x[-sf_column], row.names = row.names,
-                   stringsAsFactors = TRUE)
+                   stringsAsFactors = stringsAsFactors)
 
     object <- as.list(substitute(list(...)))[-1L]
     arg_nm <- sapply(object, function(x) deparse(x)) # nolint
@@ -218,21 +261,16 @@ make_sf <- function (...)
     return (df)
 }
 
+sf_types <- c ("points", "lines", "polygons", "multilines", "multipolygons")
 
-#' Return an OSM Overpass query as an \code{osmdata} object in \code{sf} format.
+#' Return an OSM Overpass query as an \link{osmdata} object in \pkg{sf}
+#' format.
 #'
-#' @param q An object of class `overpass_query` constructed with \code{opq} and
-#'        \code{add_osm_feature}. May be be omitted, in which case the
-#'        \code{osmdata} object will not include the query.
-#' @param doc If missing, \code{doc} is obtained by issuing the overpass query,
-#'        \code{q}, otherwise either the name of a file from which to read data,
-#'        or an object of class \code{XML} returned from \code{osmdata_xml}. 
-#' @param quiet suppress status messages. 
-#' @param encoding Unless otherwise specified XML documents are assumed to be
-#'        encoded as UTF-8 or UTF-16. If the document is not UTF-8/16, and lacks
-#'        an explicit encoding directive, this allows you to supply a default.
+#' @inheritParams osmdata_sp
+#' @param stringsAsFactors Should character strings in 'sf' 'data.frame' be
+#' coerced to factors?
 #' @return An object of class `osmdata` with the OSM components (points, lines,
-#'         and polygons) represented in \code{sf} format.
+#'         and polygons) represented in \pkg{sf} format.
 #' @export
 #'
 #' @examples
@@ -241,10 +279,7 @@ make_sf <- function (...)
 #'             add_osm_feature (key="historic", value="ruins") %>%
 #'             osmdata_sf ()
 #' }
-osmdata_sf <- function(q, doc, quiet=TRUE, encoding) {
-    if (missing (encoding))
-        encoding <- 'UTF-8'
-
+osmdata_sf <- function(q, doc, quiet=TRUE, stringsAsFactors = FALSE) {
     obj <- osmdata () # uses class def
     if (missing (q) & !quiet)
         message ('q missing: osmdata object will not include query')
@@ -257,24 +292,9 @@ osmdata_sf <- function(q, doc, quiet=TRUE, encoding) {
     else
         stop ('q must be an overpass query or a character string')
 
-    if (missing (doc))
-    {
-        doc <- overpass_query (query = obj$overpass_call, quiet = quiet,
-                               encoding = encoding)
-
-        obj$timestamp <- get_timestamp ()
-    } else
-    {
-        if (is.character (doc))
-        {
-            if (!file.exists (doc))
-                stop ("file ", doc, " does not exist")
-            doc <- xml2::read_xml (doc)
-        }
-        obj$timestamp <- get_timestamp (doc)
-        doc <- as.character (doc)
-    }
-
+    temp <- fill_overpass_data (obj, doc, quiet = quiet)
+    obj <- temp$obj
+    doc <- temp$doc
 
     if (!quiet)
         message ('converting OSM data to sf format')
@@ -282,50 +302,105 @@ osmdata_sf <- function(q, doc, quiet=TRUE, encoding) {
     if (missing (q))
         obj$bbox <- paste (res$bbox, collapse = ' ')
 
-    # This is repetitive, but sf uses the allocated names, so get and assign can
-    # not be used.
-    # TODO: Find a way to loop this
-    #nms <- c ("points", "lines", "polygons", "multilines", "multipolygons")
-    #for (n in nms)
-    #{
-    #    onm <- paste0 ("osm_", n)
-    #    if (length (res [[paste0 (n, "_kv")]]) > 0)
-    #        obj [[onm]] <- make_sf (res [[n]], res [[paste0 (n, "_kv")]])
-    #    else
-    #        obj [[onm]] <- make_sf (res [[n]])
-    #}
-
-    geometry <- res$points
-    if (length (res$points_kv) > 0)
-        obj$osm_points <- make_sf (geometry, res$points_kv)
-    else
-        obj$osm_points <- make_sf (geometry)
-
-    geometry <- res$lines
-    if (length (res$lines_kv) > 0)
-        obj$osm_lines <- make_sf (geometry, res$lines_kv)
-    else
-        obj$osm_lines <- make_sf (geometry)
-
-    geometry <- res$polygons
-    if (length (res$polygons_kv) > 0)
-        obj$osm_polygons <- make_sf (geometry, res$polygons_kv)
-    else
-        obj$osm_polygons <- make_sf (geometry)
-
-    geometry <- res$multilines
-    if (length (res$multilines_kv) > 0)
-        obj$osm_multilines <- make_sf (geometry, res$multilines_kv)
-    else
-        obj$osm_multilines <- make_sf (geometry)
-
-    geometry <- res$multipolygons
-    if (length (res$multipolygons_kv) > 0)
-        obj$osm_multipolygons <- make_sf (geometry, res$multipolygons_kv)
-    else
-        obj$osm_multipolygons <- make_sf (geometry)
-
+    for (ty in sf_types)
+        obj <- fill_objects (res, obj, type = ty,
+                             stringsAsFactors = stringsAsFactors)
     class (obj) <- c (class (obj), "osmdata_sf")
 
     return (obj)
+}
+
+fill_objects <- function (res, obj, type = "points",
+                          stringsAsFactors = FALSE)
+{
+    if (!type %in% sf_types)
+        stop ("type must be one of ", paste (sf_types, collapse = " "))
+
+    geometry <- res [[type]]
+    obj_name <- paste0 ("osm_", type)
+    kv_name <- paste0 (type, "_kv")
+    if (length (res [[kv_name]]) > 0)
+        obj [[obj_name]] <- make_sf (geometry, res [[kv_name]],
+                                     stringsAsFactors = stringsAsFactors)
+    else if (length (obj [[obj_name]]) > 0)
+        obj [[obj_name]] <- make_sf (geometry,
+                                     stringsAsFactors = stringsAsFactors)
+
+    return (obj)
+}
+
+#' Return an OSM Overpass query as an \link{osmdata} object in
+#' `silicate` (`SC`) format.
+#'
+#' @inheritParams osmdata_sp
+#' @return An object of class `osmdata` representing the original OSM hierarchy
+#'      of nodes, ways, and relations.
+#' @export
+#'
+#' @note The `silicate` format is currently highly experimental, and
+#'      recommended for use only if you really know what you're doing.
+#'
+#' @examples
+#' \dontrun{
+#' hampi_sf <- opq ("hampi india") %>%
+#'             add_osm_feature (key="historic", value="ruins") %>%
+#'             osmdata_sc ()
+#' }
+osmdata_sc <- function(q, doc, quiet=TRUE) {
+
+    obj <- osmdata () # class def used here to for fill_overpass_data fn
+    if (missing (q) & !quiet)
+        message ('q missing: osmdata object will not include query')
+    else if (is (q, 'overpass_query'))
+    {
+        obj$bbox <- q$bbox
+        obj$overpass_call <- opq_string (q)
+    } else if (is.character (q))
+        obj$overpass_call <- q
+    else
+        stop ('q must be an overpass query or a character string')
+
+    temp <- fill_overpass_data (obj, doc, quiet = quiet)
+    obj <- temp$obj
+    doc <- temp$doc
+
+    if (!quiet)
+        message ('converting OSM data to sc format')
+    res <- rcpp_osmdata_sc (temp$doc)
+
+    res$object_link_edge$native_ <- TRUE
+
+    obj <- list () # SC **does not** use osmdata class definition
+    obj$nodes <- tibble::as.tibble (res$nodes)
+    obj$relation_members <- tibble::as.tibble (res$relation_members)
+    obj$relation_properties <- tibble::as.tibble (res$relation_properties)
+    obj$object <- tibble::as.tibble (res$object)
+    obj$object_link_edge <- tibble::as.tibble (res$object_link_edge)
+    obj$edge <- tibble::as.tibble (res$edge)
+    obj$vertex <- tibble::as.tibble (res$vertex)
+    obj$meta <- tibble::tibble (proj = NA_character_,
+                                ctime = temp$obj$meta$timestamp,
+                                OSM_version = temp$obj$meta$OSM_version,
+                                overpass_version = temp$obj$meta$overpass_version)
+    if (!missing (q))
+        obj$meta$bbox <- q$bbox
+    else
+        obj$meta$bbox <- bbox_to_string (obj)
+
+    attr (obj, "join_ramp") <- c ("nodes",
+                                  "relation_members",
+                                  "relation_properties",
+                                  "object",
+                                  "object_link_edge",
+                                  "edge",
+                                  "vertex")
+    attr (obj, "class") <- c ("SC", "sc")
+
+    return (obj)
+}
+
+getbb_sc <- function (x)
+{
+    apply (x$vertex [, 1:2], 2, range) %>%
+        bbox_to_string ()
 }

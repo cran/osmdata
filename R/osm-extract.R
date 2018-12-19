@@ -188,13 +188,13 @@ sanity_check <- function (dat, id)
 }
 
 
-#' Extract all \code{osm_points} from an osmdata object
+#' Extract all `osm_points` from an osmdata object
 #'
-#' @param dat An object of class \code{osmdata}
+#' @param dat An object of class \link{osmdata}
 #' @param id OSM identification of one or more objects for which points are to
 #' be extracted
 #'
-#' @return An \code{sf} Simple Features Collection of points 
+#' @return An \pkg{sf} Simple Features Collection of points 
 #'
 #' @export
 #'
@@ -223,17 +223,17 @@ osm_points <- function(dat, id) {
     dat$osm_points [which (rownames (dat$osm_points) %in% ids), ]
 }
 
-#' Extract all \code{osm_lines} from an osmdata object
+#' Extract all `osm_lines` from an osmdata object
 #'
-#' If \code{id} is of a point object, \code{osm_lines} will return all lines
-#' containing that point. If \code{id} is of a line or polygon object,
-#' \code{osm_lines} will return all lines which intersect the given line or
+#' If `id` is of a point object, `osm_lines` will return all lines
+#' containing that point. If `id` is of a line or polygon object,
+#' `osm_lines` will return all lines which intersect the given line or
 #' polygon.
 #'
-#' @param dat An object of class \code{osmdata}
+#' @param dat An object of class \link{osmdata}
 #' @param id OSM identification of one or more objects for which lines are to be
 #' extracted
-#' @return An \code{sf} Simple Features Collection of linestrings 
+#' @return An \pkg{sf} Simple Features Collection of linestrings 
 #'
 #' @export
 #'
@@ -271,18 +271,18 @@ osm_lines <- function(dat, id) {
 }
 
 
-#' Extract all \code{osm_polygons} from an osmdata object
+#' Extract all `osm_polygons` from an osmdata object
 #'
-#' If \code{id} is of a point object, \code{osm_polygons} will return all
-#' polygons containing that point. If \code{id} is of a line or polygon object,
-#' \code{osm_polygons} will return all polygons which intersect the given line
+#' If `id` is of a point object, `osm_polygons` will return all
+#' polygons containing that point. If `id` is of a line or polygon object,
+#' `osm_polygons` will return all polygons which intersect the given line
 #' or polygon.
 #'
 #'
-#' @param dat An object of class \code{osmdata}
+#' @param dat An object of class \link{osmdata}
 #' @param id OSM identification of one or more objects for which polygons are to
 #' be extracted
-#' @return An \code{sf} Simple Features Collection of polygons 
+#' @return An \pkg{sf} Simple Features Collection of polygons 
 #'
 #' @export
 #'
@@ -314,18 +314,18 @@ osm_polygons <- function(dat, id) {
 }
 
 
-#' Extract all \code{osm_multilines} from an osmdata object
+#' Extract all `osm_multilines` from an osmdata object
 #'
-#' \code{id} must be of an \code{osm_point} or \code{osm_line} object (and can
-#' not be the \code{id} of an \code{osm_polygon} object because multilines by
-#' definition contain no polygons.  \code{osm_multilines} returns any multiline
-#' object(s) which contain the object specified by \code{id}.
+#' `id` must be of an `osm_points` or `osm_lines` object (and can
+#' not be the `id` of an `osm_polygons` object because multilines by
+#' definition contain no polygons.  `osm_multilines` returns any multiline
+#' object(s) which contain the object specified by `id`.
 #'
 #'
-#' @param dat An object of class \code{osmdata}
+#' @param dat An object of class \link{osmdata}
 #' @param id OSM identification of one of more objects for which multilines are
 #' to be extracted
-#' @return An \code{sf} Simple Features Collection of multilines 
+#' @return An \pkg{sf} Simple Features Collection of multilines 
 #'
 #' @export
 #'
@@ -360,17 +360,17 @@ osm_multilines <- function(dat, id) {
     dat$osm_multilines [which (rownames (dat$osm_multilines) %in% ids), ]
 }
 
-#' Extract all \code{osm_multipolygons} from an osmdata object
+#' Extract all `osm_multipolygons` from an osmdata object
 #'
-#' \code{id} must be of an \code{osm_point}, \code{osm_line}, or
-#' \code{osm_polygon} object. \code{osm_multipolygons} returns any multipolygon
-#' object(s) which contain the object specified by \code{id}.
+#' `id` must be of an `osm_points`, `osm_lines`, or
+#' `osm_polygons` object. `osm_multipolygons` returns any multipolygon
+#' object(s) which contain the object specified by `id`.
 #'
 #'
-#' @param dat An object of class \code{osmdata}
+#' @param dat An object of class \link{osmdata}
 #' @param id OSM identification of one or more objects for which multipolygons
 #' are to be extracted
-#' @return An \code{sf} Simple Features Collection of multipolygons 
+#' @return An \pkg{sf} Simple Features Collection of multipolygons 
 #'
 #' @export
 #'

@@ -4,15 +4,18 @@
 \alias{opq_osm_id}
 \title{Add a feature specified by OSM ID to an Overpass query}
 \usage{
-opq_osm_id(id = NULL, type = NULL)
+opq_osm_id(id = NULL, type = NULL, open_url = FALSE)
 }
 \arguments{
 \item{id}{One or more official OSM identifiers (long-form integers)}
 
-\item{type}{Type of object; must be either `node`, `way`, or `relation`}
+\item{type}{Type of object; must be either \code{node}, \code{way}, or \code{relation}}
+
+\item{open_url}{If \code{TRUE}, open the OSM page of the specified object in web
+browser. Multiple objects (\code{id} values) will be opened in multiple pages.}
 }
 \value{
-\code{opq} object
+\link{opq} object
 }
 \description{
 Add a feature specified by OSM ID to an Overpass query
@@ -21,7 +24,7 @@ Add a feature specified by OSM ID to an Overpass query
 Extracting elements by ID requires explicitly specifying the type of
 element. Only elements of one of the three given types can be extracted in a
 single query, but the results of multiple types can neverthelss be combined
-with the \code{c} operation of \code{osmdata}.
+with the \link{c} operation of \link{osmdata}.
 }
 \examples{
 \dontrun{

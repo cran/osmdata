@@ -66,8 +66,10 @@ void osm_convert::trace_way_nmat (const Ways &ways, const Nodes &nodes,
             ni != wayi->second.nodes.end (); ++ni)
     {
         rownames.push_back (std::to_string (*ni));
-        nmat (tempi, 0) = static_cast <double> (nodes.find (*ni)->second.lon);
-        nmat (tempi++, 1) = static_cast <double> (nodes.find (*ni)->second.lat);
+        //nmat (tempi, 0) = static_cast <double> (nodes.find (*ni)->second.lon);
+        //nmat (tempi++, 1) = static_cast <double> (nodes.find (*ni)->second.lat);
+        nmat (tempi, 0) = nodes.find (*ni)->second.lon;
+        nmat (tempi++, 1) = nodes.find (*ni)->second.lat;
     }
 
     std::vector <std::string> colnames = {"lon", "lat"};
@@ -75,7 +77,8 @@ void osm_convert::trace_way_nmat (const Ways &ways, const Nodes &nodes,
     dimnames.push_back (rownames);
     dimnames.push_back (colnames);
     nmat.attr ("dimnames") = dimnames;
-    dimnames.erase (0, static_cast <int> (dimnames.size ()));
+    //dimnames.erase (0, static_cast <int> (dimnames.size ()));
+    dimnames.erase (0, 2);
 }
 
 /* get_value_mat_way
@@ -100,9 +103,8 @@ void osm_convert::get_value_mat_way (Ways::const_iterator wayi,
             kv_iter != wayi->second.key_val.end (); ++kv_iter)
     {
         const std::string &key = kv_iter->first;
-        long int coli = std::distance (unique_vals.k_way.begin (),
-                unique_vals.k_way.find (key));
-        value_arr (rowi, static_cast <unsigned int> (coli)) = kv_iter->second;
+        unsigned int coli = unique_vals.k_way_index.at (key);
+        value_arr (rowi, coli) = kv_iter->second;
     }
 }
 
@@ -125,9 +127,8 @@ void osm_convert::get_value_mat_rel (Relations::const_iterator &reli,
             ++kv_iter)
     {
         const std::string &key = kv_iter->first;
-        long int coli = std::distance (unique_vals.k_rel.begin (),
-                unique_vals.k_rel.find (key));
-        value_arr (rowi, static_cast <unsigned int> (coli)) = kv_iter->second;
+        unsigned int coli = unique_vals.k_rel_index.at (key);
+        value_arr (rowi, coli) = kv_iter->second;
     }
 }
 
@@ -189,14 +190,17 @@ Rcpp::CharacterMatrix osm_convert::restructure_kv_mat (Rcpp::CharacterMatrix &kv
             varnames_new.push_back ("role");
             kv_out.column (2) = roles;
         }
-        unsigned int count = 1 + add_lines;
+        int count = 1 + static_cast <int> (add_lines);
+        int i_int = 0;
         for (unsigned int i=0; i<static_cast <unsigned int> (kv.ncol ()); i++)
+        {
             if (i != static_cast <unsigned int> (ni))
             {
                 varnames_new.push_back (varnames [i]);
-                kv_out.column (static_cast <int> (count++)) =
-                    kv.column (static_cast <int> (i));
+                kv_out.column (count++) = kv.column (i_int);
             }
+            i_int++;
+        }
         kv_out.attr ("dimnames") = Rcpp::List::create (ids, varnames_new);
     } else
         kv_out = kv;
@@ -245,7 +249,8 @@ template <typename T> Rcpp::List osm_convert::convert_poly_linestring_to_sf (
             dimnames.push_back (rowname_arr [i][j]);
             dimnames.push_back (colnames);
             nmat.attr ("dimnames") = dimnames;
-            dimnames.erase (0, static_cast <int> (dimnames.size ()));
+            //dimnames.erase (0, static_cast <int> (dimnames.size ()));
+            dimnames.erase (0, 2);
             outList_i [j] = nmat;
         }
         outList_i.attr ("names") = id_vec [i];
@@ -295,7 +300,6 @@ void osm_convert::convert_multipoly_to_sp (Rcpp::S4 &multipolygons, const Relati
         const string_arr3 &rowname_arr, const string_arr2 &id_vec,
         const UniqueVals &unique_vals)
 {
-
     Rcpp::Environment sp_env = Rcpp::Environment::namespace_env ("sp");
     Rcpp::Function Polygon = sp_env ["Polygon"];
     Rcpp::Language polygons_call ("new", "Polygons");
@@ -337,7 +341,8 @@ void osm_convert::convert_multipoly_to_sp (Rcpp::S4 &multipolygons, const Relati
                 dimnames.push_back (rowname_arr [i][j]);
                 dimnames.push_back (colnames);
                 nmat.attr ("dimnames") = dimnames;
-                dimnames.erase (0, static_cast <int> (dimnames.size ()));
+                //dimnames.erase (0, static_cast <int> (dimnames.size ()));
+                dimnames.erase (0, 2);
 
                 Rcpp::S4 poly = Polygon (nmat);
                 poly.slot ("hole") = !outer;
@@ -353,12 +358,17 @@ void osm_convert::convert_multipoly_to_sp (Rcpp::S4 &multipolygons, const Relati
 
             Rcpp::S4 polygons = polygons_call.eval ();
             polygons.slot ("Polygons") = outList_i;
-            // convert id_vec to single string
-            std::string id_vec_str = id_vec [i] [0];
-            for (unsigned int j = 1;
-                    j < static_cast <unsigned int> (id_vec [i].size ()); j++)
-                id_vec_str += "." + id_vec [i] [j];
-            polygons.slot ("ID") = id_vec_str;
+            // Issue #36 caused by data with one item having no actual data for
+            // one item, so id_vec[i].size = lon_vec[i].size = ... = 0
+            if (id_vec [i].size () > 0)
+            {
+                // convert id_vec to single string
+                std::string id_vec_str = id_vec [i] [0];
+                for (unsigned int j = 1;
+                        j < static_cast <unsigned int> (id_vec [i].size ()); j++)
+                    id_vec_str += "." + id_vec [i] [j];
+                polygons.slot ("ID") = id_vec_str;
+            }
             //polygons.slot ("ID") = id_vec [i]; // sp expects char not vec!
             polygons.slot ("plotOrder") = plotorder;
             //polygons.slot ("labpt") = poly.slot ("labpt");
@@ -373,21 +383,23 @@ void osm_convert::convert_multipoly_to_sp (Rcpp::S4 &multipolygons, const Relati
     Rcpp::Language sp_polys_call ("new", "SpatialPolygonsDataFrame");
     multipolygons = sp_polys_call.eval ();
     multipolygons.slot ("polygons") = outList;
+
     // Fill plotOrder slot with int vector - this has to be int, not
     // unsigned int!
     std::vector <int> plotord (rels.size ());
-    for (unsigned int j=0; j<static_cast <unsigned int> (rels.size ()); j++)
-        plotord [j] = static_cast <int> (j) + 1;
+    for (int j = 0; j < static_cast <int> (rels.size ()); j++)
+        plotord [j] = j + 1;
     multipolygons.slot ("plotOrder") = plotord;
     plotord.clear ();
 
-    Rcpp::DataFrame kv_df;
+    Rcpp::DataFrame kv_df = R_NilValue;
     if (rel_id.size () > 0)
     {
         kv_mat.attr ("names") = unique_vals.k_rel;
         kv_mat.attr ("dimnames") = Rcpp::List::create (rel_id, unique_vals.k_rel);
-        kv_df = kv_mat;
-        kv_df.attr ("names") = unique_vals.k_rel;
+        kv_mat.attr ("names") = unique_vals.k_rel;
+        if (kv_mat.nrow () > 0 && kv_mat.ncol () > 0)
+            kv_df = osm_convert::restructure_kv_mat (kv_mat, false);
         multipolygons.slot ("data") = kv_df;
     }
     rel_id.clear ();
@@ -448,7 +460,8 @@ void osm_convert::convert_multiline_to_sp (Rcpp::S4 &multilines, const Relations
                 dimnames.push_back (rowname_arr [i][j]);
                 dimnames.push_back (colnames);
                 nmat.attr ("dimnames") = dimnames;
-                dimnames.erase (0, static_cast <int> (dimnames.size ()));
+                //dimnames.erase (0, static_cast <int> (dimnames.size ()));
+                dimnames.erase (0, 2);
 
                 Rcpp::S4 line = line_call.eval ();
                 line.slot ("coords") = nmat;
@@ -471,14 +484,72 @@ void osm_convert::convert_multiline_to_sp (Rcpp::S4 &multilines, const Relations
     multilines = sp_lines_call.eval ();
     multilines.slot ("lines") = outList;
 
-    Rcpp::DataFrame kv_df;
+    Rcpp::DataFrame kv_df = R_NilValue;
     if (rel_id.size () > 0)
     {
         kv_mat.attr ("names") = unique_vals.k_rel;
         kv_mat.attr ("dimnames") = Rcpp::List::create (rel_id, unique_vals.k_rel);
-        kv_df = kv_mat;
-        kv_df.attr ("names") = unique_vals.k_rel;
+        kv_mat.attr ("names") = unique_vals.k_rel;
+        if (kv_mat.nrow () > 0 && kv_mat.ncol () > 0)
+            kv_df = osm_convert::restructure_kv_mat (kv_mat, true);
         multilines.slot ("data") = kv_df;
     }
     rel_id.clear ();
+}
+
+/* convert_relation_to_sc
+ *
+ * Converts the data contained in all the arguments into an SC object
+ *
+ * @param id_vec 2D array of either <std::string> or <osmid_t> IDs for all ways
+ *        used in the geometry.
+ *
+ * @return Objects pointed to by 'members_out' and 'kv_out' are constructed.
+ */
+void osm_convert::convert_relation_to_sc (string_arr2 &members_out,
+        string_arr2 &kv_out, const Relations &rels,
+        const UniqueVals &unique_vals)
+{
+    int nmembers = 0;
+    for (auto itr = rels.begin (); itr != rels.end (); itr++)
+        nmembers += itr->relations.size ();
+
+    members_out.resize (nmembers);
+    for (auto m: members_out)
+        m.resize (3);
+
+    size_t ncol = unique_vals.k_rel.size ();
+    kv_out.resize (ncol);
+    for (auto k: kv_out)
+        k.resize (rels.size ());
+
+    unsigned int rowi = 0; // explicit loop index - see note at top of osmdata-sf
+    for (auto itr = rels.begin (); itr != rels.end (); itr++)
+    {
+        //const unsigned int rowi = static_cast <unsigned int> (
+        //        std::distance (rels.begin (), itr));
+
+        // Get all members of that relation and their roles:
+        unsigned int rowj = rowi;
+        for (auto ritr = itr->relations.begin ();
+                ritr != itr->relations.end (); ++ritr)
+        {
+            //const unsigned int rowj = rowi + static_cast <unsigned int> (
+            //        std::distance (itr->relations.begin (), ritr));
+            members_out [rowj] [0] = std::to_string (itr->id);
+            members_out [rowj] [1] = std::to_string (ritr->first); // OSM id
+            members_out [rowj++] [2] = ritr->second; // role
+        }
+        
+        // And then key-value pairs
+        for (auto kv_iter = itr->key_val.begin ();
+                kv_iter != itr->key_val.end (); ++kv_iter)
+        {
+            const std::string &key = kv_iter->first;
+            long int coli = static_cast <long int> (
+                    unique_vals.k_rel_index.at (key));
+            kv_out [coli] [rowi] = kv_iter->second;
+        }
+        rowi++;
+    } // end for itr
 }

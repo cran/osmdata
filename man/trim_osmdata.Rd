@@ -7,8 +7,8 @@
 trim_osmdata(dat, bb_poly, exclude = TRUE)
 }
 \arguments{
-\item{dat}{An \code{osmdata} object returned from \code{osmdata_sf()} or
-\code{osmdata_sp()}.}
+\item{dat}{An \link{osmdata} object returned from \link{osmdata_sf} or
+\link{osmdata_sp}.}
 
 \item{bb_poly}{A matrix representing a bounding polygon obtained with
 \code{getbb (..., format_out = "polygon")} (and possibly selected from
@@ -23,9 +23,25 @@ A trimmed version of \code{dat}, reduced only to those components
 lying within the bounding polygon.
 }
 \description{
-Trim an \code{osmdata} object to within a bounding polygon
+Trim an \link{osmdata} object to within a bounding polygon
 }
 \note{
 It will generally be necessary to pre-load the \pkg{sf} package for
 this function to work correctly.
+}
+\examples{
+\dontrun{
+dat <- opq ("colchester uk") \%>\%
+            add_osm_feature (key="highway") \%>\%
+            osmdata_sf (quiet = FALSE)
+bb <- getbb ("colchester uk", format_out = "polygon")
+library (sf) # required for this function to work
+dat_tr <- trim_osmdata (dat, bb)
+bb <- getbb ("colchester uk", format_out = "sf_polygon")
+class (bb) # sf data.frame
+dat_tr <- trim_osmdata (dat, bb)
+bb <- as (bb, "Spatial")
+class (bb) # SpatialPolygonsDataFrame
+dat_tr <- trim_osmdata (dat, bb)
+}
 }

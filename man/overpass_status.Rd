@@ -4,17 +4,15 @@
 \alias{overpass_status}
 \title{Retrieve status of the Overpass API}
 \usage{
-overpass_status(quiet = FALSE, wait = 10)
+overpass_status(quiet = FALSE)
 }
 \arguments{
 \item{quiet}{if \code{FALSE} display a status message}
-
-\item{wait}{If status is unavailable, wait this long (in s)}
 }
 \value{
 an invisible list of whether the API is available along with the
-        text of the message from Overpass and the timestamp of the
-        next available slot
+text of the message from Overpass and the timestamp of the
+next available slot
 }
 \description{
 Retrieve status of the Overpass API

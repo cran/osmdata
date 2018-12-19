@@ -68,7 +68,7 @@ test_that ("sf-point", {
 
 test_that ("sf-point-with-fields", {
                x <- sf::st_sfc (sf::st_point(1:2))
-               y <- sf::st_sf (x, a = 3, b = "blah")
+               y <- sf::st_sf (x, a = 3, b = "blah", stringsAsFactors = FALSE)
                x <- make_sf (x, a = 3, b = "blah")
                expect_identical (x, y)
                # next lines will work with next sf version:
@@ -78,21 +78,22 @@ test_that ("sf-point-with-fields", {
 })
 
 test_that ("multiple-points", {
-               x0 <- make_sfc (list (1:2, 3:4), type = "POINT")
+               x <- make_sfc (list (1:2, 3:4), type = "POINT")
                y <- sf::st_sfc (sf::st_point (1:2), sf::st_point (3:4))
-               expect_identical (x0, y)
-               y <- sf::st_sf (x0, a = 7:8, b = c("blah", "junk"))
-               x <- make_sf (x0, a = 7:8, b = c("blah", "junk"))
                expect_identical (x, y)
+               y0 <- sf::st_sf (x, a = 7:8, b = c("blah", "junk"),
+                                stringsAsFactors = FALSE)
+               x0 <- make_sf (x, a = 7:8, b = c("blah", "junk"))
+               expect_identical (x0, y0)
                dat <- data.frame (a = 11:12, txt = c("junk", "blah"))
-               y <- sf::st_sf (x0, dat)
-               x <- make_sf (x0, dat)
-               expect_identical (x, y)
+               y0 <- sf::st_sf (x, dat, stringsAsFactors = FALSE)
+               x0 <- make_sf (x, dat)
+               expect_identical (x0, y0)
                dat <- data.frame (a = 11:12, txt = c("junk", "blah"))
-               y <- sf::st_sf (x0, dat)
-               expect_identical (x, y) # data.frame yields same results as lists
-               x <- make_sf (x0, dat)
-               expect_identical (x, y)
+               y0 <- sf::st_sf (x, dat, stringsAsFactors = FALSE)
+               expect_identical (x0, y0) # data.frame yields same results as lists
+               x0 <- make_sf (x, dat, stringsAsFactors = FALSE)
+               expect_identical (x0, y0)
 })
 
 # **********************************************************
@@ -120,7 +121,7 @@ test_that ("sf-line", {
 
 test_that ("sf-line-with-fields", {
                x <- make_sfc (cbind (1:4, 5:8), "LINESTRING")
-               y <- sf::st_sf (x, a = 3, b = "blah")
+               y <- sf::st_sf (x, a = 3, b = "blah", stringsAsFactors = FALSE)
                x <- make_sf (x, a = 3, b = "blah")
                expect_identical (x, y)
 })
@@ -146,7 +147,7 @@ test_that ("sf-multiple-lines-with-fields", {
                x1 <- cbind (1:4, 5:8)
                x2 <- cbind (11:13, 25:27)
                x <- sf::st_sfc (sf::st_linestring (x1), sf::st_linestring (x2))
-               y <- sf::st_sf (x, a = 1:2, b = "blah")
+               y <- sf::st_sf (x, a = 1:2, b = "blah", stringsAsFactors = FALSE)
                x <- make_sfc (list (x1, x2), type = "LINESTRING")
                x <- make_sf (x, a = 1:2, b = "blah")
                expect_identical (x, y)
@@ -188,7 +189,7 @@ test_that ("sf-polygon", {
 test_that ("sf-polygon-with-fields", {
                xy <- cbind (c (1:4, 1), c(5:8, 5))
                x <- make_sfc (xy, "POLYGON")
-               y <- sf::st_sf (x, a = 3, b = "blah")
+               y <- sf::st_sf (x, a = 3, b = "blah", stringsAsFactors = FALSE)
                x <- make_sf (x, a = 3, b = "blah")
                expect_identical (x, y)
 })
@@ -216,7 +217,7 @@ test_that ("sf-multiple-polygons-with-fields", {
                xy2 <- cbind (c (11:14, 11), c(15:18, 15))
                x <- sf::st_sfc (sf::st_polygon (list (xy1)),
                                 sf::st_polygon (list (xy2)))
-               y <- sf::st_sf (x, a = 1:2, b = "blah")
+               y <- sf::st_sf (x, a = 1:2, b = "blah", stringsAsFactors = FALSE)
                x <- make_sfc (list (xy1, xy2), type = "POLYGON")
                x <- make_sf (x, a = 1:2, b = "blah")
                expect_identical (x, y)
@@ -287,17 +288,38 @@ test_that ("sf-multiple-multilinestring", {
 test_that ("sf-multilinestring-with-fields", {
                x1 <- cbind (c (1:4, 1), c (5:8, 5))
                x2 <- cbind (c (11:13, 11), c (25:27, 25))
-               x0 <- make_sfc (list (x1, x2), type = "MULTILINESTRING")
+               x0 <- c (make_sfc (list (x1, x2), type = "MULTILINESTRING"),
+                        make_sfc (list (x2, x1), type = "MULTILINESTRING"))
+               y0 <- sf::st_sfc (sf::st_multilinestring (list (x1, x2)),
+                                 sf::st_multilinestring (list (x2, x1)))
+               expect_identical (x0, y0)
                dat <- data.frame (a = 1:2, b = c("blah", "junk"))
-               y <- sf::st_sf (x0, dat)
-               x <- make_sf (x0, dat)
-               expect_identical (x, y)
-               y <- sf::st_sf (dat, x0)
-               x <- make_sf (x0, dat)
-               expect_identical (x, y)
-               y <- sf::st_sf (x0, dat)
-               x <- make_sf (dat, x0)
-               expect_identical (x, y)
+               x1 <- make_sf (x0, dat)
+               x2 <- make_sf (y0, dat)
+               y1 <- sf::st_sf (x0, dat)
+               y2 <- sf::st_sf (y0, dat)
+               attr (x2, "sf_column") <- "x0"
+               names (x2) <- c ("a", "b", "x0")
+               attr (y2, "sf_column") <- "x0"
+               names (y2) <- c ("a", "b", "x0")
+               expect_identical (x1, x2)
+               expect_identical (x1, y1)
+               expect_identical (x1, y2)
+               expect_identical (x2, y1)
+               expect_identical (x2, y2)
+               expect_identical (y1, y2)
+
+               y3 <- sf::st_sf (dat, x0)
+               expect_identical (x1, y3)
+               expect_identical (x2, y3)
+               expect_identical (y1, y3)
+               expect_identical (y2, y3)
+               x3 <- make_sf (dat, x0)
+               expect_identical (x1, x3)
+               expect_identical (x2, x3)
+               expect_identical (y1, x3)
+               expect_identical (y2, x3)
+               expect_identical (y3, x3)
 })
 
 
@@ -358,17 +380,38 @@ test_that ("sf-multiple-multipolygons", {
 test_that ("sf-multipolygon-with-fields", {
                x1 <- cbind (c (1:4, 1), c (5:8, 5))
                x2 <- cbind (c (11:13, 11), c (25:27, 25))
-               x0 <- make_sfc (list (x1, x2), type = "MULTIPOLYGON")
+               x0 <- c (make_sfc (list (x1, x2), type = "MULTIPOLYGON"),
+                        make_sfc (list (x2, x1), type = "MULTIPOLYGON"))
+               y0 <- sf::st_sfc (sf::st_multipolygon (list (list (x1, x2))),
+                                 sf::st_multipolygon (list (list (x2, x1))))
+               expect_identical (x0, y0)
                dat <- data.frame (a = 1:2, b = c("blah", "junk"))
-               y <- sf::st_sf (x0, dat)
-               x <- make_sf (x0, dat)
-               expect_identical (x, y)
-               y <- sf::st_sf (dat, x0)
-               x <- make_sf (x0, dat)
-               expect_identical (x, y)
-               y <- sf::st_sf (x0, dat)
-               x <- make_sf (dat, x0)
-               expect_identical (x, y)
+               x1 <- make_sf (x0, dat)
+               x2 <- make_sf (y0, dat)
+               y1 <- sf::st_sf (x0, dat)
+               y2 <- sf::st_sf (y0, dat)
+               attr (x2, "sf_column") <- "x0"
+               names (x2) <- c ("a", "b", "x0")
+               attr (y2, "sf_column") <- "x0"
+               names (y2) <- c ("a", "b", "x0")
+               expect_identical (x1, x2)
+               expect_identical (x1, y1)
+               expect_identical (x1, y2)
+               expect_identical (x2, y1)
+               expect_identical (x2, y2)
+               expect_identical (y1, y2)
+
+               y3 <- sf::st_sf (dat, x0)
+               expect_identical (x1, y3)
+               expect_identical (x2, y3)
+               expect_identical (y1, y3)
+               expect_identical (y2, y3)
+               x3 <- make_sf (dat, x0)
+               expect_identical (x1, x3)
+               expect_identical (x2, x3)
+               expect_identical (y1, x3)
+               expect_identical (y2, x3)
+               expect_identical (y3, x3)
 })
 
 } # end if test_all

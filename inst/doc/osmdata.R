@@ -5,10 +5,29 @@
 library(osmdata)
 
 ## ----install, eval = FALSE-----------------------------------------------
-#  devtools::install_github('osmdatar/osmdata')
+#  devtools::install_github('ropensci/osmdata')
 
 ## ----opq1----------------------------------------------------------------
 q <- opq(bbox = c(51.1, 0.1, 51.2, 0.2))
+
+## ----opq3, eval = FALSE--------------------------------------------------
+#  q <- opq(bbox = 'greater london uk') %>%
+#      add_osm_feature(key = 'highway', value = 'motorway')
+
+## ---- echo = FALSE-------------------------------------------------------
+q <- opq (bbox = c (51.2867602, -0.510375, 51.6918741, 0.3340155)) %>%
+    add_osm_feature(key = 'highway', value = 'motorway')
+
+## ----features, eval=FALSE------------------------------------------------
+#  head (available_features ())
+
+## ---- echo=FALSE---------------------------------------------------------
+c ("4wd only", "abandoned", "abutters", "access", "addr", "addr:city")
+
+## ----workflow, eval = FALSE----------------------------------------------
+#  x <- opq(bbox = 'greater london uk') %>%
+#      add_osm_feature(key = 'highway', value = 'motorway') %>%
+#      osmdata_sf ()
 
 ## ----opq2, eval = FALSE--------------------------------------------------
 #  bb = getbb('Greater London, U.K.')
@@ -22,24 +41,12 @@ q <- opq(bbox = c(51.1, 0.1, 51.2, 0.2))
 #  bb_df = getbb(place_name = "london", format_out = "data.frame")
 #  bb_poly = getbb(place_name = "london", format_out = "polygon")
 
-## ----opq3, eval = FALSE--------------------------------------------------
-#  q <- opq(bbox = 'greater london uk') %>%
-#      add_osm_feature(key = 'highway', value = 'motorway')
-
-## ---- echo = FALSE-------------------------------------------------------
-q <- opq (bbox = c (51.2867602, -0.510375, 51.6918741, 0.3340155)) %>%
-    add_osm_feature(key = 'highway', value = 'motorway')
-
 ## ----trim-osmdata, eval = FALSE------------------------------------------
-#  q <- opq(bbox = 'greater london uk', format_out = 'polygon') %>%
+#  bb <- getbb ('greater london uk', format_out = 'polygon')
+#  x <- opq(bbox = bb) %>%
 #      add_osm_feature(key = 'highway', value = 'motorway') %>%
-#      trim_osmdata ()
-
-## ----features, eval=FALSE------------------------------------------------
-#  head (available_features ())
-
-## ---- echo=FALSE---------------------------------------------------------
-c ("4wd only", "abandoned", "abutters", "access", "addr", "addr:city")
+#      osmdata_sf () %>%
+#      trim_osmdata (bb)
 
 ## ------------------------------------------------------------------------
 get_overpass_url()

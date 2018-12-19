@@ -17,7 +17,8 @@ add_feature(opq, key, value, key_exact = TRUE, value_exact = TRUE,
 \item{key}{feature key}
 
 \item{value}{value for feature key; can be negated with an initial
-exclamation mark, \code{value = "!this"}.}
+exclamation mark, \code{value = "!this"}, and can also be a vector,
+\code{value = c ("this", "that")}.}
 
 \item{key_exact}{If FALSE, \code{key} is not interpreted exactly; see
 \url{https://wiki.openstreetmap.org/wiki/Overpass_API}}
@@ -31,7 +32,7 @@ not sensitive to case}
 opq query bbox has been set}
 }
 \value{
-\code{opq} object
+\link{opq} object
 }
 \description{
 Add a feature to an Overpass query
@@ -39,13 +40,13 @@ Add a feature to an Overpass query
 \note{
 \code{key_exact} should generally be \code{TRUE}, because OSM uses a
 reasonably well defined set of possible keys, as returned by
-\code{available_features}. Setting \code{key_exact = FALSE} allows matching
+\link{available_features}. Setting \code{key_exact = FALSE} allows matching
 of regular expressions on OSM keys, as described in Section 6.1.5 of
 \url{http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL}. The actual
 query submitted to the overpass API can be obtained from
 \link{opq_string}.
 
-\code{add_feature} is deprecated; please use \code{add_osm_feature}.
+\link{add_feature} is deprecated; please use \link{add_osm_feature}.
 }
 \examples{
 \dontrun{

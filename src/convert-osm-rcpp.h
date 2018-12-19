@@ -24,7 +24,7 @@
  *
  *  Limitations:
  *
- *  Dependencies:       none (rapidXML header included in osmdatar)
+ *  Dependencies:       none (rapidXML header included in osmdata)
  *
  *  Compiler Options:   -std=c++11
  ***************************************************************************/
@@ -64,6 +64,10 @@ void convert_multipoly_to_sp (Rcpp::S4 &multipolygons, const Relations &rels,
 void convert_multiline_to_sp (Rcpp::S4 &multilines, const Relations &rels,
         const double_arr3 &lon_arr, const double_arr3 &lat_arr, 
         const string_arr3 &rowname_arr, const osmt_arr2 &id_vec,
+        const UniqueVals &unique_vals);
+
+void convert_relation_to_sc (string_arr2 &members_out,
+        string_arr2 &kv_out, const Relations &rels,
         const UniqueVals &unique_vals);
 
 } // end namespace osm_convert

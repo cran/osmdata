@@ -23,7 +23,7 @@
  *
  *  Limitations:
  *
- *  Dependencies:       none (rapidXML header included in osmdatar)
+ *  Dependencies:       none (rapidXML header included in osmdata)
  *
  *  Compiler Options:   -std=c++11
  ***************************************************************************/
@@ -120,6 +120,7 @@ class XmlData
             // APS empty m_nodes/m_ways/m_relations constructed here, no need to explicitly clear
             XmlDocPtr p = parseXML (str);
             traverseWays (p->first_node ());
+            make_key_val_indices ();
         }
 
         // APS make the dtor virtual since compiler support for "final" is limited
@@ -144,6 +145,7 @@ class XmlData
         void traverseRelation (XmlNodePtr pt, RawRelation& rrel);
         void traverseWay (XmlNodePtr pt, RawWay& rway);
         void traverseNode (XmlNodePtr pt, RawNode& rnode);
+        void make_key_val_indices ();
 
 }; // end Class::XmlData
 
@@ -395,6 +397,22 @@ inline void XmlData::traverseNode (XmlNodePtr pt, RawNode& rnode)
     }
 } // end function XmlData::traverseNode
 
+inline void XmlData::make_key_val_indices ()
+{
+    // These are std::maps which enable keys to be mapped directly onto their
+    // column number in the key-val matrices
+    unsigned int i = 0;
+    for (auto m: m_unique.k_point)
+        m_unique.k_point_index.insert (std::make_pair (m, i++));
+
+    i = 0;
+    for (auto m: m_unique.k_way)
+        m_unique.k_way_index.insert (std::make_pair (m, i++));
+
+    i = 0;
+    for (auto m: m_unique.k_rel)
+        m_unique.k_rel_index.insert (std::make_pair (m, i++));
+}
 
 /*---------------------------- fn headers -----------------------------*/
 
@@ -405,7 +423,7 @@ Rcpp::List get_osm_relations (const Relations &rels,
         const std::map <osmid_t, OneWay> &ways, const UniqueVals &unique_vals,
         const Rcpp::NumericVector &bbox, const Rcpp::List &crs);
 void get_osm_ways (Rcpp::List &wayList, Rcpp::DataFrame &kv_df,
-        const std::set <osmid_t> way_ids, const Ways &ways, const Nodes &nodes,
+        const std::set <osmid_t> &way_ids, const Ways &ways, const Nodes &nodes,
         const UniqueVals &unique_vals, const std::string &geom_type,
         const Rcpp::NumericVector &bbox, const Rcpp::List &crs);
 void get_osm_nodes (Rcpp::List &ptList, Rcpp::DataFrame &kv_df,
@@ -421,7 +439,7 @@ namespace osm_sp {
 void get_osm_nodes (Rcpp::S4 &sp_points, const Nodes &nodes, 
         const UniqueVals &unique_vals);
 void get_osm_ways (Rcpp::S4 &sp_ways, 
-        const std::set <osmid_t> way_ids, const Ways &ways, const Nodes &nodes,
+        const std::set <osmid_t> &way_ids, const Ways &ways, const Nodes &nodes,
         const UniqueVals &unique_vals, const std::string &geom_type);
 void get_osm_relations (Rcpp::S4 &multilines, Rcpp::S4 &multipolygons, 
         const Relations &rels, const std::map <osmid_t, Node> &nodes,
@@ -430,3 +448,17 @@ void get_osm_relations (Rcpp::S4 &multilines, Rcpp::S4 &multipolygons,
 } // end namespace osm_sp
 
 Rcpp::List rcpp_osmdata_sp (const std::string& st);
+
+namespace osm_sc {
+
+void get_osm_relations (Rcpp::DataFrame &rel_df, Rcpp::DataFrame &kv_df,
+        const Relations &rels);
+void get_osm_ways (Rcpp::DataFrame &edge,
+        Rcpp::DataFrame &object_link_edge, Rcpp::DataFrame &kv_df,
+        const Ways &ways);
+void get_osm_nodes (Rcpp::DataFrame &node_df, Rcpp::DataFrame &kv_df,
+        const Nodes &nodes);
+
+} // end namespace osm_sc
+
+Rcpp::List rcpp_osmdata_sc (const std::string& st);

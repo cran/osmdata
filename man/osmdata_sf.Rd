@@ -2,31 +2,34 @@
 % Please edit documentation in R/get-osmdata.R
 \name{osmdata_sf}
 \alias{osmdata_sf}
-\title{Return an OSM Overpass query as an \code{osmdata} object in \code{sf} format.}
+\title{Return an OSM Overpass query as an \link{osmdata} object in \pkg{sf}
+format.}
 \usage{
-osmdata_sf(q, doc, quiet = TRUE, encoding)
+osmdata_sf(q, doc, quiet = TRUE, stringsAsFactors = FALSE)
 }
 \arguments{
-\item{q}{An object of class `overpass_query` constructed with \code{opq} and
-\code{add_osm_feature}. May be be omitted, in which case the
-\code{osmdata} object will not include the query.}
+\item{q}{An object of class \code{overpass_query} constructed with
+\link{opq} and \link{add_osm_feature}. May be be omitted,
+in which case the \link{osmdata} object will not include the
+query.}
 
 \item{doc}{If missing, \code{doc} is obtained by issuing the overpass query,
 \code{q}, otherwise either the name of a file from which to read data,
-or an object of class \code{XML} returned from \code{osmdata_xml}.}
+or an object of class \pkg{XML} returned from
+\link{osmdata_xml}.}
 
 \item{quiet}{suppress status messages.}
 
-\item{encoding}{Unless otherwise specified XML documents are assumed to be
-encoded as UTF-8 or UTF-16. If the document is not UTF-8/16, and lacks
-an explicit encoding directive, this allows you to supply a default.}
+\item{stringsAsFactors}{Should character strings in 'sf' 'data.frame' be
+coerced to factors?}
 }
 \value{
-An object of class `osmdata` with the OSM components (points, lines,
-        and polygons) represented in \code{sf} format.
+An object of class \code{osmdata} with the OSM components (points, lines,
+and polygons) represented in \pkg{sf} format.
 }
 \description{
-Return an OSM Overpass query as an \code{osmdata} object in \code{sf} format.
+Return an OSM Overpass query as an \link{osmdata} object in \pkg{sf}
+format.
 }
 \examples{
 \dontrun{

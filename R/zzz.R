@@ -1,8 +1,18 @@
 .onLoad <- function (libname, pkgname)
 {
     op <- options ()
+	
+    ## https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances
+    ## see https://github.com/ropensci/osmdata/pull/149
+    ## Added and edited code here by JimShady to use random API each time.
+	available_apis <- c('http://overpass-api.de/api/interpreter',
+						'https://overpass.kumi.systems/api/interpreter')
+	
     op.osmdata <- list (osmdata.base_url =
-                        'http://overpass-api.de/api/interpreter')
+                        sample(available_apis, 1))
+	
+	## End of code edited by JimShady
+	
     toset <- !(names (op.osmdata) %in% names (op))
     if (any (toset))
         options (op.osmdata [toset])
@@ -18,11 +28,11 @@
 #' get_overpass_url
 #'
 #' Return the URL of the specified overpass API. Default is
-#' \url{http://overpass-api.de/api/interpreter}.
+#' <http://overpass-api.de/api/interpreter>.
 #'
 #' @return The overpass API URL
 #'
-#' @seealso \code{\link{set_overpass_url}}
+#' @seealso [set_overpass_url()]
 #'
 #' @export
 get_overpass_url <- function ()
@@ -39,6 +49,7 @@ get_overpass_url <- function ()
 #' are:
 #' \itemize{
 #' \item 'http://overpass-api.de/api/interpreter' (default)
+#' \item 'https://overpass.kumi.systems/api/interpreter'
 #' \item 'http://overpass.osm.rambler.ru/cgi/interpreter'
 #' \item 'http://api.openstreetmap.fr/oapi/interpreter'
 #' \item 'https://overpass.osm.vi-di.fr/api/interpreter'
@@ -50,13 +61,13 @@ get_overpass_url <- function ()
 #' }
 #'
 #' For further details, see
-#' \url{http://wiki.openstreetmap.org/wiki/Overpass_API}
+#' <http://wiki.openstreetmap.org/wiki/Overpass_API>
 #'
 #' @param overpass_url The desired overpass API URL
 #'
 #' @return The overpass API URL
 #'
-#' @seealso \code{\link{get_overpass_url}}
+#' @seealso [get_overpass_url()]
 #'
 #' @export
 set_overpass_url <- function (overpass_url)

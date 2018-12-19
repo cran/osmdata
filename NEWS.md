@@ -1,8 +1,28 @@
+0.0.9
+===================
+Major changes:
+- New function `osmdata_sc` to return data in `silicate::SC` format (see
+  github.com/hypertidy/silicate; this also requires additional dependency on
+  `tibble`)
+- Structure of `osmdata` object modified to replace former `$timestamp` field
+  with `$meta` field containing a list of `$timestamp`, `$OSM_version`
+  (currently 0.6), and `$overpass_version`.
+- add_osm_feature() now accepts vectors of multiple values (see #139).
+- osmdata_sf() objects default to character vectors, not factors (see #44).
+
+Minor changes:
+- vignette updated
+- Overpass URL now randomly selected from the four primary servers (see
+  https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances),
+  thanks to @JimShady.
+- bug fix for osmdata_sp() (see #56)
+- osmdata_sp() fixed to return osm_id values (see #131; thanks @JimShady).
+
 0.0.8
 ===================
 - Fix bug in `trim_osmdata` so that all sf attributes are reinstated, and also
   issue message that sf-preload is necessary for this function
-- Fix big with opq (key_exact = FALSE) so value_exact is always also set to
+- Fix bug with opq (key_exact = FALSE) so value_exact is always also set to
   FALSE
 
 0.0.7

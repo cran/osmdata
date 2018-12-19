@@ -11,36 +11,36 @@
 #'
 #' @section Functions to Prepare Queries:
 #' \itemize{
-#' \item \code{\link{getbb}}: Get bounding box for a given place name
-#' \item \code{\link{bbox_to_string}}: Convert a named matrix or a named vector
+#' \item \link{getbb}: Get bounding box for a given place name
+#' \item \link{bbox_to_string}: Convert a named matrix or a named vector
 #' (or an unnamed vector) return a string
-#' \item \code{\link{overpass_status}}: Retrieve status of the overpass API
-#' \item \code{\link{opq}}: Build an overpass query
-#' \item \code{\link{add_osm_feature}}: Add a feature to an overpass query
-#' \item \code{\link{opq_string}}: Convert an osmdata query to overpass API
+#' \item \link{overpass_status}: Retrieve status of the overpass API
+#' \item \link{opq}: Build an overpass query
+#' \item \link{add_osm_feature}: Add a feature to an overpass query
+#' \item \link{opq_string}: Convert an osmdata query to overpass API
 #' string
 #' }
 #'
 #' @section Functions to Get Additional OSM Information:
 #' \itemize{
-#' \item \code{\link{available_features}}: List recognised features in OSM
-#' \item \code{\link{available_tags}}: List tags associated with a feature
+#' \item \link{available_features}: List recognised features in OSM
+#' \item \link{available_tags}: List tags associated with a feature
 #' }
 #'
 #' @section Functions to Extract OSM Data:
 #' \itemize{
-#' \item \code{\link{osmdata_sf}}: Return OSM data in \code{sf} format
-#' \item \code{\link{osmdata_sp}}: Return OSM data in \code{sp} format
-#' \item \code{\link{osmdata_xml}}: Return OSM data in \code{XML} format
+#' \item \link{osmdata_sf}: Return OSM data in \pkg{sf} format
+#' \item \link{osmdata_sp}: Return OSM data in \pkg{sp} format
+#' \item \link{osmdata_xml}: Return OSM data in \pkg{XML} format
 #' }
 #'
 #' @section Functions to Search Data:
 #' \itemize{
-#' \item \code{\link{osm_points}}: Extract all \code{osm_points} objects
-#' \item \code{\link{osm_lines}}: Extract all \code{osm_lines} objects
-#' \item \code{\link{osm_polygons}}: Extract all \code{osm_polygons} objects
-#' \item \code{\link{osm_multilines}}: Extract all \code{osm_multilines} objects
-#' \item \code{\link{osm_multipolygons}}: Extract all \code{osm_multipolygons} objects
+#' \item `osm_points`: Extract all `osm_points` objects
+#' \item `osm_lines`: Extract all `osm_lines` objects
+#' \item `osm_polygons`: Extract all `osm_polygons` objects
+#' \item `osm_multilines`: Extract all `osm_multilines` objects
+#' \item `osm_multipolygons`: Extract all `osm_multipolygons` objects
 #' }
 #'
 #' @name osmdata
@@ -55,7 +55,8 @@
 #' @importFrom methods is slot
 #' @importFrom Rcpp evalCpp
 #' @importFrom rvest html_attr html_nodes
-#' @importFrom utils read.table 
+#' @importFrom tibble as.tibble
+#' @importFrom utils browseURL read.table 
 #' @importFrom xml2 read_html read_xml xml_attr xml_text xml_find_all
 #' @useDynLib osmdata, .registration = TRUE
 NULL

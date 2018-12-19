@@ -1,14 +1,14 @@
 /***************************************************************************
- *  Project:    osmdatar
+ *  Project:    osmdata
  *  File:       common.h
  *  Language:   C++
  *
- *  osmdatar is free software: you can redistribute it and/or modify it under
+ *  osmdata is free software: you can redistribute it and/or modify it under
  *  the terms of the GNU General Public License as published by the Free
  *  Software Foundation, either version 3 of the License, or (at your option)
  *  any later version.
  *
- *  osmdatar is distributed in the hope that it will be useful, but WITHOUT ANY
+ *  osmdata is distributed in the hope that it will be useful, but WITHOUT ANY
  *  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  *  FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
  *  details.
@@ -23,7 +23,7 @@
  *
  *  Limitations:
  *
- *  Dependencies:       none (rapidXML header included in osmdatar)
+ *  Dependencies:       none (rapidXML header included in osmdata)
  *
  *  Compiler Options:   -std=c++11
  ***************************************************************************/
@@ -75,7 +75,9 @@ typedef std::unique_ptr<rapidxml::xml_document<> > XmlDocPtr;
 typedef const rapidxml::xml_node<>* XmlNodePtr;
 typedef const rapidxml::xml_attribute<>* XmlAttrPtr;
 
+// ----- functions in common.cpp
 XmlDocPtr parseXML (const std::string& xmlString);
+// ----- end functions in common.cpp
 
 struct UniqueVals
 {
@@ -90,6 +92,9 @@ struct UniqueVals
     // is slower than an unordered_set, it is useful to have keys alphabetically
     // ordered.
     std::set <std::string> k_point, k_way, k_rel;
+    // A numeric index is also constructed to enable direct indexing into
+    // key-val matrices. This is an unsigned int for indexing into Rcpp objects.
+    std::map <std::string, unsigned int> k_point_index, k_way_index, k_rel_index;
 };
 
 struct RawNode

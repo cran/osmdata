@@ -9,6 +9,7 @@ output:
     html_document:
         toc: true
         toc_float: true
+        number_sections: false
         theme: flatly
 vignette: >
   %\VignetteIndexEntry{1. osmdata}
@@ -45,7 +46,7 @@ The development version of `osmdata` can be installed with the `devtools`
 package using the following command:
 
 ```{r install, eval = FALSE}
-devtools::install_github('osmdatar/osmdata')
+devtools::install_github('ropensci/osmdata')
 ```
 
 This vignette also uses the [`magrittr`](https://github.com/tidyverse/magrittr) pipe, `%>%`, for 'pipy' workflows.
@@ -64,40 +65,11 @@ queries begin with a bounding box, defined in `osmdata` with the function
 q <- opq(bbox = c(51.1, 0.1, 51.2, 0.2))
 ```
 
-Bounding boxes may also be defined by simply passing the name of a desired area
-- if `bbox` is a text string `opq()` uses the helper function `getbb()` to
-  convert it into a bounding box:
-
-```{r opq2, eval = FALSE}
-bb = getbb('Greater London, U.K.')
-q <- opq(bbox = bb)
-```
-
-Note that the text string is not case sensitive, and that you can avoid the
-intermediate step of using `getbb()` by placing a text string directly into the
-`bbox` argument of `opq()`:
-
-```{r eval=FALSE}
-identical(q, opq(bbox = 'greater london uk'))
-## TRUE
-```
-
-Note also that `getbb()` can return a data frame reporting multiple matches or
-matrices representing bounding polygons of matches:
-```{r, eval=FALSE}
-bb_df = getbb(place_name = "london", format_out = "data.frame")
-bb_poly = getbb(place_name = "london", format_out = "polygon")
-```
-The [`overpass API`](www.overpass-api.de) only accepts simple rectangular
-bounding boxes, and so data requested with a bounding polygon will actually be
-all data within the corresponding bounding box, but such data may be
-subsequently trimmed to within the polygon with the `trim_osmdata()` function,
-demonstrated in the code immediately below.
-
-Following the initial `opq()` call, `osmdata` queries are built by adding one or
-more 'features', which are specified in terms of `key-value` pairs.  For
-example, all paths, ways, and roads are designated in OSM with `key=highway`, so
-that a query all motorways in greater London (UK) can be constructed as follows:
+The following sub-section provides more detail on bounding boxes.  Following the
+initial `opq()` call, `osmdata` queries are built by adding one or more
+'features', which are specified in terms of `key-value` pairs.  For example, all
+paths, ways, and roads are designated in OSM with `key=highway`, so that a query
+all motorways in greater London (UK) can be constructed as follows:
 
 ```{r opq3, eval = FALSE}
 q <- opq(bbox = 'greater london uk') %>%
@@ -107,16 +79,6 @@ q <- opq(bbox = 'greater london uk') %>%
 q <- opq (bbox = c (51.2867602, -0.510375, 51.6918741, 0.3340155)) %>%
     add_osm_feature(key = 'highway', value = 'motorway')
 ```
-
-All highways from within the polygonal boundary of Greater London can be
-extracted with,
-```{r trim-osmdata, eval = FALSE}
-q <- opq(bbox = 'greater london uk', format_out = 'polygon') %>%
-    add_osm_feature(key = 'highway', value = 'motorway') %>%
-    trim_osmdata ()
-```
-See `?time_osmdata()` for further ways to obtain polygonally bounded sets of OSM
-data.
 
 A detailed description of features is provided at the 
 [OSM wiki](https://wiki.openstreetmap.org/wiki/Category:Keys), or the 
@@ -135,7 +97,64 @@ There are two primary `osmdata` functions for obtaining data from a query:
 `osmdata_sf()` and `osmdata_sp()`, which return data in 
 [Simple Features (`sf`)](https://cran.r-project.org/package=sf)
 and [Spatial (`sp`)](https://cran.r-project.org/package=sp) formats,
-respectively.
+respectively. The typical workflow for extracting OSM data with `osmdata` thus
+consists of the three lines:
+```{r workflow, eval = FALSE}
+x <- opq(bbox = 'greater london uk') %>%
+    add_osm_feature(key = 'highway', value = 'motorway') %>%
+    osmdata_sf ()
+```
+The return object (`x`) is described in the third section below.
+
+
+### 1.1 Bounding boxes: the `getbb()` function
+
+While bounding boxes may be explicitly specified for the `opq()` function, they
+are more commonly obtained from the `getbb()` function, which accepts character
+strings. As illustrated in the above example, the `opq()` function also accepts
+character strings, which are simply passed directly to `getbb()` to convert them
+to rectangular bounding boxes.
+```{r opq2, eval = FALSE}
+bb = getbb('Greater London, U.K.')
+q <- opq(bbox = bb)
+```
+
+Note that the text string is not case sensitive, as illustrated in the following
+code:
+```{r eval=FALSE}
+identical(q, opq(bbox = 'greater london uk'))
+## TRUE
+```
+
+Note also that `getbb()` can return a data frame reporting multiple matches or
+matrices representing bounding polygons of matches:
+```{r, eval=FALSE}
+bb_df = getbb(place_name = "london", format_out = "data.frame")
+bb_poly = getbb(place_name = "london", format_out = "polygon")
+```
+The [`overpass API`](www.overpass-api.de) only accepts simple rectangular
+bounding boxes, and so data requested with a bounding polygon will actually be
+all data within the corresponding rectangular bounding box, but such data may be
+subsequently trimmed to within the polygon with the `trim_osmdata()` function,
+demonstrated in the code immediately below.
+
+All highways from within the polygonal boundary of Greater London can be
+extracted with,
+```{r trim-osmdata, eval = FALSE}
+bb <- getbb ('greater london uk', format_out = 'polygon')
+x <- opq(bbox = bb) %>%
+    add_osm_feature(key = 'highway', value = 'motorway') %>%
+    osmdata_sf () %>%
+    trim_osmdata (bb)
+```
+See `?trim_osmdata()` for further ways to obtain polygonally bounded sets of OSM
+data.
+
+The `getbb()` function also allows specification of an explicit `featuretype`,
+such as street, city, county, state, or country. The default value of
+`settlement` combines all results below country and above streets. See `?getbb`
+for more details.
+
 
 ## 2. The overpass API
 
@@ -165,9 +184,11 @@ query language given in the
 as well as the 
 [overpass API Language Guide](http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide).
 
-By default, `osmdata` sends queries to `http://overpass-api.de/api/interpreter`
-but other servers can be used, thanks to functions that *get* and *set* the base
-url:
+By default, `osmdata` sends queries to one of the four main [`overpass` server
+instances](https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances),
+such as `http://overpass-api.de/api/interpreter` but other servers listed on the
+page linked to above can be used, thanks to functions that *get* and *set* the
+base url:
 
 ```{r}
 get_overpass_url()
@@ -312,7 +333,7 @@ q <- opq(bbox = 'Kunming, China') %>%
                 value_exact = FALSE, match_case = FALSE)
 ```
 
-### 3.2 Extracting `OSM` data from a query
+### 2.2 Extracting `OSM` data from a query
 
 The primary `osmdata` functions `osmdata_sf()` or `osmdata_sp()` pass these
 queries to `overpass` and return OSM data in corresponding `sf` or `sp` format,
@@ -369,7 +390,7 @@ must include those keys, yet most features will also include many other keys,
 and thus `osmdata` objects generally list a large number of distinct keys, as
 demonstrated below.
 
-### 2.2. Query example
+### 2.3. Query example
 
 To appreciate query building in more concrete terms, let's imagine that we
 wanted to find all cycle paths in Seville, Spain:
@@ -663,7 +684,7 @@ and `key=address` contains no data yet is still returned by `GDAL/sf`.
 
 Finally, note that `osmdata` will generally extract OSM data considerably faster
 than equivalent `sf/GDAL` routines (as detailed
-[here](https://github.com/osmdatar/osmdata/wiki/Timing-benchmarks)).
+[here](https://github.com/ropensci/osmdata/wiki/Timing-benchmarks)).
 
 ### 3.3. The `osmdata_sp()` function
 
@@ -827,13 +848,42 @@ sp::plot(lcnr9$osm_lines)
 
 ![](https://cloud.githubusercontent.com/assets/1825120/23709879/c98e2c2c-0412-11e7-86b8-1ffc95aab5a1.png)
 
-## 5. Related Packages
+## 5. Additional Functionality
+
+This section briefly describes a few of additional functions, with additional
+detail provided in the help files for each of these function.
+
+1. The `trim_osmdata()` function, as described above in the sub-section on
+   bounding boxes, trims an `osmdata` object to within a defined bounding
+   *polygon*, rather than bounding box.
+2. The `opq_osm_id()` function allows queries for particular OSM objects by
+   their OSM-allocated ID values.
+3. The `osm_poly2line()` function converts all `$osm_polygons` items of an
+   `osmdata` object to `$osm_lines`. These objects remain polygonal in form,
+   through sharing identical start and end points, but can then be treated as
+   simple lines. This is important for polygonal highways, which are
+   automatically classified as `$osm_polygons` simply because they form closed
+   loops. The function enables all highways to be grouped together (as
+   `$osm_lines`) regardless of the form.
+4. The `unique_osmdata()` function removes redundant items from the different
+   components of an `osmdata` object. A multilinestring, for example, is
+   composed of multiple lines, and each line is composed of multiple points. For
+   a multilinestring, an `osmdata` object will thus contain several
+   `$osm_lines`, and for each of these several `$osm_points`. This function
+   removes all of these redundant objects, so that `$osm_lines` only contains
+   lines which are not part of any higher-level objects, and `$osm_points` only
+   contains points which are not part of any higher-level objects.
+
+
+## 6. Related Packages
 
 @eugster_osmar:_2012 describe `osmar`, an R package for handling OSM data
 that enables visualisation, search and even rudimentary routing operations.
 `osmar` is not user friendly or able to download OSM data flexibly,
 as reported in an [early tutorial](http://eprints.whiterose.ac.uk/77643/)
-comparing R and QGIS for handling OSM data [@lovelace_harnessing_2014].
+comparing R and QGIS for handling OSM data [@lovelace_harnessing_2014]. Note
+also that the `osmar` package does not work at present, and can not be used for
+accessing OSM data.
 
 `osmdata` builds on two previous R packages:
 `osmplotr`, a package [available from CRAN](https://cran.r-project.org/package=osmplotr)
@@ -842,4 +892,4 @@ and `overpass`, a [GitHub package](https://github.com/hrbrmstr/overpass)
 by Bob Rudis that provides an R interface to the 
 [overpass](http://overpass-api.de/) API.
 
-## 6. References
+## 7. References

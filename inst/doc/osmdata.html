@@ -12,7 +12,7 @@
 <meta name="author" content="Mark Padgham" />
 <meta name="author" content="Robin Lovelace" />
 
-<meta name="date" content="2018-10-15" />
+<meta name="date" content="2018-12-14" />
 
 <title>1. osmdata</title>
 
@@ -1373,6 +1373,9 @@ img {
 button.code-folding-btn:focus {
   outline: none;
 }
+summary {
+  display: list-item;
+}
 </style>
 
 
@@ -1380,14 +1383,74 @@ button.code-folding-btn:focus {
 <div class="container-fluid main-container">
 
 <!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
 </script>
 
 <!-- code folding -->
-
 
 
 
@@ -1495,7 +1558,7 @@ div.tocify {
 <h1 class="title toc-ignore">1. osmdata</h1>
 <h4 class="author"><em>Mark Padgham</em></h4>
 <h4 class="author"><em>Robin Lovelace</em></h4>
-<h4 class="date"><em>2018-10-15</em></h4>
+<h4 class="date"><em>2018-12-14</em></h4>
 
 </div>
 
@@ -1510,33 +1573,43 @@ div.tocify {
 <pre class="r"><code>library(osmdata)</code></pre>
 <pre><code>## Data (c) OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright</code></pre>
 <p>The development version of <code>osmdata</code> can be installed with the <code>devtools</code> package using the following command:</p>
-<pre class="r"><code>devtools::install_github(&#39;osmdatar/osmdata&#39;)</code></pre>
+<pre class="r"><code>devtools::install_github(&#39;ropensci/osmdata&#39;)</code></pre>
 <p>This vignette also uses the <a href="https://github.com/tidyverse/magrittr"><code>magrittr</code></a> pipe, <code>%&gt;%</code>, for ‘pipy’ workflows.</p>
-<p><code>osmdata</code> uses the <a href="http://overpass-api.de"><code>overpass</code> API</a> to download OpenStreetMap (OSM) data and can convert the results to either Simple Features (typically of class <code>sf</code>) or Spatial objects (e.g. <code>SpatialPointsDataFrame</code>), as defined by the packages <a href="https://cran.r-project.org/package=sf"><code>sf</code></a> and <a href="https://cran.r-project.org/package=sp"><code>sp</code></a> packages respectively.</p>
+<p><code>osmdata</code> uses the <a href="http://overpass-api.de"><code>overpass</code> API</a> to download OpenStreetMap (OSM) data and can convert the results to either Simple Features (typically of class <code>sf</code>) or Spatial objects (e.g. <code>SpatialPointsDataFrame</code>), as defined by the packages <a href="https://cran.r-project.org/package=sf"><code>sf</code></a> and <a href="https://cran.r-project.org/package=sp"><code>sp</code></a> packages respectively.</p>
 <p><code>overpass</code> is a C++ library that serves OSM data over the web. All <code>overpass</code> queries begin with a bounding box, defined in <code>osmdata</code> with the function <code>opq()</code>:</p>
 <pre class="r"><code>q &lt;- opq(bbox = c(51.1, 0.1, 51.2, 0.2))</code></pre>
-<p>Bounding boxes may also be defined by simply passing the name of a desired area - if <code>bbox</code> is a text string <code>opq()</code> uses the helper function <code>getbb()</code> to convert it into a bounding box:</p>
+<p>The following sub-section provides more detail on bounding boxes. Following the initial <code>opq()</code> call, <code>osmdata</code> queries are built by adding one or more ‘features’, which are specified in terms of <code>key-value</code> pairs. For example, all paths, ways, and roads are designated in OSM with <code>key=highway</code>, so that a query all motorways in greater London (UK) can be constructed as follows:</p>
+<pre class="r"><code>q &lt;- opq(bbox = &#39;greater london uk&#39;) %&gt;%
+    add_osm_feature(key = &#39;highway&#39;, value = &#39;motorway&#39;)</code></pre>
+<p>A detailed description of features is provided at the <a href="https://wiki.openstreetmap.org/wiki/Category:Keys">OSM wiki</a>, or the <code>osmdata</code> function <code>available_features()</code> can be used to retrive the comprehensive list of feature keys currently used in OSM.</p>
+<pre class="r"><code>head (available_features ())</code></pre>
+<pre><code>## [1] &quot;4wd only&quot;  &quot;abandoned&quot; &quot;abutters&quot;  &quot;access&quot;    &quot;addr&quot;      &quot;addr:city&quot;</code></pre>
+<p>There are two primary <code>osmdata</code> functions for obtaining data from a query: <code>osmdata_sf()</code> and <code>osmdata_sp()</code>, which return data in <a href="https://cran.r-project.org/package=sf">Simple Features (<code>sf</code>)</a> and <a href="https://cran.r-project.org/package=sp">Spatial (<code>sp</code>)</a> formats, respectively. The typical workflow for extracting OSM data with <code>osmdata</code> thus consists of the three lines:</p>
+<pre class="r"><code>x &lt;- opq(bbox = &#39;greater london uk&#39;) %&gt;%
+    add_osm_feature(key = &#39;highway&#39;, value = &#39;motorway&#39;) %&gt;%
+    osmdata_sf ()</code></pre>
+<p>The return object (<code>x</code>) is described in the third section below.</p>
+<div id="bounding-boxes-the-getbb-function" class="section level3">
+<h3>1.1 Bounding boxes: the <code>getbb()</code> function</h3>
+<p>While bounding boxes may be explicitly specified for the <code>opq()</code> function, they are more commonly obtained from the <code>getbb()</code> function, which accepts character strings. As illustrated in the above example, the <code>opq()</code> function also accepts character strings, which are simply passed directly to <code>getbb()</code> to convert them to rectangular bounding boxes.</p>
 <pre class="r"><code>bb = getbb(&#39;Greater London, U.K.&#39;)
 q &lt;- opq(bbox = bb)</code></pre>
-<p>Note that the text string is not case sensitive, and that you can avoid the intermediate step of using <code>getbb()</code> by placing a text string directly into the <code>bbox</code> argument of <code>opq()</code>:</p>
+<p>Note that the text string is not case sensitive, as illustrated in the following code:</p>
 <pre class="r"><code>identical(q, opq(bbox = &#39;greater london uk&#39;))
 ## TRUE</code></pre>
 <p>Note also that <code>getbb()</code> can return a data frame reporting multiple matches or matrices representing bounding polygons of matches:</p>
 <pre class="r"><code>bb_df = getbb(place_name = &quot;london&quot;, format_out = &quot;data.frame&quot;)
 bb_poly = getbb(place_name = &quot;london&quot;, format_out = &quot;polygon&quot;)</code></pre>
-<p>The <a href="www.overpass-api.de"><code>overpass API</code></a> only accepts simple rectangular bounding boxes, and so data requested with a bounding polygon will actually be all data within the corresponding bounding box, but such data may be subsequently trimmed to within the polygon with the <code>trim_osmdata()</code> function, demonstrated in the code immediately below.</p>
-<p>Following the initial <code>opq()</code> call, <code>osmdata</code> queries are built by adding one or more ‘features’, which are specified in terms of <code>key-value</code> pairs. For example, all paths, ways, and roads are designated in OSM with <code>key=highway</code>, so that a query all motorways in greater London (UK) can be constructed as follows:</p>
-<pre class="r"><code>q &lt;- opq(bbox = &#39;greater london uk&#39;) %&gt;%
-    add_osm_feature(key = &#39;highway&#39;, value = &#39;motorway&#39;)</code></pre>
+<p>The <a href="www.overpass-api.de"><code>overpass API</code></a> only accepts simple rectangular bounding boxes, and so data requested with a bounding polygon will actually be all data within the corresponding rectangular bounding box, but such data may be subsequently trimmed to within the polygon with the <code>trim_osmdata()</code> function, demonstrated in the code immediately below.</p>
 <p>All highways from within the polygonal boundary of Greater London can be extracted with,</p>
-<pre class="r"><code>q &lt;- opq(bbox = &#39;greater london uk&#39;, format_out = &#39;polygon&#39;) %&gt;%
+<pre class="r"><code>bb &lt;- getbb (&#39;greater london uk&#39;, format_out = &#39;polygon&#39;)
+x &lt;- opq(bbox = bb) %&gt;%
     add_osm_feature(key = &#39;highway&#39;, value = &#39;motorway&#39;) %&gt;%
-    trim_osmdata ()</code></pre>
-<p>See <code>?time_osmdata()</code> for further ways to obtain polygonally bounded sets of OSM data.</p>
-<p>A detailed description of features is provided at the <a href="https://wiki.openstreetmap.org/wiki/Category:Keys">OSM wiki</a>, or the <code>osmdata</code> function <code>available_features()</code> can be used to retrive the comprehensive list of feature keys currently used in OSM.</p>
-<pre class="r"><code>head (available_features ())</code></pre>
-<pre><code>## [1] &quot;4wd only&quot;  &quot;abandoned&quot; &quot;abutters&quot;  &quot;access&quot;    &quot;addr&quot;      &quot;addr:city&quot;</code></pre>
-<p>There are two primary <code>osmdata</code> functions for obtaining data from a query: <code>osmdata_sf()</code> and <code>osmdata_sp()</code>, which return data in <a href="https://cran.r-project.org/package=sf">Simple Features (<code>sf</code>)</a> and <a href="https://cran.r-project.org/package=sp">Spatial (<code>sp</code>)</a> formats, respectively.</p>
+    osmdata_sf () %&gt;%
+    trim_osmdata (bb)</code></pre>
+<p>See <code>?trim_osmdata()</code> for further ways to obtain polygonally bounded sets of OSM data.</p>
+<p>The <code>getbb()</code> function also allows specification of an explicit <code>featuretype</code>, such as street, city, county, state, or country. The default value of <code>settlement</code> combines all results below country and above streets. See <code>?getbb</code> for more details.</p>
+</div>
 </div>
 <div id="the-overpass-api" class="section level2">
 <h2>2. The overpass API</h2>
@@ -1546,9 +1619,9 @@ bb_poly = getbb(place_name = &quot;london&quot;, format_out = &quot;polygon&quot
 </blockquote>
 <p>The syntax of <code>overpass</code> queries is powerful yet hard to learn. This section briefly introduces the structure of <code>overpass</code> queries in order to help construct more efficient and powerful queries. Those wanting to skip straight onto query construction in <code>osmdata</code> may safely jump ahead to the <a href="#query-example">query example below</a>.</p>
 <p><code>osmdata</code> simplifies queries so that OSM data can be extracted with very little understanding of the <code>overpass</code> query syntax, although it is still possible to submit arbitrarily complex <code>overpass</code> queries via <code>osmdata</code>. An excellent place to explore <code>overpass</code> queries specifically and OSM data in general is the online interactive query builder at <a href="http://overpass-turbo.eu/">overpass-turbo</a>, which includes a helpful corrector function for incorrectly formatted queries. Examples of its functionality in action can be found on the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_API_by_Example">OpenStreetMap wiki</a>, with full details of the <code>overpass</code> query language given in the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL">Query Language Guide</a> as well as the <a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide">overpass API Language Guide</a>.</p>
-<p>By default, <code>osmdata</code> sends queries to <code>http://overpass-api.de/api/interpreter</code> but other servers can be used, thanks to functions that <em>get</em> and <em>set</em> the base url:</p>
+<p>By default, <code>osmdata</code> sends queries to one of the four main <a href="https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances"><code>overpass</code> server instances</a>, such as <code>http://overpass-api.de/api/interpreter</code> but other servers listed on the page linked to above can be used, thanks to functions that <em>get</em> and <em>set</em> the base url:</p>
 <pre class="r"><code>get_overpass_url()</code></pre>
-<pre><code>## [1] &quot;http://overpass-api.de/api/interpreter&quot;</code></pre>
+<pre><code>## [1] &quot;https://overpass.kumi.systems/api/interpreter&quot;</code></pre>
 <pre class="r"><code>new_url &lt;- &quot;http://overpass.openstreetmap.ie/api/interpreter&quot;</code></pre>
 <pre class="r"><code>set_overpass_url(new_url) # reset the base url (not run)</code></pre>
 <p><code>osmdata</code> queries are lists of class <code>overpass_query</code>. The actual query passed to the <code>overpass API</code> with a query can be obtained with the function <code>opq_string()</code>. Applied to the preceding query, this function gives:</p>
@@ -1618,7 +1691,7 @@ unlist (lapply (dat, nrow) [4:8])</code></pre>
                 value_exact = FALSE, match_case = FALSE)</code></pre>
 </div>
 <div id="extracting-osm-data-from-a-query" class="section level3">
-<h3>3.2 Extracting <code>OSM</code> data from a query</h3>
+<h3>2.2 Extracting <code>OSM</code> data from a query</h3>
 <p>The primary <code>osmdata</code> functions <code>osmdata_sf()</code> or <code>osmdata_sp()</code> pass these queries to <code>overpass</code> and return OSM data in corresponding <code>sf</code> or <code>sp</code> format, respectively. Both of these functions also accept direct <code>overpass</code> queries, such as those produced by the <code>osmdata</code> function <code>opq_string()</code>, or copied directly from the <a href="overpass-turbo.eu"><code>overpass-turbo</code> query builder</a>.</p>
 <pre class="r"><code>osmdata_sf(opq_string(q))
 ## Object of class &#39;osmdata&#39; with:
@@ -1640,7 +1713,7 @@ lots_of_data &lt;- osmdata_sf(q)</code></pre>
 <p><code>osmdata</code> will use that query to return all named highways within the requested bounding box. Note that <code>key</code> specifications are requests for features which must include those keys, yet most features will also include many other keys, and thus <code>osmdata</code> objects generally list a large number of distinct keys, as demonstrated below.</p>
 </div>
 <div id="query-example" class="section level3">
-<h3>2.2. Query example</h3>
+<h3>2.3. Query example</h3>
 <p>To appreciate query building in more concrete terms, let’s imagine that we wanted to find all cycle paths in Seville, Spain:</p>
 <pre class="r"><code>q1 &lt;- opq(&#39;Sevilla&#39;) %&gt;%
     add_osm_feature(key = &#39;highway&#39;, value = &#39;cycleway&#39;)
@@ -1779,7 +1852,7 @@ as.numeric(s1 / s2)
 all(is.na(addr))
 ## TRUE</code></pre>
 <p>and <code>key=address</code> contains no data yet is still returned by <code>GDAL/sf</code>.</p>
-<p>Finally, note that <code>osmdata</code> will generally extract OSM data considerably faster than equivalent <code>sf/GDAL</code> routines (as detailed <a href="https://github.com/osmdatar/osmdata/wiki/Timing-benchmarks">here</a>).</p>
+<p>Finally, note that <code>osmdata</code> will generally extract OSM data considerably faster than equivalent <code>sf/GDAL</code> routines (as detailed <a href="https://github.com/ropensci/osmdata/wiki/Timing-benchmarks">here</a>).</p>
 </div>
 <div id="the-osmdata_sp-function" class="section level3">
 <h3>3.3. The <code>osmdata_sp()</code> function</h3>
@@ -1864,13 +1937,23 @@ sp::plot(lcnr9$osm_lines)</code></pre>
 <p><img src="data:image/png;base64,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" /></p>
 </div>
 </div>
+<div id="additional-functionality" class="section level2">
+<h2>5. Additional Functionality</h2>
+<p>This section briefly describes a few of additional functions, with additional detail provided in the help files for each of these function.</p>
+<ol style="list-style-type: decimal">
+<li>The <code>trim_osmdata()</code> function, as described above in the sub-section on bounding boxes, trims an <code>osmdata</code> object to within a defined bounding <em>polygon</em>, rather than bounding box.</li>
+<li>The <code>opq_osm_id()</code> function allows queries for particular OSM objects by their OSM-allocated ID values.</li>
+<li>The <code>osm_poly2line()</code> function converts all <code>$osm_polygons</code> items of an <code>osmdata</code> object to <code>$osm_lines</code>. These objects remain polygonal in form, through sharing identical start and end points, but can then be treated as simple lines. This is important for polygonal highways, which are automatically classified as <code>$osm_polygons</code> simply because they form closed loops. The function enables all highways to be grouped together (as <code>$osm_lines</code>) regardless of the form.</li>
+<li>The <code>unique_osmdata()</code> function removes redundant items from the different components of an <code>osmdata</code> object. A multilinestring, for example, is composed of multiple lines, and each line is composed of multiple points. For a multilinestring, an <code>osmdata</code> object will thus contain several <code>$osm_lines</code>, and for each of these several <code>$osm_points</code>. This function removes all of these redundant objects, so that <code>$osm_lines</code> only contains lines which are not part of any higher-level objects, and <code>$osm_points</code> only contains points which are not part of any higher-level objects.</li>
+</ol>
+</div>
 <div id="related-packages" class="section level2">
-<h2>5. Related Packages</h2>
-<p><span class="citation">Eugster and Schlesinger (2012)</span> describe <code>osmar</code>, an R package for handling OSM data that enables visualisation, search and even rudimentary routing operations. <code>osmar</code> is not user friendly or able to download OSM data flexibly, as reported in an <a href="http://eprints.whiterose.ac.uk/77643/">early tutorial</a> comparing R and QGIS for handling OSM data <span class="citation">(Lovelace 2014)</span>.</p>
+<h2>6. Related Packages</h2>
+<p><span class="citation">Eugster and Schlesinger (2012)</span> describe <code>osmar</code>, an R package for handling OSM data that enables visualisation, search and even rudimentary routing operations. <code>osmar</code> is not user friendly or able to download OSM data flexibly, as reported in an <a href="http://eprints.whiterose.ac.uk/77643/">early tutorial</a> comparing R and QGIS for handling OSM data <span class="citation">(Lovelace 2014)</span>. Note also that the <code>osmar</code> package does not work at present, and can not be used for accessing OSM data.</p>
 <p><code>osmdata</code> builds on two previous R packages: <code>osmplotr</code>, a package <a href="https://cran.r-project.org/package=osmplotr">available from CRAN</a> for accessing and plotting OSM data <span class="citation">(Padgham 2016)</span> and <code>overpass</code>, a <a href="https://github.com/hrbrmstr/overpass">GitHub package</a> by Bob Rudis that provides an R interface to the <a href="http://overpass-api.de/">overpass</a> API.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
-<h2>6. References</h2>
+<h2>7. References</h2>
 <div id="refs" class="references">
 <div id="ref-eugster_osmar:_2012">
 <p>Eugster, Manuel J a, and Thomas Schlesinger. 2012. “Osmar: OpenStreetMap and R.” <em>The R Journal</em> 5 (1): 53–64.</p>
