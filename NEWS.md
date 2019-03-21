@@ -1,3 +1,12 @@
+0.0.10
+===================
+
+Minor changes:
+- Bux fix for vectorized lists of values in `add_osm_feature`, so only listed
+  items are returns (see #139; thanks @loreabad6)
+- But fix to ensure all `sf` `data.frame` objects have `stringsAsFactors =
+  FALSE`
+
 0.0.9
 ===================
 Major changes:

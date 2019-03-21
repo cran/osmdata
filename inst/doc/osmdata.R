@@ -5,7 +5,7 @@
 library(osmdata)
 
 ## ----install, eval = FALSE-----------------------------------------------
-#  devtools::install_github('ropensci/osmdata')
+#  remotes::install_github('ropensci/osmdata')
 
 ## ----opq1----------------------------------------------------------------
 q <- opq(bbox = c(51.1, 0.1, 51.2, 0.2))

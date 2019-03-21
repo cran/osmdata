@@ -1,11 +1,13 @@
 #' Build an Overpass query
 #'
 #' @param bbox Either (i) four numeric values specifying the maximal and minimal
-#'             longitudes and latitudes; (ii) a character string passed to
-#'             \link{getbb} to be converted to a numerical bounding box; or
-#'             (iii) a matrix representing a bounding polygon as returned from
-#'             `getbb(..., format_out = "polygon")`.
-#' @param timeout It may be necessary to ncrease this value for large queries,
+#'             longitudes and latitudes, in the form \code{c(xmin, ymin, xmax, ymax)} or
+#'             (ii) a character string in the form \code{xmin,ymin,xmax,ymax}.
+#'              These will be passed to \link{getbb} to be converted
+#'              to a numerical bounding box.
+#'              Can also be (iii) a matrix representing a bounding polygon
+#'              as returned from `getbb(..., format_out = "polygon")`.
+#' @param timeout It may be necessary to increase this value for large queries,
 #'             because the server may time out before all data are delivered.
 #' @param memsize The default memory size for the 'overpass' server in
 #'              *bytes*; may need to be increased in order to handle large
@@ -17,7 +19,7 @@
 #' <https://wiki.openstreetmap.org/wiki/Overpass_API#Resource_management_options_.28osm-script.29>
 #' for explanation of `timeout` and `memsize` (or `maxsize` in
 #' overpass terms). Note in particular the comment that queries with arbitrarily
-#' large `memsize` are likely to be rejeted.
+#' large `memsize` are likely to be rejected.
 #'
 #' @export
 #'
@@ -83,21 +85,20 @@ opq <- function (bbox = NULL, timeout = 25, memsize)
 #'
 #' @examples
 #' \dontrun{
-#' q <- getbb ("portsmouth", display_name_contains = "United States") %>%
-#'                 opq () %>% 
-#'                 add_osm_feature("amenity", "restaurant") %>%
-#'                 add_osm_feature("amenity", "pub") 
+#' q <- opq ("portsmouth usa") %>%
+#'                 add_osm_feature(key = "amenity",
+#'                                 value = "restaurant") %>%
+#'                 add_osm_feature(key = "amenity", value = "pub") 
 #' osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
-#' q1 <- getbb ("portsmouth", display_name_contains = "United States") %>%
-#'                 opq () %>% 
-#'                 add_osm_feature("amenity", "restaurant") 
-#' q2 <- getbb ("portsmouth", display_name_contains = "United States") %>%
-#'                 opq () %>% 
-#'                 add_osm_feature("amenity", "pub") 
+#' q1 <- opq ("portsmouth usa") %>%
+#'                 add_osm_feature(key = "amenity",
+#'                                 value = "restaurant") 
+#' q2 <- opq ("portsmouth usa") %>%
+#'                 add_osm_feature(key = "amenity", value = "pub") 
 #' c (osmdata_sf (q1), osmdata_sf (q2)) # all objects that are restaurants OR pubs
 #' # Use of negation to extract all non-primary highways
 #' q <- opq ("portsmouth uk") %>%
-#'         add_osm_feature (key="highway", value = "!primary") 
+#'         add_osm_feature (key = "highway", value = "!primary") 
 #' }
 add_osm_feature <- function (opq, key, value, key_exact = TRUE,
                              value_exact = TRUE, match_case = TRUE, bbox = NULL)
@@ -142,6 +143,8 @@ add_osm_feature <- function (opq, key, value, key_exact = TRUE,
         {
             # convert to OR'ed regex:
             value <- paste0 (value, collapse = "|")
+            if (value_exact)
+                value <- paste0 ("^(", value, ")$")
             bind <- "~"
         } else if (substring (value, 1, 1) == "!")
         {
@@ -163,7 +166,7 @@ add_osm_feature <- function (opq, key, value, key_exact = TRUE,
     opq$features <- c(opq$features, feature)
 
     if (is.null (opq$suffix))
-        opq$suffix <- ");\n(._;>);\nout body;"
+        opq$suffix <- ");\n(._;>;);\nout body;"
     #opq$suffix <- ");\n(._;>);\nout qt body;"
     # qt option is not compatible with sf because GDAL requires nodes to be
     # numerically sorted

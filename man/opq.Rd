@@ -8,12 +8,14 @@ opq(bbox = NULL, timeout = 25, memsize)
 }
 \arguments{
 \item{bbox}{Either (i) four numeric values specifying the maximal and minimal
-longitudes and latitudes; (ii) a character string passed to
-\link{getbb} to be converted to a numerical bounding box; or
-(iii) a matrix representing a bounding polygon as returned from
-\code{getbb(..., format_out = "polygon")}.}
+longitudes and latitudes, in the form \code{c(xmin, ymin, xmax, ymax)} or
+(ii) a character string in the form \code{xmin,ymin,xmax,ymax}.
+These will be passed to \link{getbb} to be converted
+to a numerical bounding box.
+Can also be (iii) a matrix representing a bounding polygon
+as returned from \code{getbb(..., format_out = "polygon")}.}
 
-\item{timeout}{It may be necessary to ncrease this value for large queries,
+\item{timeout}{It may be necessary to increase this value for large queries,
 because the server may time out before all data are delivered.}
 
 \item{memsize}{The default memory size for the 'overpass' server in
@@ -31,7 +33,7 @@ See
 \url{https://wiki.openstreetmap.org/wiki/Overpass_API#Resource_management_options_.28osm-script.29}
 for explanation of \code{timeout} and \code{memsize} (or \code{maxsize} in
 overpass terms). Note in particular the comment that queries with arbitrarily
-large \code{memsize} are likely to be rejeted.
+large \code{memsize} are likely to be rejected.
 }
 \examples{
 \dontrun{
