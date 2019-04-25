@@ -42,7 +42,7 @@ c ("4wd only", "abandoned", "abutters", "access", "addr", "addr:city")
 #  bb_poly = getbb(place_name = "london", format_out = "polygon")
 
 ## ----trim-osmdata, eval = FALSE------------------------------------------
-#  bb <- getbb ('greater london uk', format_out = 'polygon')
+#  bb <- getbb ('london uk', format_out = 'polygon')
 #  x <- opq(bbox = bb) %>%
 #      add_osm_feature(key = 'highway', value = 'motorway') %>%
 #      osmdata_sf () %>%

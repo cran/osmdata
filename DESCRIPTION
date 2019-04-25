@@ -1,5 +1,5 @@
 Package: osmdata
-Version: 0.0.10
+Version: 0.1.0
 Authors@R: c(
     person("Mark", "Padgham", email="mark.padgham@email.com", role=c("aut", "cre")),
     person("Bob", "Rudis", role="aut"),
@@ -26,7 +26,8 @@ NeedsCompilation: yes
 LazyData: true
 Imports: curl, httr, lubridate, magrittr, methods, Rcpp (>= 0.12.4),
         rvest, jsonlite, sp, tibble, utils, xml2
-Suggests: devtools, knitr, pkgdown, rmarkdown, roxygen2, sf, testthat
+Suggests: devtools, knitr, pkgdown, raster, rmarkdown, roxygen2, sf,
+        testthat
 LinkingTo: Rcpp
 URL: https://github.com/ropensci/osmdata
 BugReports: https://github.com/ropensci/osmdata/issues
@@ -37,7 +38,7 @@ X-schema.org-applicationCategory: Data Access
 X-schema.org-keywords: open0street0map, openstreetmap, overpass0API,
         OSM
 X-schema.org-isPartOf: https://ropensci.org
-Packaged: 2019-03-21 14:35:46 UTC; markus
+Packaged: 2019-04-25 11:03:35 UTC; markus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
@@ -48,4 +49,4 @@ Author: Mark Padgham [aut, cre],
   Finkelstein Noam [ctb, cph] (Author of included stub.R code),
   Bartnik Lukasz [ctb, cph] (Author of included stub.R code)
 Repository: CRAN
-Date/Publication: 2019-03-21 15:20:03 UTC
+Date/Publication: 2019-04-25 11:30:02 UTC

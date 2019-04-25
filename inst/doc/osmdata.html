@@ -12,7 +12,7 @@
 <meta name="author" content="Mark Padgham" />
 <meta name="author" content="Robin Lovelace" />
 
-<meta name="date" content="2019-03-21" />
+<meta name="date" content="2019-04-25" />
 
 <title>1. osmdata</title>
 
@@ -1564,7 +1564,7 @@ div.tocify {
 <h1 class="title toc-ignore">1. osmdata</h1>
 <h4 class="author">Mark Padgham</h4>
 <h4 class="author">Robin Lovelace</h4>
-<h4 class="date">2019-03-21</h4>
+<h4 class="date">2019-04-25</h4>
 
 </div>
 
@@ -1607,7 +1607,7 @@ q &lt;- opq(bbox = bb)</code></pre>
 bb_poly = getbb(place_name = &quot;london&quot;, format_out = &quot;polygon&quot;)</code></pre>
 <p>The <a href="www.overpass-api.de"><code>overpass API</code></a> only accepts simple rectangular bounding boxes, and so data requested with a bounding polygon will actually be all data within the corresponding rectangular bounding box, but such data may be subsequently trimmed to within the polygon with the <code>trim_osmdata()</code> function, demonstrated in the code immediately below.</p>
 <p>All highways from within the polygonal boundary of Greater London can be extracted with,</p>
-<pre class="r"><code>bb &lt;- getbb (&#39;greater london uk&#39;, format_out = &#39;polygon&#39;)
+<pre class="r"><code>bb &lt;- getbb (&#39;london uk&#39;, format_out = &#39;polygon&#39;)
 x &lt;- opq(bbox = bb) %&gt;%
     add_osm_feature(key = &#39;highway&#39;, value = &#39;motorway&#39;) %&gt;%
     osmdata_sf () %&gt;%
