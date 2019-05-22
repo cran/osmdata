@@ -1,3 +1,9 @@
+0.1.1
+===================
+
+Minor changes:
+- bug fix in `trim_osmdata` function
+
 0.1.0
 ===================
 

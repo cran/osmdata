@@ -1,6 +1,6 @@
-055fbdb109385d94b26bf882e1fda1d8 *DESCRIPTION
+d6925f73c6d6a6bd859242cbe140faaf *DESCRIPTION
 f60aee3b9edc9ff2340f4d3fe5c2b18b *NAMESPACE
-ef3c95ed6db66f4fa1ee1c326b1fe7a3 *NEWS.md
+59f2a4e93541bdb0e08cc01259f99807 *NEWS.md
 8c3d5b44f7af948e66dc727d02cfe523 *R/RcppExports.R
 5b1375f63e9e0909c32a301b2ff54f03 *R/elevation.R
 8c34fa70d02bc5367ffa344beb57a543 *R/features.R
@@ -13,7 +13,7 @@ cce31a0369a776cbecaae5bb4b01f77a *R/osmdata-methods.R
 9b833b603f7565b5dc03a048a8ace1c5 *R/osmdata-package.R
 eca143b5045e266168a55bfe4ac15143 *R/overpass-query.R
 5cea9132fa4619259b1ad0efab810370 *R/poly2line.R
-689bf7a2e32787dacf097d1c0f1092fa *R/trim-osmdata.R
+27ea6575c8c3ae740e3841e08a05c93c *R/trim-osmdata.R
 de8fe9b6b1e406a8d56b2427f6727a7b *R/unique-osmdata.R
 1941c3963cc9083832229af8b7113193 *R/zzz.R
 0bfe96a29eb3477bbb88a45cd43ab9fb *build/vignette.rds
@@ -21,13 +21,13 @@ fa18128de2fd0d8337a2249f71575aed *cleanup
 01dae3dfab9b1cbb035cd129e1d81c94 *inst/CITATION
 56a8ebc59d1ed8798436581b7c645eb2 *inst/doc/osm-sf-translation.R
 9d5e2cf8788ba265e5b16921140a5656 *inst/doc/osm-sf-translation.Rmd
-3e77468091aaba88339d1c5a68312dc0 *inst/doc/osm-sf-translation.html
+5623fb6bbf78c0fb3e4aad083e9f18a0 *inst/doc/osm-sf-translation.html
 b94d755a1324ae96871294be11934e1d *inst/doc/osmdata-sc.R
 63008b3dc13faff36c35fea2fc951b2c *inst/doc/osmdata-sc.Rmd
-38b110bfdc4b005e468dd1cbf56c7b8d *inst/doc/osmdata-sc.html
+3eb2d2ede5079f02f1f8353cb2ab611e *inst/doc/osmdata-sc.html
 37fbb1c5294583a7fb337df64c346874 *inst/doc/osmdata.R
 a5e73a95b8ad6eda8c76301277d75e1c *inst/doc/osmdata.Rmd
-e49899be0742148e6a9aec868e94faa8 *inst/doc/osmdata.html
+60d5accec63c12e79605b0651b90f735 *inst/doc/osmdata.html
 9c4851d1fefef7402efbfc3660a96a23 *man/add_osm_feature.Rd
 ab55a4e6fae299ba77add1951c7e3d63 *man/available_features.Rd
 ca2d6f1c4b1cb844204b29d5800b1cb3 *man/available_tags.Rd
