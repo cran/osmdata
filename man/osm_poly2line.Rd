@@ -10,18 +10,18 @@ osm_poly2line(osmdat)
 \item{osmdat}{An \link{osmdata} object.}
 }
 \value{
-Modified version of same object with all \code{$osm_polygons}
-objeccts merged into \code{$osm_lines}.
+Modified version of same object with all \code{osm_polygons}
+objeccts merged into \code{osm_lines}.
 }
 \description{
 Street networks downloaded with \code{add_osm_object(key = "highway")} will
-store any circular highways in \code{$osm_polygons}. this function combines
-those with the \code{$osm_lines} component to yield a single \pkg{sf}
+store any circular highways in \code{osm_polygons}. this function combines
+those with the \code{osm_lines} component to yield a single \pkg{sf}
 \code{data.frame} of all highways, whether polygonal or not.
 }
 \note{
-The \code{$osm_polygons} field is retained, with those features also
-repeated as \code{LINESTRING} objects in \code{$osm_lines}.
+The \code{osm_polygons} field is retained, with those features also
+repeated as \code{LINESTRING} objects in \code{osm_lines}.
 }
 \examples{
 \dontrun{

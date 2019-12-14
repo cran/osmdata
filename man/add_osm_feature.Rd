@@ -5,11 +5,25 @@
 \alias{add_feature}
 \title{Add a feature to an Overpass query}
 \usage{
-add_osm_feature(opq, key, value, key_exact = TRUE, value_exact = TRUE,
-  match_case = TRUE, bbox = NULL)
+add_osm_feature(
+  opq,
+  key,
+  value,
+  key_exact = TRUE,
+  value_exact = TRUE,
+  match_case = TRUE,
+  bbox = NULL
+)
 
-add_feature(opq, key, value, key_exact = TRUE, value_exact = TRUE,
-  match_case = TRUE, bbox = NULL)
+add_feature(
+  opq,
+  key,
+  value,
+  key_exact = TRUE,
+  value_exact = TRUE,
+  match_case = TRUE,
+  bbox = NULL
+)
 }
 \arguments{
 \item{opq}{An \code{overpass_query} object}
@@ -42,7 +56,7 @@ Add a feature to an Overpass query
 reasonably well defined set of possible keys, as returned by
 \link{available_features}. Setting \code{key_exact = FALSE} allows matching
 of regular expressions on OSM keys, as described in Section 6.1.5 of
-\url{http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL}. The actual
+\url{https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL}. The actual
 query submitted to the overpass API can be obtained from
 \link{opq_string}.
 
@@ -53,19 +67,19 @@ query submitted to the overpass API can be obtained from
 q <- opq ("portsmouth usa") \%>\%
                 add_osm_feature(key = "amenity",
                                 value = "restaurant") \%>\%
-                add_osm_feature(key = "amenity", value = "pub") 
+                add_osm_feature(key = "amenity", value = "pub")
 osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
 q1 <- opq ("portsmouth usa") \%>\%
                 add_osm_feature(key = "amenity",
-                                value = "restaurant") 
+                                value = "restaurant")
 q2 <- opq ("portsmouth usa") \%>\%
-                add_osm_feature(key = "amenity", value = "pub") 
-c (osmdata_sf (q1), osmdata_sf (q2)) # all objects that are restaurants OR pubs
+                add_osm_feature(key = "amenity", value = "pub")
+c (osmdata_sf (q1), osmdata_sf (q2)) # all restaurants OR pubs
 # Use of negation to extract all non-primary highways
 q <- opq ("portsmouth uk") \%>\%
-        add_osm_feature (key = "highway", value = "!primary") 
+        add_osm_feature (key = "highway", value = "!primary")
 }
 }
 \references{
-\url{http://wiki.openstreetmap.org/wiki/Map_Features}
+\url{https://wiki.openstreetmap.org/wiki/Map_Features}
 }

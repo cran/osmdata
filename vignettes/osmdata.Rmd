@@ -20,14 +20,14 @@ vignette: >
 ## 1. Introduction
 
 `osmdata` is an R package for downloading and using data from OpenStreetMap
-([OSM](www.openstreetmap.org/)).  OSM is a global open access mapping project,
+([OSM](https://www.openstreetmap.org/)).  OSM is a global open access mapping project,
 which is free and open under the 
-[ODbL licence](http://www.openstreetmap.org/copyright) [@OpenStreetMap].  This
+[ODbL licence](https://www.openstreetmap.org/copyright) [@OpenStreetMap].  This
 has many benefits, ensuring transparent data provenance and ownership, enabling
 real-time evolution of the database and, by allowing anyone to contribute,
 encouraging democratic decision making and citizen science
 [@johnson_models_2017].  See the 
-[OSM wiki](http://wiki.openstreetmap.org/wiki/Contribute_map_data) to find out
+[OSM wiki](https://wiki.openstreetmap.org/wiki/Contribute_map_data) to find out
 how to contribute to the world's open geographical data commons. 
 
 Unlike the [`OpenStreetMap`](https://cran.r-project.org/package=OpenStreetMap)
@@ -49,7 +49,8 @@ package using the following command:
 remotes::install_github('ropensci/osmdata')
 ```
 
-`osmdata` uses the [`overpass` API](http://overpass-api.de) to download
+`osmdata` uses the [`overpass` API](https://overpass-api.de) to download
+
 OpenStreetMap (OSM) data and can convert the results to a variety of formats,
 including both Simple Features (typically of class `sf`) and Spatial objects
 (e.g. `SpatialPointsDataFrame`), as defined by the packages
@@ -114,7 +115,7 @@ strings. As illustrated in the above example, the `opq()` function also accepts
 character strings, which are simply passed directly to `getbb()` to convert them
 to rectangular bounding boxes.
 ```{r opq2, eval = FALSE}
-bb = getbb('Greater London, U.K.')
+bb <- getbb('Greater London, U.K.')
 q <- opq(bbox = bb)
 ```
 
@@ -128,10 +129,10 @@ identical(q, opq(bbox = 'greater london uk'))
 Note also that `getbb()` can return a data frame reporting multiple matches or
 matrices representing bounding polygons of matches:
 ```{r, eval=FALSE}
-bb_df = getbb(place_name = "london", format_out = "data.frame")
-bb_poly = getbb(place_name = "london", format_out = "polygon")
+bb_df <- getbb(place_name = "london", format_out = "data.frame")
+bb_poly <- getbb(place_name = "london", format_out = "polygon")
 ```
-The [`overpass API`](www.overpass-api.de) only accepts simple rectangular
+The [`overpass API`](https://www.overpass-api.de) only accepts simple rectangular
 bounding boxes, and so data requested with a bounding polygon will actually be
 all data within the corresponding rectangular bounding box, but such data may be
 subsequently trimmed to within the polygon with the `trim_osmdata()` function,
@@ -158,8 +159,8 @@ for more details.
 ## 2. The overpass API
 
 As mentioned, `osmdata` obtains OSM data from the 
-[`overpass API`](www.overpass-api.de), 
-[which is](http://wiki.openstreetmap.org/wiki/Overpass_API)
+[`overpass API`](https://www.overpass-api.de), 
+[which is](https://wiki.openstreetmap.org/wiki/Overpass_API)
 
 > a read-only API that serves up custom selected parts of the OSM map data.
 
@@ -173,25 +174,25 @@ below](#query-example).
 understanding of the `overpass` query syntax, although it is still possible to
 submit arbitrarily complex `overpass`  queries via `osmdata`.  An excellent
 place to explore `overpass` queries specifically and OSM data in general is the 
-online interactive query builder at [overpass-turbo](http://overpass-turbo.eu/),
+online interactive query builder at [overpass-turbo](https://overpass-turbo.eu/),
 which includes a helpful corrector function for incorrectly formatted queries.
 Examples of its functionality in action can be found on the 
-[OpenStreetMap wiki](http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_API_by_Example),
+[OpenStreetMap wiki](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_API_by_Example),
 with full details of the `overpass`
 query language given in the 
-[Query Language Guide](http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL) 
+[Query Language Guide](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL) 
 as well as the 
-[overpass API Language Guide](http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide).
+[overpass API Language Guide](https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide).
 
 By default, `osmdata` sends queries to one of the four main [`overpass` server
 instances](https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances),
-such as `http://overpass-api.de/api/interpreter` but other servers listed on the
+such as `https://overpass-api.de/api/interpreter` but other servers listed on the
 page linked to above can be used, thanks to functions that *get* and *set* the
 base url:
 
 ```{r}
 get_overpass_url()
-new_url <- "http://overpass.openstreetmap.ie/api/interpreter"
+new_url <- "https://overpass.openstreetmap.ie/api/interpreter"
 ```
 
 ```{r, eval=FALSE}
@@ -209,10 +210,10 @@ opq_string(q)
 ##   node
 ##     ["highway"="motorway"]
 ##     (51.2867602,-0.510375,51.6918741,0.3340155);
-##   way  
+##   way
 ##     ["highway"="motorway"]
 ##     (51.2867602,-0.510375,51.6918741,0.3340155);
-##   relation  
+##   relation
 ##     ["highway"="motorway"]
 ##     (51.2867602,-0.510375,51.6918741,0.3340155);
 ## );
@@ -220,7 +221,7 @@ opq_string(q)
 ```
 
 The resultant output may be pasted directly into the 
-[overpass-turbo](http://overpass-turbo.eu/) online interactive query builder.
+[overpass-turbo](https://overpass-turbo.eu/) online interactive query builder.
 (The output of `opq_string` has been somewhat reformatted here to reflect
 the format typically used in `overpass-turbo`.)
 
@@ -228,7 +229,7 @@ the format typically used in `overpass-turbo`.)
 
 As demonstrated above, an `osmdata` query begins by specifying a bounding box
 with the function `opq()`, followed by specifying desired OSM features with
-`add_feature()`.  
+`add_osm_feature()`.  
 
 ```{r kunming1, eval = FALSE}
 q <- opq(bbox = 'Kunming, China') %>%
@@ -308,10 +309,6 @@ And there are, for example, the considerably lower number of 2,029 points
 describing objects in Kunming that are **both** natural waterbodies **and** that
 include 'Dian' in their English name.
 
-Each successive feature added with `add_feature()` is added to previous
-features, so, for example, extending the previous query by an additional
-`key-value` pair to:
-
 Both `key` and `value` fields may be matched either exactly or approximately.
 The previous query is repeated here for convenience:
 ```{r kunming4, eval = FALSE}
@@ -320,7 +317,7 @@ q <- opq(bbox = 'Kunming, China') %>%
     add_osm_feature(key = 'name:en', value = 'Dian', value_exact = FALSE)
 ```
 
-In addtion to `value_exact`, `add_osm_feature` also offers the additional two
+In addition to `value_exact`, `add_osm_feature` also offers the additional two
 options of `key_exact` and `match_case`. The former functions just like
 `value_exact`, but is applied to the specified `key` parameter, while
 `match_case` (default `TRUE`) specifies whether case should also be matched.
@@ -338,7 +335,7 @@ The primary `osmdata` functions `osmdata_sf()` or `osmdata_sp()` pass these
 queries to `overpass` and return OSM data in corresponding `sf` or `sp` format,
 respectively.  Both of these functions also accept direct `overpass` queries,
 such as those produced by the `osmdata` function `opq_string()`, or copied
-directly from the [`overpass-turbo` query builder](overpass-turbo.eu).
+directly from the [`overpass-turbo` query builder](https://overpass-turbo.eu).
 
 ```{r, eval=FALSE}
 osmdata_sf(opq_string(q))
@@ -373,7 +370,7 @@ lots_of_data <- osmdata_sf(q)
 ```
 
 Queries are, however, usually more useful when refined through using
-`add_feature()`, which minimally requires a single `key` and returns all objects
+`add_osm_feature()`, which minimally requires a single `key` and returns all objects
 specifying any value for that `key`: 
 
 ```{r opq-london, eval = FALSE}
@@ -408,9 +405,9 @@ cycleways or those which are bridges. Combining these into one query will return
 only those that are designated cycleways **AND** that are bridges:
 
 ```{r des-bike1, eval=FALSE}
-q2 <- add_feature(q1, key = 'bicycle', value = 'designated')
+q2 <- add_osm_feature(q1, key = 'bicycle', value = 'designated')
 des_bike <- osmdata_sf(q2)
-q3 <- add_feature(q2, key = 'bridge', value = 'yes')
+q3 <- add_osm_feature(q2, key = 'bridge', value = 'yes')
 des_bike_and_bridge <- osmdata_sf(q3)
 nrow(des_bike_and_bridge$osm_points); nrow(des_bike_and_bridge$osm_lines)
 ## [1] 7
@@ -422,7 +419,7 @@ can be obtained through simply combining multiple `osmdata` objects with the `c`
 operator:
 
 ```{r, des-bike2, eval=FALSE}
-q4 <- add_feature(q1, key = 'bridge', value = 'yes')
+q4 <- add_osm_feature(q1, key = 'bridge', value = 'yes')
 bridge <- osmdata_sf(q4)
 des_bike_or_bridge <- c(des_bike, bridge)
 nrow(des_bike_or_bridge$osm_points); nrow(des_bike_or_bridge$osm_lines)
@@ -462,8 +459,8 @@ As the results show, all `osmdata` objects should contain:
 - The spatial data, consisting of `osm_points`, `osm_lines`, `osm_polygons`,
   `osm_multilines` and `osm_multipolygons`.
 
- hese some or all of these can be empty: the example printed above contains only
- points and linesThe more complex features of `osm_multilines` and
+ Some or all of these can be empty: the example printed above contains only
+ points and lines. The more complex features of `osm_multilines` and
  `osm_multipolygons` refer to OSM relations than contain multiple lines and
  polygons.
 
@@ -527,17 +524,17 @@ The first few lines of the XML data downloaded above look like this:
 
 ```{r, eval=FALSE}
 readLines('buildings.osm')[1:6]
-## [1] "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"                                                                             
-## [2] "<osm version=\"0.6\" generator=\"Overpass API\">"                                                                       
+## [1] "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+## [2] "<osm version=\"0.6\" generator=\"Overpass API\">"
 ## [3] "  <note>The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.</note>"
-## [4] "  <meta osm_base=\"2017-03-07T09:28:03Z\"/>"                                                                            
-## [5] "  <node id=\"21593231\" lat=\"51.5149566\" lon=\"-0.1134203\"/>"                                            
-## [6] "  <node id=\"25378129\" lat=\"51.5135870\" lon=\"-0.1115193\"/>"                                                        
+## [4] "  <meta osm_base=\"2017-03-07T09:28:03Z\"/>"
+## [5] "  <node id=\"21593231\" lat=\"51.5149566\" lon=\"-0.1134203\"/>"
+## [6] "  <node id=\"25378129\" lat=\"51.5135870\" lon=\"-0.1115193\"/>"
 ```
 
 These data can be used in any other programs able to read and process XML data,
-such as the open source GIS [QGIS](http://qgis.org/en/site/) or the OSM data
-editor [JOSM](http://wiki.openstreetmap.org/wiki/JOSM).  The remainder of this
+such as the open source GIS [QGIS](https://qgis.org/en/site/) or the OSM data
+editor [JOSM](https://wiki.openstreetmap.org/wiki/JOSM).  The remainder of this
 vignette assumes that not only do you want to get OSM data using R, you also
 want to import and eventually process it, using R. For that you'll need to
 import the data into a native R class.
@@ -554,18 +551,18 @@ dat_sf <- osmdata_sf(q, 'buildings.osm')
 ### 3.2. The `osmdata_sf()` function
 
 `osmdata_sf()` returns OSM data in 
-[Simple Features (SF)](http://www.opengeospatial.org/standards/sfo) 
+[Simple Features (SF)](https://www.opengeospatial.org/standards/sfo) 
 format, defined by the
-[Open Geospatial Consortium](http://www.opengeospatial.org), and implemented in
+[Open Geospatial Consortium](https://www.opengeospatial.org), and implemented in
 the `R` package [`sf`](https://cran.r-project.org/package=sf). This package
 provides a direct interface to the `C++` 
-[Graphical Data Abstraction Library (GDAL)](http://gdal.org) which also includes
-a so-called ['driver' for OSM data](http://www.gdal.org/drv_osm.html). This
+[Graphical Data Abstraction Library (GDAL)](https://gdal.org) which also includes
+a so-called ['driver' for OSM data](https://www.gdal.org/drv_osm.html). This
 means that OSM data may also be read directly with `sf`, rather than using
 `osmdata`. In this case, data must first be saved to disk, which can 
 be readily achieved using `osmdata_xml()` described above, or through
 downloading directly from the [overpass interactive query
-builder](http://overpass-turbo.eu). 
+builder](https://overpass-turbo.eu). 
 
 The following example is based on this query:
 
@@ -653,20 +650,20 @@ extracts only a restricted list of OSM `keys`, whereas `osmdata` returns all
 
 ```{r, eval=FALSE}
 names(sf::st_read('trentham.osm', layer = 'points', quiet = TRUE)) # the keys
-## [1] "osm_id"     "name"       "barrier"    "highway"   
-## [5] "ref"        "address"    "is_in"      "place"     
-## [9] "man_made"   "other_tags" "geometry"  
+## [1] "osm_id"     "name"       "barrier"    "highway"
+## [5] "ref"        "address"    "is_in"      "place"
+## [9] "man_made"   "other_tags" "geometry"
 ```
 
 ```{r, eval=FALSE}
 names(osmdata_sf(q, 'trentham.osm')$osm_points)
-## [1] "osm_id"           "name"             "X_description_"   "X_waypoint_"     
-## [5] "addr.city"        "addr.housenumber" "addr.postcode"    "addr.street"     
-## [9] "amenity"          "barrier"          "denomination"     "foot"            
-## [13] "ford"             "highway"          "leisure"          "note_1"          
+## [1] "osm_id"           "name"             "X_description_"   "X_waypoint_"
+## [5] "addr.city"        "addr.housenumber" "addr.postcode"    "addr.street"
+## [9] "amenity"          "barrier"          "denomination"     "foot"
+## [13] "ford"             "highway"          "leisure"          "note_1"
 ## [17] "phone"            "place"            "railway"          "railway.historic"
-## [21] "ref"              "religion"         "shop"             "source"          
-## [25] "tourism"          "waterway"         "geometry" 
+## [21] "ref"              "religion"         "shop"             "source"
+## [25] "tourism"          "waterway"         "geometry"
 ```
 
 `key` fields which are not specified in a given set of OSM data are not returned
@@ -879,7 +876,7 @@ detail provided in the help files for each of these function.
 @eugster_osmar:_2012 describe `osmar`, an R package for handling OSM data
 that enables visualisation, search and even rudimentary routing operations.
 `osmar` is not user friendly or able to download OSM data flexibly,
-as reported in an [early tutorial](http://eprints.whiterose.ac.uk/77643/)
+as reported in an [early tutorial](https://eprints.whiterose.ac.uk/77643/)
 comparing R and QGIS for handling OSM data [@lovelace_harnessing_2014]. Note
 also that the `osmar` package does not work at present, and can not be used for
 accessing OSM data.
@@ -889,6 +886,6 @@ accessing OSM data.
 for accessing and plotting OSM data [@osmplotr]
 and `overpass`, a [GitHub package](https://github.com/hrbrmstr/overpass)
 by Bob Rudis that provides an R interface to the 
-[overpass](http://overpass-api.de/) API.
+[overpass](https://overpass-api.de/) API.
 
 ## 7. References

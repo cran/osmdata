@@ -84,11 +84,11 @@ bbox_to_string <- function(bbox) {
 #' `bb_lookup` from the github package \pkg{nominatim} package,
 #' which can be found at <https://github.com/hrbrmstr/nominatim>.
 #' 
-#' See <http://wiki.openstreetmap.org/wiki/Nominatim> for details.
+#' See <https://wiki.openstreetmap.org/wiki/Nominatim> for details.
 #' 
 #' @param place_name The name of the place you're searching for
 #' @param display_name_contains Text string to match with display_name field
-#' returned by <http://wiki.openstreetmap.org/wiki/Nominatim>
+#' returned by <https://wiki.openstreetmap.org/wiki/Nominatim>
 #' @param viewbox The bounds in which you're searching
 #' @param format_out Character string indicating output format: matrix (default),
 #' string (see [bbox_to_string()]), data.frame (all 'hits' returned
@@ -119,7 +119,7 @@ bbox_to_string <- function(bbox) {
 #' 
 #' @note Specific values of `featuretype` include "street", "city",
 #" "county", "state", and "country" (see
-#' <http://wiki.openstreetmap.org/wiki/Nominatim> for details). The default
+#' <https://wiki.openstreetmap.org/wiki/Nominatim> for details). The default
 #' `featuretype = "settlement"` combines results from all intermediate
 #' levels below "country" and above "streets". If the bounding box or polygon of
 #' a city is desired, better results will usually be obtained with
@@ -144,7 +144,7 @@ bbox_to_string <- function(bbox) {
 #' # Using an alternative service (locationiq requires an API key)
 #' key <- Sys.getenv("LOCATIONIQ") # add LOCATIONIQ=type_your_api_key_here to .Renviron
 #' if(nchar(key) ==  32) {
-#'   getbb(place_name, base_url = "http://locationiq.org/v1/search.php", key = key)
+#'   getbb(place_name, base_url = "https://locationiq.org/v1/search.php", key = key)
 #' }
 #' }
 getbb <- function(place_name,
@@ -160,15 +160,8 @@ getbb <- function(place_name,
     is_polygon <- grepl("polygon", format_out)
     query <- list (q = place_name)
     featuretype <- tolower (featuretype)
-    if (featuretype == "settlement")
-        query <- c (query, list (featuretype = "settlement"))
-    else if (featuretype %in% c ("city", "county", "state", "country"))
-    {
-        query <- c (query, list (place_name))
-        names (query) <- c ("q", featuretype)
-    } else
-        stop ("featuretype ", featuretype, " not recognised;\n",
-              "please use one of (settlement, city, county, state, country)")
+
+    query <- c (query, list (featuretype = featuretype))
 
     if (is_polygon)
         query <- c (query, list (polygon_text = 1))
@@ -184,8 +177,8 @@ getbb <- function(place_name,
     if (!silent)
         print(q_url)
 
-    res <- httr::GET (q_url)
     #res <- httr::POST(base_url, query = query, httr::timeout (100))
+    res <- httr::RETRY("POST", q_url, times = 10)
     txt <- httr::content(res, as = "text", encoding = "UTF-8",
                          type = "application/xml")
     obj <- tryCatch(expr =
@@ -194,19 +187,23 @@ getbb <- function(place_name,
                     },
                     error = function(cond)
                     {
+            # nocov start
             message(paste0("Nominatim did respond as expected ",
                            "(e.g. due to excessive use of their api).\n",
                            "Please try again or use a different base_url\n",
                            "The url that failed was:\n", q_url))
+            # nocov end
                     }
     )
 
     # Code optionally select more things stored in obj...
     if (!is.null(display_name_contains))
     {
+        # nocov start
         obj <- obj[grepl(display_name_contains, obj$display_name), ]
         if (nrow (obj) == 0)
             stop ("No locations include display name ", display_name_contains)
+        # nocov end
     }
 
     if (format_out == "data.frame") {
@@ -223,8 +220,10 @@ getbb <- function(place_name,
     else if (is_polygon)
     {
         . <- NULL # suppress R CMD check note
-        indx_multi <- which (grepl ("MULTIPOLYGON", obj$geotext))
+        indx_multi <- grep ("MULTIPOLYGON", obj$geotext)
         gt_p <- gt_mp <- NULL
+        # nocov start
+        # TODO: Test this
         if (length (indx_multi) > 0)
         {
             gt_mp <- obj$geotext [indx_multi] %>%
@@ -235,6 +234,7 @@ getbb <- function(place_name,
             for (i in indx_na)
                 gt_mp [[i]] <- NULL
         }
+        # nocov end
 
         indx <- which (!(seq (obj) %in% indx_multi))
         gt_p <- obj$geotext [indx] %>%
@@ -312,12 +312,12 @@ get1bdypoly <- function (p)
                  character (1), USE.NAMES = FALSE)
 
     ret <- list ()
-    i <- which (grepl ("\\)", p))
+    i <- grep ("\\)", p)
     while (length (i) > 0)
     {
         ret [[length (ret) + 1]] <- rm_bracket (p [1:i [1]])
         p <- p [(i [1] + 1):length (p)]
-        i <- which (grepl ("\\)", p))
+        i <- grep ("\\)", p)
     }
     ret [[length (ret) + 1]] <- rm_bracket (p)
 
@@ -342,7 +342,7 @@ get1bdypoly <- function (p)
 #' @noRd
 get1bdymultipoly <- function (p)
 {
-    p <- p [1:min (which (grepl (")", p)))]
+    p <- p [1:min (grep (")", p))]
 
     p <- vapply (p, function (i) gsub (")", "", i),
                    character (1), USE.NAMES = FALSE)

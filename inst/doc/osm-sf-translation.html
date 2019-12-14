@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Mark Padgham" />
 
-<meta name="date" content="2019-05-22" />
+<meta name="date" content="2019-12-14" />
 
 <title>3. Translation of OSM to Simple Features</title>
 
@@ -87,8 +87,6 @@ overflow: auto;
 margin-left: 2%;
 position: fixed;
 border: 1px solid #ccc;
-webkit-border-radius: 6px;
-moz-border-radius: 6px;
 border-radius: 6px;
 }
 
@@ -116,9 +114,14 @@ font-size: 12px;
 .tocify-subheader .tocify-subheader {
 text-indent: 30px;
 }
-
 .tocify-subheader .tocify-subheader .tocify-subheader {
 text-indent: 40px;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
+text-indent: 50px;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
+text-indent: 60px;
 }
 
 .tocify .tocify-item > a, .tocify .nav-list .nav-header {
@@ -522,13 +525,13 @@ float: none;
 
           item.append($("<a/>", {
 
-            "text": self.text()
+            "html": self.html()
 
           }));
 
         } else {
 
-          item.text(self.text());
+          item.html(self.html());
 
         }
 
@@ -1359,7 +1362,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -1421,6 +1423,7 @@ summary {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -1433,48 +1436,9 @@ summary {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -1488,6 +1452,12 @@ $(document).ready(function ()  {
 }
 }
 
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
 
 .toc-content {
   padding-left: 30px;
@@ -1523,8 +1493,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -1562,7 +1530,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">3. Translation of OSM to Simple Features</h1>
 <h4 class="author">Mark Padgham</h4>
-<h4 class="date">2019-05-22</h4>
+<h4 class="date">2019-12-14</h4>
 
 </div>
 
@@ -1575,7 +1543,7 @@ div.tocify {
 <li><p><code>ways</code>, which may be closed, in which case they form polygons, or unclosed, in which case they are (non-polygonal) lines.</p></li>
 <li><p><code>relations</code> which are higher-level objects used to specify relationships between collections of ways and nodes. While there are several recognised categories of <code>relations</code>, in spatial terms these may be reduced to a binary distinction between:</p>
 <ul>
-<li><p><code>multipolygon</code> relations, which specify relationships between an exterior polygon (through designating <code>role=&#39;outer&#39;</code>) and possible inner polygons (<code>role=&#39;inner&#39;</code>). These may or may not be designated with <code>type=multipolygon</code>. Political boundaries, for example, often have <code>type=boundary</code> rather than explicit <code>type-multipolygon</code>. <code>osmdata</code> identifies multioplygons as those <code>relation</code> objects having at least one member with <code>role=outer</code> or <code>role=inner</code>.</p></li>
+<li><p><code>multipolygon</code> relations, which specify relationships between an exterior polygon (through designating <code>role=&#39;outer&#39;</code>) and possible inner polygons (<code>role=&#39;inner&#39;</code>). These may or may not be designated with <code>type=multipolygon</code>. Political boundaries, for example, often have <code>type=boundary</code> rather than explicit <code>type-multipolygon</code>. <code>osmdata</code> identifies multipolygons as those <code>relation</code> objects having at least one member with <code>role=outer</code> or <code>role=inner</code>.</p></li>
 <li><p>In the absence of <code>inner</code> and <code>outer</code> roles, an OSM relation is assumed to be non-polygonal, and to instead form a collection of non-enclosing lines.</p></li>
 </ul></li>
 </ol>
@@ -1626,14 +1594,14 @@ div.tocify {
 </div>
 <div id="gdal-translation-of-osm-into-simple-features" class="section level2">
 <h2>4. <code>GDAL</code> Translation of OSM into Simple Features</h2>
-<p>The <code>R</code> package <a href="https://cran.r-project.org/package=sf"><code>sf</code></a> provide an <code>R</code> implementation of Spatial Features, and provides a wrapper around GDAL for reading geospatial data. <code>GDAL</code> provides a <a href="http://www.gdal.org/drv_osm.html">‘driver’ to read OSM data</a>, and thus <code>sf</code> can also be used to read <code>OSM</code> data in <code>R</code>, <a href="https://ropensci.github.io/osmdata/articles/osmdata.html">as detailed in the main <code>osmdata</code> vignette</a>. However, the <code>GDAL</code> translation of OSM data differs in several important ways from the <code>osmdata</code> translation.</p>
+<p>The <code>R</code> package <a href="https://cran.r-project.org/package=sf"><code>sf</code></a> provide an <code>R</code> implementation of Spatial Features, and provides a wrapper around GDAL for reading geospatial data. <code>GDAL</code> provides a <a href="http://www.gdal.org/drv_osm.html">‘driver’ to read OSM data</a>, and thus <code>sf</code> can also be used to read <code>OSM</code> data in <code>R</code>, <a href="https://docs.ropensci.org/osmdata/articles/osmdata.html">as detailed in the main <code>osmdata</code> vignette</a>. However, the <code>GDAL</code> translation of OSM data differs in several important ways from the <code>osmdata</code> translation.</p>
 <p>The primary difference is that GDAL only returns <em>unique</em> objects of each spatial (SF) type. Thus <code>sf::POINT</code> objects consist of only those points that are not otherwise members of some ‘higher’ object (<code>line</code>, <code>polygon</code>, or <code>relation</code> objects). Although a given set of OSM data may actually contain a great many points, attempting to load these with</p>
 <pre class="r"><code>sf::st_read (file, layer = &#39;points&#39;)</code></pre>
 <p>will generally return surprisingly few points.</p>
 <div id="osm-nodes-1" class="section level3">
 <h3>4.1. OSM Nodes</h3>
 <p>Apart from the numerical difference arising through <code>osmdata</code> returning an <code>sf::POINTS</code> structure containing <strong>all</strong> nodes within a given set of OSM data, while <code>sf::st_read (file, layer=&#39;points&#39;)</code> returns only those points not represented in other structure, the representation of points remains otherwise broadly similar. The only other major difference is that <code>osmdata</code> retains all <code>key-value</code> pairs present in a given set of OSM data, whereas <code>GDAL/sf</code> only retains a select few of these. Moreover, the <code>keys</code> returned by <code>GDAL/sf</code> are pre-defined and invariant, meaning that data returned from <code>sf::st_read (...)</code> may often contain <code>key</code> columns in the resultant <code>data.frame</code> which contain no (non-<code>NA</code>) data. This difference is illustrated in an example repeated here from the<br />
-<a href="https://ropensci.github.io/osmdata/articles/osmdata.html">main <code>osmdata</code> vignette</a>, with the same principles applying to all of the following classes of OSM data.</p>
+<a href="https://docs.ropensci.org/osmdata/articles/osmdata.html">main <code>osmdata</code> vignette</a>, with the same principles applying to all of the following classes of OSM data.</p>
 <p>The following three lines define a query and download the resultant data to an <code>XML</code> file.</p>
 <pre class="r"><code>q &lt;- opq (bbox = &#39;Trentham, Australia&#39;)
 q &lt;- add_osm_feature (q, key = &#39;name&#39;) # any named objects
@@ -1644,14 +1612,12 @@ osmdata_xml (q, &#39;trentham.osm&#39;)</code></pre>
 ##  [6] &quot;address&quot;    &quot;is_in&quot;      &quot;place&quot;      &quot;man_made&quot;   &quot;other_tags&quot;
 ## [11] &quot;geometry&quot;</code></pre>
 <pre class="r"><code>names (osmdata_sf (q, &#39;trentham.osm&#39;)$osm_points)</code></pre>
-<pre><code>##  [1] &quot;osm_id&quot;           &quot;name&quot;             &quot;X_description_&quot;  
-##  [4] &quot;X_waypoint_&quot;      &quot;addr.city&quot;        &quot;addr.housenumber&quot;
-##  [7] &quot;addr.postcode&quot;    &quot;addr.street&quot;      &quot;amenity&quot;         
-## [10] &quot;barrier&quot;          &quot;denomination&quot;     &quot;foot&quot;            
-## [13] &quot;ford&quot;             &quot;highway&quot;          &quot;leisure&quot;         
-## [16] &quot;note_1&quot;           &quot;phone&quot;            &quot;place&quot;           
-## [19] &quot;railway&quot;          &quot;railway.historic&quot; &quot;ref&quot;             
-## [22] &quot;religion&quot;         &quot;shop&quot;             &quot;source&quot;          
+<pre><code>##  [1] &quot;osm_id&quot;           &quot;name&quot;             &quot;X_description_&quot;   &quot;X_waypoint_&quot;     
+##  [5] &quot;addr.city&quot;        &quot;addr.housenumber&quot; &quot;addr.postcode&quot;    &quot;addr.street&quot;     
+##  [9] &quot;amenity&quot;          &quot;barrier&quot;          &quot;denomination&quot;     &quot;foot&quot;            
+## [13] &quot;ford&quot;             &quot;highway&quot;          &quot;leisure&quot;          &quot;note_1&quot;          
+## [17] &quot;phone&quot;            &quot;place&quot;            &quot;railway&quot;          &quot;railway.historic&quot;
+## [21] &quot;ref&quot;              &quot;religion&quot;         &quot;shop&quot;             &quot;source&quot;          
 ## [25] &quot;tourism&quot;          &quot;waterway&quot;         &quot;geometry&quot;</code></pre>
 <p><code>osmdata</code> returns far more <code>key</code> fields than does <code>GDAL/sf</code>. More importantly, however, <code>GDAL/sf</code> returns pre-defined <code>key</code> fields regardless of whether they contain any data:</p>
 <pre class="r"><code>addr &lt;- sf::st_read (&#39;trentham.osm&#39;, layer = &#39;points&#39;, quiet = TRUE)$address
@@ -1661,7 +1627,7 @@ all (is.na (addr))</code></pre>
 </div>
 <div id="osm-ways-1" class="section level3">
 <h3>4.2. OSM Ways</h3>
-<p>As for points, <code>GDAL/sf</code> only returns those ways that are not represented or contained in ‘higher’ objects (OSM relations interpreted as <code>SF::MULTIPOLYGON</code> or <code>SF::MULTILINESTRING</code> objects). <code>osmdata</code> returns all ways, and thus enables, for example, examination of the full attributes of any member of a multigeometry object. This is not possible with the <code>GDAL/sf</code> translation. As for points, the only additional difference between <code>osmdata</code> adn <code>GDAL/sf</code> is that <code>osmdata</code> retains all <code>key-value</code> pairs, whereas <code>GDAL</code> retains only a select few.</p>
+<p>As for points, <code>GDAL/sf</code> only returns those ways that are not represented or contained in ‘higher’ objects (OSM relations interpreted as <code>SF::MULTIPOLYGON</code> or <code>SF::MULTILINESTRING</code> objects). <code>osmdata</code> returns all ways, and thus enables, for example, examination of the full attributes of any member of a multigeometry object. This is not possible with the <code>GDAL/sf</code> translation. As for points, the only additional difference between <code>osmdata</code> and <code>GDAL/sf</code> is that <code>osmdata</code> retains all <code>key-value</code> pairs, whereas <code>GDAL</code> retains only a select few.</p>
 </div>
 <div id="osm-relations-1" class="section level3">
 <h3>4.3 OSM Relations</h3>
@@ -1717,6 +1683,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

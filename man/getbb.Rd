@@ -4,17 +4,24 @@
 \alias{getbb}
 \title{Get bounding box for a given place name}
 \usage{
-getbb(place_name, display_name_contains = NULL, viewbox = NULL,
+getbb(
+  place_name,
+  display_name_contains = NULL,
+  viewbox = NULL,
   format_out = "matrix",
   base_url = "https://nominatim.openstreetmap.org",
-  featuretype = "settlement", limit = 10, key = NULL,
-  silent = TRUE, poly_num = c(1, 1))
+  featuretype = "settlement",
+  limit = 10,
+  key = NULL,
+  silent = TRUE,
+  poly_num = c(1, 1)
+)
 }
 \arguments{
 \item{place_name}{The name of the place you're searching for}
 
 \item{display_name_contains}{Text string to match with display_name field
-returned by \url{http://wiki.openstreetmap.org/wiki/Nominatim}}
+returned by \url{https://wiki.openstreetmap.org/wiki/Nominatim}}
 
 \item{viewbox}{The bounds in which you're searching}
 
@@ -63,11 +70,11 @@ It was inspired by the functions
 \code{bb_lookup} from the github package \pkg{nominatim} package,
 which can be found at \url{https://github.com/hrbrmstr/nominatim}.
 
-See \url{http://wiki.openstreetmap.org/wiki/Nominatim} for details.
+See \url{https://wiki.openstreetmap.org/wiki/Nominatim} for details.
 }
 \note{
 Specific values of \code{featuretype} include "street", "city",
-\url{http://wiki.openstreetmap.org/wiki/Nominatim} for details). The default
+\url{https://wiki.openstreetmap.org/wiki/Nominatim} for details). The default
 \code{featuretype = "settlement"} combines results from all intermediate
 levels below "country" and above "streets". If the bounding box or polygon of
 a city is desired, better results will usually be obtained with
@@ -90,7 +97,7 @@ getbb("accra", format_out = "sf_polygon") # rectangular bb
 # Using an alternative service (locationiq requires an API key)
 key <- Sys.getenv("LOCATIONIQ") # add LOCATIONIQ=type_your_api_key_here to .Renviron
 if(nchar(key) ==  32) {
-  getbb(place_name, base_url = "http://locationiq.org/v1/search.php", key = key)
+  getbb(place_name, base_url = "https://locationiq.org/v1/search.php", key = key)
 }
 }
 }

@@ -3,7 +3,7 @@
 #' @return character vector of all known features
 #'
 #' @note requires internet access
-#' @references <http://wiki.openstreetmap.org/wiki/Map_Features>
+#' @references <https://wiki.openstreetmap.org/wiki/Map_Features>
 #'
 #' @export
 #'
@@ -13,7 +13,7 @@
 #' }
 available_features <- function() {
 
-    url_ftrs <- "http://wiki.openstreetmap.org/wiki/Map_Features"
+    url_ftrs <- "https://wiki.openstreetmap.org/wiki/Map_Features"
     if (curl::has_internet ())
     {
         pg <- xml2::read_html (httr::GET (url_ftrs))
@@ -32,7 +32,7 @@ available_features <- function() {
 #' @return character vector of all known tags for a feature
 #'
 #' @note requires internet access
-#' @references <http://wiki.openstreetmap.org/wiki/Map_Features>
+#' @references <https://wiki.openstreetmap.org/wiki/Map_Features>
 #'
 #' @export
 #'
@@ -41,7 +41,7 @@ available_features <- function() {
 #' available_tags("aerialway")
 #' }
 available_tags <- function(feature) {
-    url_ftrs <- "http://wiki.openstreetmap.org/wiki/Map_Features"
+    url_ftrs <- "https://wiki.openstreetmap.org/wiki/Map_Features"
 
     if (curl::has_internet ())
     {
@@ -49,10 +49,14 @@ available_tags <- function(feature) {
             stop ("Please specify feature")
 
         pg <- xml2::read_html (httr::GET (url_ftrs))
-        tags <- xml2::xml_attr (rvest::html_nodes (pg,
-                           sprintf("a[title^='Tag:%s']", feature)), "title")
-        unique (sort (gsub (sprintf ("Tag:%s=", feature), "",
-                            tags, fixed = TRUE)))
+        #tags <- xml2::xml_attr (rvest::html_nodes (pg,
+        #                   sprintf("a[title^='Tag:%s']", feature)), "title")
+        #unique (sort (gsub (sprintf ("Tag:%s=", feature), "",
+        #                    tags, fixed = TRUE)))
+        tags <- rvest::html_nodes (pg, sprintf("a[title^='Tag:%s']", feature))
+        tags <- vapply (strsplit (xml2::xml_attr (tags, "href"), "%3D"),
+                        function (i) i [2], character (1))
+        unique (sort (tags))
     } else {
         message ("No internet connection")
     }

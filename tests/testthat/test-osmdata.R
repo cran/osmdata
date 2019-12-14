@@ -62,6 +62,18 @@ test_that ('query-construction', {
                                        key_exact = FALSE, value_exact = FALSE))
           })
 
+test_that ("add feature", {
+    qry <- opq (bbox = c(-0.118, 51.514, -0.115, 51.517))
+    qry1 <- add_osm_feature (qry, key = 'highway')
+    qry2 <- add_osm_feature (qry, key = 'highway', value = "primary")
+    qry3 <- add_osm_feature (qry, key = 'highway',
+                             value = c ("primary", "tertiary"))
+    expect_identical (qry1$features, " [\"highway\"]")
+    expect_identical (qry2$features, " [\"highway\"=\"primary\"]")
+    expect_identical (qry3$features,
+                      " [\"highway\"~\"^(primary|tertiary)$\"]")
+          })
+
 test_that ('make_query', {
     qry <- opq (bbox = c(-0.118, 51.514, -0.115, 51.517))
     qry <- add_osm_feature (qry, key = 'highway')
@@ -73,52 +85,47 @@ test_that ('make_query', {
                       'Overpass query unavailable without internet')
         expect_error (osmdata_sp (qry),
                       'Overpass query unavailable without internet')
+        expect_error (osmdata_sc (qry),
+                      'Overpass query unavailable without internet')
     } else
     {
         # Test all `osmdata_..` functions by stubbing the results of
         # `overpass_query()`
-        if (!test_all)
-        {
-            load ("../overpass_query_result.rda")
-            stub (osmdata_xml, 'overpass_query', function (x, ...)
-                  overpass_query_result)
-        }
+        load ("../overpass_query_result.rda")
+        stub (osmdata_xml, 'overpass_query', function (x, ...)
+              overpass_query_result)
         doc <- osmdata_xml (qry)
         expect_true (is (doc, 'xml_document'))
         expect_silent (osmdata_xml (qry, file = 'junk.osm'))
 
-        if (!test_all)
-            stub (osmdata_sp, 'overpass_query', function (x, ...)
-                  overpass_query_result)
-        res <- osmdata_sp (qry)
-        expect_message (print (res), "Object of class 'osmdata' with")
-        expect_silent (res <- osmdata_sp (qry, doc))
-        expect_message (print (res), "Object of class 'osmdata' with")
-        expect_silent (res <- osmdata_sp (qry, 'junk.osm'))
-        expect_message (res <- osmdata_sp (qry, 'junk.osm', quiet = FALSE))
+        if (test_all) {
+            res <- osmdata_sp (qry)
+            expect_message (print (res), "Object of class 'osmdata' with")
+            expect_silent (res <- osmdata_sp (qry, doc))
+            expect_message (print (res), "Object of class 'osmdata' with")
+            expect_silent (res <- osmdata_sp (qry, 'junk.osm'))
+            expect_message (res <- osmdata_sp (qry, 'junk.osm', quiet = FALSE))
 
-        expect_s3_class (res, 'osmdata')
-        nms <- c ('bbox', 'overpass_call', 'meta', 'osm_points',
-                  'osm_lines', 'osm_polygons', 'osm_multilines',
-                  'osm_multipolygons')
-        expect_named (res, expected = nms, ignore.order = FALSE)
-        nms <- c ("timestamp", "OSM_version", "overpass_version")
-        expect_named (res$meta, expected = nms)
+            expect_s3_class (res, 'osmdata')
+            nms <- c ('bbox', 'overpass_call', 'meta', 'osm_points',
+                      'osm_lines', 'osm_polygons', 'osm_multilines',
+                      'osm_multipolygons')
+            expect_named (res, expected = nms, ignore.order = FALSE)
+            nms <- c ("timestamp", "OSM_version", "overpass_version")
+            expect_named (res$meta, expected = nms)
 
-        if (!test_all)
-            stub (osmdata_sf, 'overpass_query', function (x, ...)
-                  overpass_query_result)
-        res <- osmdata_sf (qry)
-        expect_message (print (res), "Object of class 'osmdata' with")
-        expect_silent (res <- osmdata_sf (qry, doc))
-        expect_message (print (res), "Object of class 'osmdata' with")
-        expect_silent (res <- osmdata_sf (qry, 'junk.osm'))
-        expect_message (res <- osmdata_sf (qry, 'junk.osm', quiet = FALSE))
-        expect_s3_class (res, 'osmdata')
-        nms <- c ('bbox', 'overpass_call', 'meta', 'osm_points',
-                  'osm_lines', 'osm_polygons', 'osm_multilines',
-                  'osm_multipolygons')
-        expect_named (res, expected = nms, ignore.order = FALSE)
+            res <- osmdata_sf (qry)
+            expect_message (print (res), "Object of class 'osmdata' with")
+            expect_silent (res <- osmdata_sf (qry, doc))
+            expect_message (print (res), "Object of class 'osmdata' with")
+            expect_silent (res <- osmdata_sf (qry, 'junk.osm'))
+            expect_message (res <- osmdata_sf (qry, 'junk.osm', quiet = FALSE))
+            expect_s3_class (res, 'osmdata')
+            nms <- c ('bbox', 'overpass_call', 'meta', 'osm_points',
+                      'osm_lines', 'osm_polygons', 'osm_multilines',
+                      'osm_multipolygons')
+            expect_named (res, expected = nms, ignore.order = FALSE)
+        }
 
         if (file.exists ('junk.osm')) invisible (file.remove ('junk.osm'))
     }
@@ -127,8 +134,12 @@ test_that ('make_query', {
 test_that ('query-no-quiet', {
     qry <- opq (bbox = c(-0.118, 51.514, -0.115, 51.517))
     qry <- add_osm_feature (qry, key = 'highway')
-    if (test_all)
-    {
+    if (!test_all) {
+        load ("../overpass_query_result.rda")
+        stub (osmdata_xml, 'overpass_query', function (x, ...)
+              overpass_query_result)
+        expect_silent (x <- osmdata_xml (qry, quiet = FALSE))
+    } else {
         expect_message (x <- osmdata_xml (qry, quiet = FALSE),
                         "Issuing query to Overpass API")
         expect_message (x <- osmdata_sp (qry, quiet = FALSE),
@@ -137,17 +148,5 @@ test_that ('query-no-quiet', {
                         "Issuing query to Overpass API")
         expect_message (x <- osmdata_sc (qry, quiet = FALSE),
                         "Issuing query to Overpass API")
-    } else
-    {
-        load ("../overpass_query_result.rda")
-        stub (osmdata_xml, 'overpass_query', function (x, ...)
-              overpass_query_result)
-        expect_silent (x <- osmdata_xml (qry, quiet = FALSE))
-        expect_message (x <- osmdata_sp (qry, quiet = FALSE),
-                        "converting OSM data to sp format")
-        expect_message (x <- osmdata_sf (qry, quiet = FALSE),
-                        "converting OSM data to sf format")
-        expect_message (x <- osmdata_sc (qry, quiet = FALSE),
-                        "converting OSM data to sc format")
     }
 })

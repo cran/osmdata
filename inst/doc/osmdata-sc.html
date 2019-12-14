@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Mark Padgham" />
 
-<meta name="date" content="2019-05-22" />
+<meta name="date" content="2019-12-14" />
 
 <title>2. Elevation data and OSM: The osmdata_sc function</title>
 
@@ -87,8 +87,6 @@ overflow: auto;
 margin-left: 2%;
 position: fixed;
 border: 1px solid #ccc;
-webkit-border-radius: 6px;
-moz-border-radius: 6px;
 border-radius: 6px;
 }
 
@@ -116,9 +114,14 @@ font-size: 12px;
 .tocify-subheader .tocify-subheader {
 text-indent: 30px;
 }
-
 .tocify-subheader .tocify-subheader .tocify-subheader {
 text-indent: 40px;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
+text-indent: 50px;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader .tocify-subheader {
+text-indent: 60px;
 }
 
 .tocify .tocify-item > a, .tocify .nav-list .nav-header {
@@ -522,13 +525,13 @@ float: none;
 
           item.append($("<a/>", {
 
-            "text": self.text()
+            "html": self.html()
 
           }));
 
         } else {
 
-          item.text(self.text());
+          item.html(self.html());
 
         }
 
@@ -1359,7 +1362,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -1421,6 +1423,7 @@ summary {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -1433,48 +1436,9 @@ summary {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
 
-
-<script>
-$(document).ready(function ()  {
-
-    // move toc-ignore selectors from section div to header
-    $('div.section.toc-ignore')
-        .removeClass('toc-ignore')
-        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
-
-    // establish options
-    var options = {
-      selectors: "h1,h2,h3",
-      theme: "bootstrap3",
-      context: '.toc-content',
-      hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
-      },
-      ignoreSelector: ".toc-ignore",
-      scrollTo: 0
-    };
-    options.showAndHide = true;
-    options.smoothScroll = true;
-
-    // tocify
-    var toc = $("#TOC").tocify(options).data("toc-tocify");
-});
-</script>
 
 <style type="text/css">
 
@@ -1488,6 +1452,12 @@ $(document).ready(function ()  {
 }
 }
 
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
 
 .toc-content {
   padding-left: 30px;
@@ -1523,8 +1493,6 @@ div.tocify {
 
 .tocify-subheader .tocify-item {
   font-size: 0.90em;
-  padding-left: 25px;
-  text-indent: 0;
 }
 
 .tocify .list-group-item {
@@ -1562,7 +1530,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">2. Elevation data and OSM: The osmdata_sc function</h1>
 <h4 class="author">Mark Padgham</h4>
-<h4 class="date">2019-05-22</h4>
+<h4 class="date">2019-12-14</h4>
 
 </div>
 
@@ -1579,12 +1547,12 @@ div.tocify {
 <li>A <code>relation_members</code> table holding all members of each OSM relation; and</li>
 <li>A <code>nodes</code> table holding all ‘key’–‘value’ pairs for each OSM <em>node</em> object.</li>
 </ol>
-<p>The translation of the underlying OSM data structure – consisting of nodes, way, and relations – into <a href="http://www.opengeospatial.org/standards/sfa">Simple Features (SF)</a> via the <a href="https://ropensci.github.io/osmdata/reference/osmdata_sf.html"><code>osmdata_sf()</code></a> function is less than 100% faithful, and results in some representational loss compared with the original OSM structure (for details, see the <a href="https://ropensci.github.io/osmdata/articles/osm-sf-translation.html">vignette on translation of OSM into SF</a>). In contrast, the <a href="https://ropensci.github.io/osmdata/reference/osmdata_sc.html"><code>osmdata_sc()</code> function</a> delivers a representation that is entirely faithful to the underlying OSM representation.</p>
+<p>The translation of the underlying OSM data structure – consisting of nodes, way, and relations – into <a href="https://www.opengeospatial.org/standards/sfa">Simple Features (SF)</a> via the <a href="https://docs.ropensci.org/osmdata/reference/osmdata_sf.html"><code>osmdata_sf()</code></a> function is less than 100% faithful, and results in some representational loss compared with the original OSM structure (for details, see the <a href="https://docs.ropensci.org/osmdata/articles/osm-sf-translation.html">vignette on translation of OSM into SF</a>). In contrast, the <a href="https://docs.ropensci.org/osmdata/reference/osmdata_sc.html"><code>osmdata_sc()</code> function</a> delivers a representation that is entirely faithful to the underlying OSM representation.</p>
 <p>The <a href="https://github.com/hypertidy/silicate"><code>silicate</code></a> format itself is currently highly experimental, and is therefore not expected to gain widespread use just yet. It nevertheless offers the single advantage in the <code>osmdata</code> package of enabling elevation data to be combined with OSM data. The result is a <a href="https://github.com/hypertidy/silicate"><code>silicate</code></a>-format object which may currently be of limited general utility, but is nevertheless able to be submitted directly to the <a href="https://github.com/ATFutures/dodgr"><code>dodgr</code> package</a> to enable routing on street networks that accounts for elevation changes.</p>
 </div>
 <div id="elevation-data" class="section level2">
 <h2>2. Elevation Data</h2>
-<p>Incorporating elevation data with OSM data currently requires local storage of desired elevation data. These must be downloaded for the desired region from <a href="http://srtm.csi.cgiar.org/srtmdata">https://srtm.csi.cgiar.org/srtmdata</a> in Geo TIFF format. Elevation data may then be incorporated with <a href="https://github.com/hypertidy/silicate"><code>silicate</code></a>-format data generated by <a href="https://ropensci.github.io/osmdata/reference/osmdata_sc.html"><code>x &lt;- osmdata_sc()</code></a> through the <code>osm_elevation()</code> function. The entire procedure is demonstrated with the following lines:</p>
+<p>Incorporating elevation data with OSM data currently requires local storage of desired elevation data. These must be downloaded for the desired region from <a href="http://srtm.csi.cgiar.org/srtmdata">https://srtm.csi.cgiar.org/srtmdata</a> in Geo TIFF format. Elevation data may then be incorporated with <a href="https://github.com/hypertidy/silicate"><code>silicate</code></a>-format data generated by <a href="https://docs.ropensci.org/osmdata/reference/osmdata_sc.html"><code>x &lt;- osmdata_sc()</code></a> through the <code>osm_elevation()</code> function. The entire procedure is demonstrated with the following lines:</p>
 <pre class="r"><code>dat &lt;- opq (&quot;omaha nebraska&quot;) %&gt;%
     add_osm_feature (key = &quot;highway&quot;) %&gt;%
     osmdata_sc ()</code></pre>
@@ -1679,6 +1647,49 @@ $(document).ready(function () {
 });
 
 
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
 </script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

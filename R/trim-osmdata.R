@@ -35,6 +35,24 @@
 #' }
 trim_osmdata <- function (dat, bb_poly, exclude = TRUE)
 {
+    # safer than using method despatch, because these class defs are **not** the
+    # first items
+    if (methods::is (dat, "osmdata_sf") | methods::is (dat, "osmdata_sp"))
+        trim_osmdata_sfp (dat = dat, bb_poly = bb_poly, exclude = exclude)
+    else if (methods::is (dat, "osmdata_sc"))
+    {
+        trim_osmdata_sc (dat = dat, bb_poly = bb_poly, exclude = exclude)
+    } else
+        stop ("unrecognised format: ", paste0 (class (dat), collapse = " "))
+}
+
+
+# ***************************************************************
+# **********************   sf/sp methods   **********************
+# ***************************************************************
+
+trim_osmdata_sfp <- function (dat, bb_poly, exclude = TRUE)
+{
     requireNamespace ("sf")
     if (!is (bb_poly, "matrix"))
         bb_poly <- bb_poly_to_mat (bb_poly)
@@ -207,8 +225,8 @@ trim_to_poly_multi <- function (dat, bb_poly, exclude = TRUE)
                                     get_trim_indx (g = gi [[1]], bb = bb_poly,
                                                    exclude = exclude))
                 ilens <- vapply (indx, length, 1L, USE.NAMES = FALSE)
-                glens <- vapply (dat [[g]]$geometry, length,
-                                 1L, USE.NAMES = FALSE)
+                glens <- vapply (dat [[g]]$geometry, function (i)
+                                 length (i [[1]]), 1L, USE.NAMES = FALSE)
                 if (exclude)
                     indx <- which (ilens == glens)
                 else
@@ -228,4 +246,73 @@ trim_to_poly_multi <- function (dat, bb_poly, exclude = TRUE)
     }
 
     return (dat)
+}
+
+# ***************************************************************
+# ************************   sc methods   ***********************
+# ***************************************************************
+
+trim_osmdata_sc <- function (dat, bb_poly, exclude = TRUE)
+{
+    v <- verts_in_bpoly (dat, bb_poly)
+
+    if (exclude)
+    {
+        edges_in <- dat$edge$edge_ [which (dat$edge$.vx0 %in% v & dat$edge$.vx1 %in% v)]
+        objs_in <- split (dat$object_link_edge, as.factor (dat$object_link_edge$object_))
+        objs_in <- names (which (unlist (lapply (objs_in, function (i) all (i$edge_ %in% edges_in)))))
+    } else
+    {
+        edges_in <- dat$edge$edge_ [which (dat$edge$.vx0 %in% v | dat$edge$.vx1 %in% v)]
+        objs_in <- unique (dat$object_link_edge$object_ [match (edges_in, dat$object_link_edge$edge_)])
+    }
+
+    rels_in <- dat$relation_ [which (dat$relations_members$member %in% objs_in)]
+
+    index <- which (dat$object_link_edge$object_ %in% objs_in)
+    dat$object_link_edge <- dat$object_link_edge [index, ]
+    index <- which (dat$object$object_ %in% objs_in)
+    dat$object <- dat$object [index, ]
+
+    dat$edge <- dat$edge [dat$edge$edge_ %in% dat$object_link_edge$edge_, ]
+
+    rels_in <- dat$relation_members$relation_ [which (dat$relation_members$member %in% objs_in)]
+    dat$relation_members <- dat$relation_members [dat$relation_members$relation_ %in% rels_in, ]
+    dat$relation_properties <- dat$relation_properties [dat$relation_properties$relation_ %in% rels_in, ]
+
+    verts <- unique (c (dat$edge$.vx0, dat$edge$.vx1))
+    dat$vertex <- dat$vertex [which (dat$vertex$vertex_ %in% verts), ]
+
+    return (dat)
+}
+
+verts_in_bpoly <- function (dat, bb_poly)
+{
+    bb_poly_to_sf <- function (bb_poly)
+    {
+        if (nrow (bb_poly) == 2)
+        {
+            bb_poly <- rbind (bb_poly [1, ],
+                              c (bb_poly [1, 1], bb_poly [2, 2]),
+                              bb_poly [2, ],
+                              c (bb_poly [2, 1], bb_poly [1, 2]))
+        }
+        if (!identical (as.numeric (utils::head (bb_poly, 1)),
+                        as.numeric (utils::tail (bb_poly, 1))))
+            bb_poly <- rbind (bb_poly, bb_poly [1, ])
+        sf::st_polygon (list (bb_poly)) %>%
+            sf::st_sfc (crs = 4326) %>%
+            sf::st_sf ()
+    }
+    bb_poly <- bb_poly_to_sf (bb_poly)
+
+    vert_to_sf <- function (dat)
+    {
+        v <- data.frame (dat$vertex) [, 1:2]
+        sf::st_as_sf (v, coords = c ("x_", "y_"), crs = 4326)
+    }
+    # suppress message about st_intersection assuming planar coordinates, because
+    # the inaccuracy may be ignored here
+    suppressMessages (w <- sf::st_within (vert_to_sf (dat), bb_poly))
+    dat$vertex$vertex_ [which (as.logical (w))]
 }

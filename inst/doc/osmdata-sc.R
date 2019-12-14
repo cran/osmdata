@@ -1,12 +1,12 @@
-## ----omaha, eval = FALSE-------------------------------------------------
+## ----omaha, eval = FALSE------------------------------------------------------
 #  dat <- opq ("omaha nebraska") %>%
 #      add_osm_feature (key = "highway") %>%
 #      osmdata_sc ()
 
-## ----dat_vertex, eval = FALSE--------------------------------------------
+## ----dat_vertex, eval = FALSE-------------------------------------------------
 #  dat$vertex
 
-## ----dat_vertex_dat, echo = FALSE----------------------------------------
+## ----dat_vertex_dat, echo = FALSE---------------------------------------------
 n <- 345239
 x_ <- c (-95.9, -95.9, -95.9, -95.9, -95.9, -95.9, -96.2, -96.2, -96.3, -96.3)
 y_ <- c (41.2, 41.2, 41.2, 41.2, 41.2, 41.2, 41.3, 41.3, 41.3, 41.3)
@@ -18,24 +18,24 @@ tibble::tibble (x_ = c (x_, rep (NA, n - 10)),
                 y_ = c (y_, rep (NA, n - 10)),
                 vertex_ = c (vertex_, rep (NA, n - 10)))
 
-## ----osm_elevation, eval = FALSE-----------------------------------------
+## ----osm_elevation, eval = FALSE----------------------------------------------
 #  dat <- osm_elevation (dat, elev_file = "/path/to/elevation/data/filename.tiff")
 
-## ----osm_elevation2, echo = FALSE----------------------------------------
+## ----osm_elevation2, echo = FALSE---------------------------------------------
 message ("Loading required namespace: raster\n",
          "Elevation data from Consortium for Spatial Information; see ",
          "http://srtm.csi.cgiar.org/srtmdata/")
 
-## ----dat_vertex2, eval = FALSE-------------------------------------------
+## ----dat_vertex2, eval = FALSE------------------------------------------------
 #  dat$vertex_
 
-## ---- dat_vertex_dat2, echo = FALSE--------------------------------------
+## ---- dat_vertex_dat2, echo = FALSE-------------------------------------------
 tibble::tibble (x_ = c (x_, rep (NA, n - 10)),
                 y_ = c (y_, rep (NA, n - 10)),
                 z_ = c (z_, rep (NA, n - 10)),
                 vertex_ = c (vertex_, rep (NA, n - 10)))
 
-## ----edges, eval = FALSE-------------------------------------------------
+## ----edges, eval = FALSE------------------------------------------------------
 #  edges <- dplyr::left_join (dat$edge, dat$vertex, by = c (".vx0" = "vertex_")) %>%
 #      dplyr::rename (".vx0_x" = x_, ".vx0_y" = y_, ".vx0_z" = z_) %>%
 #      dplyr::left_join (dat$vertex, by = c (".vx1" = "vertex_")) %>%
@@ -44,7 +44,7 @@ tibble::tibble (x_ = c (x_, rep (NA, n - 10)),
 #      dplyr::select (-c (.vx0_z, .vx1_z))
 #  edges
 
-## ----edges-dat, echo = FALSE---------------------------------------------
+## ----edges-dat, echo = FALSE--------------------------------------------------
 n <- 376370
 x <- paste0 (c (1903265686, 1903265664, 1903265638, 1903265710, 1903265636,
                  1903265685, 1903265678, 1903265646, 1903265714, 1903265659))
@@ -67,7 +67,7 @@ tibble::tibble (".vx0" = c (x, rep (NA, n - 10)),
                 ".vx1_y" = c (x1_y, rep (NA, n - 10)),
                 "zmn" = c (z, rep (NA, n - 10)))
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 #  library (mapdeck)
 #  set_token (Sys.getenv ("MAPBOX_TOKEN")) # load local token for MapBox
 #  mapdeck (style = mapdeck_style ("dark")) %>%

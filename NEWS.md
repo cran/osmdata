@@ -1,3 +1,21 @@
+0.1.1.00x
+===================
+Major changes:
+- New function `unname_osmdata_sf`, to remove row names from `sf`-format
+  geometry objects that may cause issues with some plotting routines such as
+  leaflet.
+
+Minor changes:
+- `getbb` now allows arbitrary `featuretype` specification, no longer just
+  those pertaining to settlement forms.
+- available_tags returns tags with underscore precisely as required for
+  `add_osm_feature` - previous version returned text values with spaces instead
+  of underscore.
+- Fix bug in `osmdata_sf` for data with no names and/or no key-val pairs
+- Fix bug in `trim_osmdata` for multi* objects; thanks to @stragu
+- Impelement `trim_osmdata.sc` method
+- retry httr calls to nominatim, which has lately been timing out quite often
+
 0.1.1
 ===================
 
