@@ -75,8 +75,6 @@ opq <- function (bbox = NULL, timeout = 25, memsize)
 #' query submitted to the overpass API can be obtained from
 #' \link{opq_string}.
 #'
-#' @note \link{add_feature} is deprecated; please use \link{add_osm_feature}.
-#'
 #' @references <https://wiki.openstreetmap.org/wiki/Map_Features>
 #'
 #' @export
@@ -223,16 +221,6 @@ opq_osm_id <- function (id = NULL, type = NULL, open_url = FALSE)
     }
 
     opq
-}
-
-#' @rdname add_osm_feature
-#' @export
-add_feature <- function (opq, key, value, key_exact = TRUE,
-                             value_exact = TRUE, match_case = TRUE, bbox = NULL)
-{
-    message ('add_feature() is deprecated; please use add_osm_feature()')
-    add_osm_feature (opq, key, value, key_exact = TRUE,
-                     value_exact = TRUE, match_case = TRUE, bbox = NULL)
 }
 
 #' Convert an overpass query into a text string

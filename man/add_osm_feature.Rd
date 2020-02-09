@@ -2,20 +2,9 @@
 % Please edit documentation in R/opq.R
 \name{add_osm_feature}
 \alias{add_osm_feature}
-\alias{add_feature}
 \title{Add a feature to an Overpass query}
 \usage{
 add_osm_feature(
-  opq,
-  key,
-  value,
-  key_exact = TRUE,
-  value_exact = TRUE,
-  match_case = TRUE,
-  bbox = NULL
-)
-
-add_feature(
   opq,
   key,
   value,
@@ -59,8 +48,6 @@ of regular expressions on OSM keys, as described in Section 6.1.5 of
 \url{https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL}. The actual
 query submitted to the overpass API can be obtained from
 \link{opq_string}.
-
-\link{add_feature} is deprecated; please use \link{add_osm_feature}.
 }
 \examples{
 \dontrun{

@@ -1,5 +1,5 @@
 Package: osmdata
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: c(
     person("Mark", "Padgham", email="mark.padgham@email.com", role=c("aut", "cre")),
     person("Bob", "Rudis", role="aut"),
@@ -7,6 +7,7 @@ Authors@R: c(
     person("Maëlle", "Salmon", role="aut"),
     person("Andrew", "Smith", role="ctb"),
     person("James", "Smith", role="ctb"),
+    person("Andrea", "Gilardi", role="ctb"),
     person("Marcin", "Kalicinski", role=c("ctb", "cph"),
         comment="Author of included RapidXML code"),
     person("Finkelstein", "Noam", role=c("ctb","cph"),
@@ -39,15 +40,16 @@ X-schema.org-applicationCategory: Data Access
 X-schema.org-keywords: open0street0map, openstreetmap, overpass0API,
         OSM
 X-schema.org-isPartOf: https://ropensci.org
-Packaged: 2019-12-14 12:21:55 UTC; markus
+Packaged: 2020-02-07 10:25:49 UTC; markus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
   Maëlle Salmon [aut],
   Andrew Smith [ctb],
   James Smith [ctb],
+  Andrea Gilardi [ctb],
   Marcin Kalicinski [ctb, cph] (Author of included RapidXML code),
   Finkelstein Noam [ctb, cph] (Author of included stub.R code),
   Bartnik Lukasz [ctb, cph] (Author of included stub.R code)
 Repository: CRAN
-Date/Publication: 2019-12-14 17:40:09 UTC
+Date/Publication: 2020-02-09 20:20:04 UTC

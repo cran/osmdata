@@ -100,15 +100,14 @@ q <- opq(bbox = c(102.5417638, 24.8915153, 102.8617638, 25.2115153)) %>%
 #  unlist (lapply (dat, nrow) [4:8])
 
 ## ---- echo = FALSE------------------------------------------------------------
-dat1 <- c (7373, 31, 118, 0, 10)
-dat2 <- c (2254, 30, 2, 0, 1)
-dat <- c (7590, 46, 119, 0, 10)
+dat1 <- c (51399, 186, 905, 0, 47)
+dat2 <- c (4473, 55, 4, 1, 3)
+dat <- c (53777, 238, 908, 1, 49)
 names (dat1) <- names (dat2) <- names (dat) <- c ('osm_points', 'osm_lines',
                                                   'osm_polygons',
                                                   'osm_multilines',
                                                   'osm_multipolygons')
-dat <- dat [c (1:3, 5)]
-dat1
+dat1 [c (1:3, 5)]
 dat2
 dat
 
@@ -116,7 +115,7 @@ dat
 #  unlist (lapply (osmdata_sf (q), nrow) [4:8])
 
 ## ---- echo = FALSE------------------------------------------------------------
-dat <- c (2029, 15, 1, 0, 1)
+dat <- c (2087, 3, 1, 0, 1)
 names (dat1) <- names (dat2) <- names (dat) <- c ('osm_points', 'osm_lines',
                                                   'osm_polygons',
                                                   'osm_multilines',
@@ -160,21 +159,21 @@ dat
 #  sp::plot(cway_sev$osm_lines)
 
 ## ----des-bike1, eval=FALSE----------------------------------------------------
-#  q2 <- add_osm_feature(q1, key = 'bicycle', value = 'designated')
-#  des_bike <- osmdata_sf(q2)
-#  q3 <- add_osm_feature(q2, key = 'bridge', value = 'yes')
-#  des_bike_and_bridge <- osmdata_sf(q3)
+#  des_bike <- osmdata_sf(q1)
+#  q2 <- add_osm_feature(q1, key = 'bridge', value = 'yes')
+#  des_bike_and_bridge <- osmdata_sf(q2)
 #  nrow(des_bike_and_bridge$osm_points); nrow(des_bike_and_bridge$osm_lines)
-#  ## [1] 7
-#  ## [1] 3
+#  ## [1] 99
+#  ## [1] 32
 
 ## ---- des-bike2, eval=FALSE---------------------------------------------------
-#  q4 <- add_osm_feature(q1, key = 'bridge', value = 'yes')
-#  bridge <- osmdata_sf(q4)
+#  q2 <- opq('Sevilla') %>%
+#      add_osm_feature(key = 'bridge', value = 'yes')
+#  bridge <- osmdata_sf(q2)
 #  des_bike_or_bridge <- c(des_bike, bridge)
 #  nrow(des_bike_or_bridge$osm_points); nrow(des_bike_or_bridge$osm_lines)
-#  ## [1] 208
-#  ## [1] 40
+#  ## [1] 9757
+#  ## [1] 1061
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  bridge
