@@ -6,6 +6,21 @@
 #'      will be passed to \link{getbb} to be converted to a numerical bounding
 #'      box. Can also be (iii) a matrix representing a bounding polygon as
 #'      returned from `getbb(..., format_out = "polygon")`.
+#' @param nodes_only If `TRUE`, query OSM nodes only. Some OSM structures such
+#'      as `place = "city"` or `highway = "traffic_signals"` are represented by
+#'      nodes only. Queries are built by default to return all nodes, ways, and
+#'      relation, but this can be very inefficient for node-only queries.
+#'      Setting this value to `TRUE` for such cases makes queries more
+#'      efficient, with data returned in the `osm_points` list item.
+#' @param datetime If specified, a date and time to extract data from the OSM
+#'      database as it was up to the specified date and time, as described at
+#'      \url{https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#date}.
+#'      This \emph{must} be in ISO8601 format ("YYYY-MM-DDThh:mm:ssZ"), where
+#'      both the "T" and "Z" characters must be present.
+#' @param datetime2 If specified, return the \emph{difference} in the OSM
+#'      database between \code{datetime} and \code{datetime2}, where
+#'      \code{datetime2 > datetime}. See
+#'      \url{https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Delta_between_two_dates_.28.22diff.22.29}.
 #' @param timeout It may be necessary to increase this value for large queries,
 #'      because the server may time out before all data are delivered.
 #' @param memsize The default memory size for the 'overpass' server in *bytes*;
@@ -23,32 +38,121 @@
 #'
 #' @examples
 #' \dontrun{
-#' q <- getbb ("portsmouth", display_name_contains = "USA") %>%
+#' q <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'             opq () %>%
 #'             add_osm_feature("amenity", "restaurant") %>%
 #'             add_osm_feature("amenity", "pub")
 #' osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
-#' q1 <- getbb ("portsmouth", display_name_contains = "USA") %>%
+#' q1 <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'                 opq () %>%
 #'                 add_osm_feature("amenity", "restaurant")
-#' q2 <- getbb ("portsmouth", display_name_contains = "USA") %>%
+#' q2 <- getbb ("portsmouth", display_name_contains = "United States") %>%
 #'                 opq () %>%
 #'                 add_osm_feature("amenity", "pub")
 #' c (osmdata_sf (q1), osmdata_sf (q2)) # all restaurants OR pubs
+#'
+#' # Use nodes_only to retrieve single point data only, such as for central
+#' # locations of cities.
+#' opq <- opq (bbox, nodes_only = TRUE) %>%
+#'     add_osm_feature (key = "place", value = "city") %>%
+#'     osmdata_sf (quiet = FALSE)
 #' }
-opq <- function (bbox = NULL, timeout = 25, memsize)
+opq <- function (bbox = NULL, nodes_only = FALSE,
+                 datetime = NULL, datetime2 = NULL,
+                 timeout = 25, memsize)
 {
     timeout <- format (timeout, scientific = FALSE)
     prefix <- paste0 ("[out:xml][timeout:", timeout, "]")
-    suffix <- ");\n(._;>;);\nout body;" # recurse down
+    suffix <- ifelse (nodes_only,
+                      "); out;", 
+                      ");\n(._;>;);\nout body;") # recurse down
     if (!missing (memsize))
         prefix <- paste0 (prefix, "[maxsize:",                          # nocov
                           format (memsize, scientific = FALSE), "]")    # nocov
+    if (!is.null (datetime))
+    {
+        datetime <- check_datetime (datetime)
+        if (!is.null (datetime2))
+        {
+            datetime2 <- check_datetime (datetime2)
+            prefix <- paste0 ('[diff:\"', datetime, '\",\"', datetime2, '\"]',
+                              prefix)
+        } else
+        {
+            prefix <- paste0 ('[date:\"', datetime, '\"]', prefix)
+        }
+    }
+
     res <- list (bbox = bbox_to_string (bbox),
               prefix = paste0 (prefix, ";\n(\n"),
               suffix = suffix, features = NULL)
     class (res) <- c (class (res), "overpass_query")
+    attr (res, "datetime") <- datetime
+    attr (res, "datetime2") <- datetime2
+    attr (res, "nodes_only") <- nodes_only
+
     return (res)
+}
+
+check_datetime <- function (x)
+{
+    if (nchar (x) != 20 &
+        substring (x, 5, 5) != "-" &
+        substring (x, 8, 8) != "-" &
+        substring (x, 11, 11) != "T" &
+        substring (x, 14, 14) != ":" &
+        substring (x, 17, 17) != ":" &
+        substring (x, 20, 20) != "Z")
+        stop ("x is not is ISO8601 format ('YYYY-MM-DDThh:mm:ssZ')")
+    YY <- substring (x, 1, 4) # nolint
+    MM <- substring (x, 6, 7) # nolint
+    DD <- substring (x, 9, 10) # nolint
+    hh <- substring (x, 12, 13)
+    mm <- substring (x, 15, 16)
+    ss <- substring (x, 18, 19)
+    if (formatC (as.integer (YY), width = 4, flag = "0") != YY |
+        formatC (as.integer (MM), width = 2, flag = "0") != MM |
+        formatC (as.integer (DD), width = 2, flag = "0") != DD |
+        formatC (as.integer (hh), width = 2, flag = "0") != hh |
+        formatC (as.integer (mm), width = 2, flag = "0") != mm |
+        formatC (as.integer (ss), width = 2, flag = "0") != ss)
+        stop ("x is not is ISO8601 format ('YYYY-MM-DDThh:mm:ssZ')")
+    invisible (x)
+}
+
+# used in the following add_osm_feature fn
+paste_features <- function (key, value, key_pre = "", bind = "=",
+                            match_case = FALSE, value_exact = FALSE) {
+    if (is.null (value))
+    {
+        feature <- paste0 (sprintf (' ["%s"]', key))
+    } else
+    {
+        if (length (value) > 1)
+        {
+            # convert to OR'ed regex:
+            value <- paste0 (value, collapse = "|")
+            if (value_exact)
+                value <- paste0 ("^(", value, ")$")
+            bind <- "~"
+        } else if (substring (value, 1, 1) == "!")
+        {
+            bind <- paste0 ("!", bind)
+            value <- substring (value, 2, nchar (value))
+            if (key_pre == "~")
+            {
+                message ("Value negation only possible for exact keys")
+                key_pre <- ""
+            }
+        }
+        feature <- paste0 (sprintf (' [%s"%s"%s"%s"',
+                                    key_pre, key, bind, value))
+        if (!match_case)
+            feature <- paste0 (feature, ",i")
+        feature <- paste0 (feature, "]")
+    }
+
+    return (feature)
 }
 
 #' Add a feature to an Overpass query
@@ -130,34 +234,9 @@ add_osm_feature <- function (opq, key, value, key_exact = TRUE,
 
     if (missing (value))
         value <- NULL
-    if (is.null (value))
-    {
-        feature <- paste0 (sprintf (' ["%s"]', key))
-    } else
-    {
-        if (length (value) > 1)
-        {
-            # convert to OR'ed regex:
-            value <- paste0 (value, collapse = "|")
-            if (value_exact)
-                value <- paste0 ("^(", value, ")$")
-            bind <- "~"
-        } else if (substring (value, 1, 1) == "!")
-        {
-            bind <- paste0 ("!", bind)
-            value <- substring (value, 2, nchar (value))
-            if (key_pre == "~")
-            {
-                message ("Value negation only possible for exact keys")
-                key_pre <- ""
-            }
-        }
-        feature <- paste0 (sprintf (' [%s"%s"%s"%s"',
-                                    key_pre, key, bind, value))
-        if (!match_case)
-            feature <- paste0 (feature, ",i")
-        feature <- paste0 (feature, "]")
-    }
+
+    feature <- paste_features (key, value, key_pre, bind,
+                               match_case, value_exact)
 
     opq$features <- c(opq$features, feature)
 
@@ -223,6 +302,57 @@ opq_osm_id <- function (id = NULL, type = NULL, open_url = FALSE)
     opq
 }
 
+#' opq_enclosing
+#'
+#' Find all features which enclose a given point, and optionally match specific
+#' 'key'-'value' pairs. This function is \emph{not} intended to be combined with
+#' \link{add_osm_feature}, rather is only to be used in the sequence
+#' \link{opq_enclosing} -> \link{opq_string} -> \link{osmdata_xml} (or other
+#' extraction function). See examples for how to use.
+#'
+#' @param lon Longitude of desired point
+#' @param lat Latitude of desired point
+#' @param key (Optional) OSM key of enclosing data
+#' @param value (Optional) OSM value matching 'key' of enclosing data
+#' @param enclosing Either 'relation' or 'way' for whether to return enclosing
+#' objects of those respective types (where generally 'relation' will correspond
+#' to multipolygon objects, and 'way' to polygon objects).
+#' @inheritParams opq
+#'
+#' @examples
+#' \dontrun{
+#' # Get water body surrounding a particular point:
+#' lat <- 54.33601
+#' lon <- -3.07677
+#' key <- "natural"
+#' value <- "water"
+#' x <- opq_enclosing (lon, lat, key, value) %>%
+#'     opq_string () %>%
+#'     osmdata_sf ()
+#' }
+#' @export
+opq_enclosing <- function (lon, lat, key = NULL, value = NULL,
+                           enclosing = "relation", timeout = 25) {
+    enclosing <- match.arg (tolower (enclosing), c ("relation", "way"))
+
+    bbox <- bbox_to_string (c (lon, lat, lon, lat))
+    timeout <- format (timeout, scientific = FALSE)
+    prefix <- paste0 ("[out:xml][timeout:", timeout, "]")
+    suffix <- ");\n(._;>;);\nout;"
+
+    features <- paste_features (key, value, value_exact = TRUE, match_case = TRUE)
+    res <- list (bbox = bbox,
+                 prefix = paste0 (prefix, ";\n(\n"),
+                 suffix = suffix,
+                 features = features)
+    class (res) <- c (class (res), "overpass_query")
+    attr (res, "datetime") <- attr (res, "datetime2") <- NULL
+    attr (res, "nodes_only") <- FALSE
+    attr (res, "enclosing") <- enclosing
+
+    return (res)
+}
+
 #' Convert an overpass query into a text string
 #'
 #' Convert an osmdata query of class opq to a character string query to
@@ -235,8 +365,10 @@ opq_osm_id <- function (id = NULL, type = NULL, open_url = FALSE)
 #' @aliases opq_to_string
 #'
 #' @examples
+#' \dontrun{
 #' q <- opq ("hampi india")
 #' opq_string (q)
+#' }
 opq_string <- function (opq)
 {
     opq_string_intern (opq, quiet = TRUE)
@@ -247,14 +379,32 @@ opq_string <- function (opq)
 # specified.
 opq_string_intern <- function (opq, quiet = TRUE)
 {
+    lat <- lon <- NULL # suppress no visible binding messages
+
     res <- NULL
     if (!is.null (opq$features)) # opq with add_osm_feature
     {
         features <- paste (opq$features, collapse = '')
-        features <- paste0 (sprintf (' node %s (%s);\n', features, opq$bbox),
-                            sprintf (' way %s (%s);\n', features, opq$bbox),
-                            sprintf (' relation %s (%s);\n\n', features,
-                                     opq$bbox))
+        if (attr (opq, "nodes_only"))
+            features <- paste0 (sprintf (' node %s (%s);\n',
+                                         features,
+                                         opq$bbox))
+        else if (!is.null (attr (opq, "enclosing")))
+            features <- paste0 ("is_in(", lat, ",", lon, ")->.a;",
+                                attr (opq, "enclosing"), "(pivot.a)",
+                                features,
+                                ";")
+        else
+            features <- paste0 (sprintf (' node %s (%s);\n',
+                                         features,
+                                         opq$bbox),
+                                sprintf (' way %s (%s);\n',
+                                         features,
+                                         opq$bbox),
+                                sprintf (' relation %s (%s);\n\n',
+                                         features,
+                                         opq$bbox))
+
         res <- paste0 (opq$prefix, features, opq$suffix)
     } else if (!is.null (opq$id)) # opq with opq_osm_id
     {

@@ -1,6 +1,27 @@
+0.1.4
+===================
+
+Major changes:
+
+- New `osm_enclosing()` function; thanks to @barryrowlingson via #199
+- `opq()` now has additional `datetime` and `datetime2` parameters which can be
+  used to extract historical data prior to `datetime`, or differences between
+  two datetimes by specifying `datetime2`; thanks to @neogeomat for the idea in
+  issue#179.
+# opq() also has additional `nodes_only` parameter to return nodes as points
+  only, for efficient extraction of strictly point-based OSM data; thanks to
+  @gdkrmr for the idea in issue#221.
+
+Minor changes:
+
+- New contributor Enrico Spinielli (@espinielli), via #207, #210, #211, #212 - Thanks!
+
+
 0.1.3
 ===================
+
 Major changes:
+
 - `osmdata_pbf` function removed as the overpass server no longer provides the
   experimental API for pbf-format data.
 - Remove deprecated `add_feature()` function; entirely replaced by
@@ -9,37 +30,43 @@ Major changes:
   multipolygon objects by default (issue#195)
 
 Minor changes:
+
 - New Contributors: Andrea Gilardi (@agila5)
 - Bug fix for issue#205
 
 0.1.2
 ===================
+
 Major changes:
+
 - New function `unname_osmdata_sf`, to remove row names from `sf`-format
   geometry objects that may cause issues with some plotting routines such as
   leaflet.
 
 Minor changes:
+
 - `getbb` now allows arbitrary `featuretype` specification, no longer just
   those pertaining to settlement forms.
 - available_tags returns tags with underscore precisely as required for
   `add_osm_feature` - previous version returned text values with spaces instead
   of underscore.
 - Fix bug in `osmdata_sf` for data with no names and/or no key-val pairs
-- Fix bug in `trim_osmdata` for multi* objects; thanks to @stragu
-- Impelement `trim_osmdata.sc` method
+- Fix bug in `trim_osmdata` for multi\* objects; thanks to @stragu
+- Implement `trim_osmdata.sc` method
 - retry httr calls to nominatim, which has lately been timing out quite often
 
 0.1.1
 ===================
 
 Minor changes:
+
 - bug fix in `trim_osmdata` function
 
 0.1.0
 ===================
 
 Major changes:
+
 - New function, `osm_elevation` to insert elevation data into `SC`-format data
   returned by `osmdata_sc` function.
 - New vignette on `osmdata_sc` function and elevation data.
@@ -50,14 +77,17 @@ Major changes:
 ===================
 
 Minor changes:
-- Bux fix for vectorized lists of values in `add_osm_feature`, so only listed
+
+- Bug fix for vectorized lists of values in `add_osm_feature`, so only listed
   items are returns (see #139; thanks @loreabad6)
 - But fix to ensure all `sf` `data.frame` objects have `stringsAsFactors =
   FALSE`
 
 0.0.9
 ===================
+
 Major changes:
+
 - New function `osmdata_sc` to return data in `silicate::SC` format (see
   github.com/hypertidy/silicate; this also requires additional dependency on
   `tibble`)
@@ -68,6 +98,7 @@ Major changes:
 - osmdata_sf() objects default to character vectors, not factors (see #44).
 
 Minor changes:
+
 - vignette updated
 - Overpass URL now randomly selected from the four primary servers (see
   https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances),

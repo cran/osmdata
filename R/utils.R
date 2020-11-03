@@ -1,6 +1,6 @@
 #' unname_osmdata_sf
 #'
-#' Remove names from 'osmdata` geometry objects, for cases in which these cause
+#' Remove names from `osmdata` geometry objects, for cases in which these cause
 #' issues, particularly with plotting, such as
 #' \url{https://github.com/rstudio/leaflet/issues/631}, or
 #' \url{https://github.com/r-spatial/sf/issues/1177}. Note that removing these
@@ -48,7 +48,7 @@ unname_osm <- function (x, what = "osm_lines")
                             function (j) unname (j))))
     else if (what == "osm_multipolygons")
         g <- lapply (g, function (i)
-                     sf::st_polygon (lapply (i, function (j) unname (j))))
+                     sf::st_multipolygon (lapply (i, function (j) unname (j))))
     x [[what]]$geometry <- sf::st_sfc (g, crs = 4326)
     return (x)
 }

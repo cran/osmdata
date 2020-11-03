@@ -4,7 +4,14 @@
 \alias{opq}
 \title{Build an Overpass query}
 \usage{
-opq(bbox = NULL, timeout = 25, memsize)
+opq(
+  bbox = NULL,
+  nodes_only = FALSE,
+  datetime = NULL,
+  datetime2 = NULL,
+  timeout = 25,
+  memsize
+)
 }
 \arguments{
 \item{bbox}{Either (i) four numeric values specifying the maximal and minimal
@@ -13,6 +20,24 @@ or (ii) a character string in the form \code{xmin,ymin,xmax,ymax}. These
 will be passed to \link{getbb} to be converted to a numerical bounding
 box. Can also be (iii) a matrix representing a bounding polygon as
 returned from \code{getbb(..., format_out = "polygon")}.}
+
+\item{nodes_only}{If \code{TRUE}, query OSM nodes only. Some OSM structures such
+as \code{place = "city"} or \code{highway = "traffic_signals"} are represented by
+nodes only. Queries are built by default to return all nodes, ways, and
+relation, but this can be very inefficient for node-only queries.
+Setting this value to \code{TRUE} for such cases makes queries more
+efficient, with data returned in the \code{osm_points} list item.}
+
+\item{datetime}{If specified, a date and time to extract data from the OSM
+database as it was up to the specified date and time, as described at
+\url{https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#date}.
+This \emph{must} be in ISO8601 format ("YYYY-MM-DDThh:mm:ssZ"), where
+both the "T" and "Z" characters must be present.}
+
+\item{datetime2}{If specified, return the \emph{difference} in the OSM
+database between \code{datetime} and \code{datetime2}, where
+\code{datetime2 > datetime}. See
+\url{https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Delta_between_two_dates_.28.22diff.22.29}.}
 
 \item{timeout}{It may be necessary to increase this value for large queries,
 because the server may time out before all data are delivered.}
@@ -35,17 +60,23 @@ are likely to be rejected.
 }
 \examples{
 \dontrun{
-q <- getbb ("portsmouth", display_name_contains = "USA") \%>\%
+q <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
             opq () \%>\%
             add_osm_feature("amenity", "restaurant") \%>\%
             add_osm_feature("amenity", "pub")
 osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
-q1 <- getbb ("portsmouth", display_name_contains = "USA") \%>\%
+q1 <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
                 opq () \%>\%
                 add_osm_feature("amenity", "restaurant")
-q2 <- getbb ("portsmouth", display_name_contains = "USA") \%>\%
+q2 <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
                 opq () \%>\%
                 add_osm_feature("amenity", "pub")
 c (osmdata_sf (q1), osmdata_sf (q2)) # all restaurants OR pubs
+
+# Use nodes_only to retrieve single point data only, such as for central
+# locations of cities.
+opq <- opq (bbox, nodes_only = TRUE) \%>\%
+    add_osm_feature (key = "place", value = "city") \%>\%
+    osmdata_sf (quiet = FALSE)
 }
 }
