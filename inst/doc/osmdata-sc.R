@@ -24,7 +24,7 @@ tibble::tibble (x_ = c (x_, rep (NA, n - 10)),
 ## ----osm_elevation2, echo = FALSE---------------------------------------------
 message ("Loading required namespace: raster\n",
          "Elevation data from Consortium for Spatial Information; see ",
-         "http://srtm.csi.cgiar.org/srtmdata/")
+         "https://srtm.csi.cgiar.org/srtmdata/")
 
 ## ----dat_vertex2, eval = FALSE------------------------------------------------
 #  dat$vertex_

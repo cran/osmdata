@@ -29,42 +29,34 @@ bbox_to_string <- function(bbox) {
 
     if (!is.numeric (bbox)) stop ("bbox must be numeric")
 
-    if (inherits(bbox, "matrix"))
-    {
-        if (nrow (bbox) > 2)
-        {
+    if (inherits(bbox, "matrix")) {
+        if (nrow (bbox) > 2) {
             bbox <- apply (bbox, 2, range)
         }
 
         if (all (c("x", "y") %in% tolower (rownames (bbox))) &
-            all (c("min", "max") %in% tolower (colnames (bbox))))
-        {
+            all (c("min", "max") %in% tolower (colnames (bbox)))) {
             bbox <- c(bbox["y", "min"], bbox["x", "min"],
                       bbox["y", "max"], bbox["x", "max"])
         } else if (all (c("coords.x1", "coords.x2") %in% rownames (bbox)) &
-                   all (c("min", "max") %in% colnames (bbox)))
-        {
+                   all (c("min", "max") %in% colnames (bbox))) {
             bbox <- c (bbox["coords.x2", "min"], bbox["coords.x1", "min"],
                        bbox["coords.x2", "max"], bbox["coords.x1", "max"])
-        } else
-        {
+        } else {
             # otherwise just presume (x,y) are columns and order the rows
             bbox <- c (min (bbox [, 2]), min (bbox [, 1]),
                        max (bbox [, 2]), max (bbox [, 1]))
         }
-    } else
-    {
+    } else {
         if (length (bbox) < 4)
             stop ("bbox must contain four elements")
         else if (length (bbox) > 4)
             message ("only the first four elements of bbox used")
 
         if (!is.null (names (bbox)) &
-            all (names (bbox) %in% c("left", "bottom", "right", "top")))
-        {
+            all (names (bbox) %in% c("left", "bottom", "right", "top"))) {
             bbox <- bbox[c ("bottom", "left", "top", "right")]
-        } else
-        {
+        } else {
             x <- sort (bbox [c (1, 3)])
             y <- sort (bbox [c (2, 4)])
             bbox <- c (y [1], x[1], y [2], x [2])
@@ -157,8 +149,70 @@ getbb <- function(place_name,
                   limit = 10,
                   key = NULL,
                   silent = TRUE) {
+
     is_polygon <- grepl("polygon", format_out)
+
+    obj <- get_bb_query (place_name,
+                         featuretype,
+                         is_polygon,
+                         display_name_contains,
+                         viewbox,
+                         key,
+                         limit,
+                         base_url,
+                         silent)
+
+    if (format_out == "data.frame") {
+      return(obj)
+    }
+
+    bn <- as.numeric (obj$boundingbox[[1]])
+    bb_mat <- matrix (c (bn [3:4], bn [1:2]), nrow = 2, byrow = TRUE)
+    dimnames (bb_mat) <- list (c ("x", "y"), c ("min", "max"))
+    if (format_out == "matrix")
+        ret <- bb_mat
+    else if (format_out == "string")
+        ret <- bbox_to_string (bbox = bb_mat)
+    else if (is_polygon) {
+
+        gt_p <- get_geotext_poly (obj)
+        gt_mp <- get_geotext_multipoly (obj)
+
+        gt <- c (gt_p, gt_mp)
+        # multipolys below are not strict SF MULTIPOLYGONs, rather just cases
+        # where nominatim returns lists of multiple items
+        if (length (gt) == 0) {
+            message ("No polygonal boundary for ", place_name)
+            ret <- bb_mat
+        } else if (length (gt) == 1) {
+                ret <- gt [[1]]
+        } else {
+            ret <- gt
+        }
+    } else {
+        stop (paste0 ("format_out not recognised; please specify one of ",
+                      "[data.frame, matrix, string, polygon]"))
+    }
+
+    if (format_out == "sf_polygon") {
+        ret <- bb_as_sf_poly (gt_p, gt_mp, place_name)
+    }
+
+    return (ret)
+}
+
+get_bb_query <- function (place_name,
+                          featuretype,
+                          is_polygon,
+                          display_name_contains,
+                          viewbox,
+                          key,
+                          limit,
+                          base_url,
+                          silent) {
+
     query <- list (q = place_name)
+
     featuretype <- tolower (featuretype)
 
     query <- c (query, list (featuretype = featuretype))
@@ -167,26 +221,23 @@ getbb <- function(place_name,
         query <- c (query, list (polygon_text = 1))
 
     query <- c (query, list (viewbox = viewbox,
-                             format = 'json',
+                             format = "json",
                              key = key,
                              # bounded = 1, # seemingly not working
                              limit = limit))
 
-    q_url <- httr::modify_url(base_url, query = query)
+    q_url <- httr::modify_url (base_url, query = query)
 
     if (!silent)
         print(q_url)
 
-    #res <- httr::POST(base_url, query = query, httr::timeout (100))
-    res <- httr::RETRY("POST", q_url, times = 10)
-    txt <- httr::content(res, as = "text", encoding = "UTF-8",
-                         type = "application/xml")
-    obj <- tryCatch(expr =
-                    {
+    res <- httr::RETRY ("POST", q_url, times = 10)
+    txt <- httr::content (res, as = "text", encoding = "UTF-8",
+                          type = "application/xml")
+    obj <- tryCatch(expr = {
                         jsonlite::fromJSON(txt)
                     },
-                    error = function(cond)
-                    {
+                    error = function(cond) {
             # nocov start
             message(paste0("Nominatim did respond as expected ",
                            "(e.g. due to excessive use of their api).\n",
@@ -197,109 +248,86 @@ getbb <- function(place_name,
     )
 
     # Code optionally select more things stored in obj...
-    if (!is.null(display_name_contains))
-    {
+    if (!is.null(display_name_contains)) {
         # nocov start
-        obj <- obj[grepl(display_name_contains, obj$display_name), ]
+        obj <- obj [grepl(display_name_contains, obj$display_name), ]
         if (nrow (obj) == 0)
             stop ("No locations include display name ", display_name_contains)
         # nocov end
     }
 
-    if (format_out == "data.frame") {
-      return(obj)
+    return (obj)
+}
+
+#' Get all polygons from a 'geojson' object
+#'
+#' @param obj A 'geojson' object
+#' @return List of polygon matrices
+#' @noRd
+get_geotext_poly <- function (obj) {
+
+    . <- NULL # suppress R CMD check note
+
+    indx_multi <- grep ("MULTIPOLYGON", obj$geotext)
+    gt_p <- NULL
+    indx <- which (!(seq (nrow(obj)) %in% indx_multi))
+    gt_p <- obj$geotext [indx] %>%
+        gsub ("POLYGON\\(\\(", "", .) %>%
+        gsub ("\\)\\)", "", .) %>%
+        strsplit (split = ",")
+    indx_na <- rev (which (is.na (gt_p)))
+    for (i in indx_na)
+        gt_p [[i]] <- NULL
+
+    # points and linestrings may be present in result, and will be prepended
+    # by sf-standard prefixes, while (multi)polygons will have been stripped
+    # to numeric values only.
+    # TDOD: Do the following lines need to be repeated for _mp?
+    indx <- which (vapply (gt_p, function (i)
+                           substring (i [1], 1, 1) %in% c ("L", "P"),
+                           logical (1)))
+    if (length (indx) > 0)
+        gt_p <- gt_p [-indx]
+
+    if (length (gt_p) > 0) {
+        gt_p <- lapply (gt_p, function (i) get1bdypoly (i))
+        gt_p <- do.call (c, gt_p)
     }
 
-    bn <- as.numeric(obj$boundingbox[[1]])
-    bb_mat <- matrix(c(bn[3:4], bn[1:2]), nrow = 2, byrow = TRUE)
-    dimnames(bb_mat) <- list(c("x", "y"), c("min", "max"))
-    if (format_out == "matrix")
-        ret <- bb_mat
-    else if (format_out == "string")
-        ret <- bbox_to_string (bbox = bb_mat)
-    else if (is_polygon)
-    {
-        . <- NULL # suppress R CMD check note
-        indx_multi <- grep ("MULTIPOLYGON", obj$geotext)
-        gt_p <- gt_mp <- NULL
-        # nocov start
-        # TODO: Test this
-        if (length (indx_multi) > 0)
-        {
-            gt_mp <- obj$geotext [indx_multi] %>%
-                gsub ("MULTIPOLYGON\\(\\(\\(", "", .) %>%
-                gsub ("\\)\\)\\)", "", .) %>%
-                strsplit (split = ',')
-            indx_na <- rev (which (is.na (gt_mp)))
-            for (i in indx_na)
-                gt_mp [[i]] <- NULL
-        }
-        # nocov end
+    return (gt_p)
+}
 
-        indx <- which (!(seq (nrow(obj)) %in% indx_multi))
-        gt_p <- obj$geotext [indx] %>%
-            gsub ("POLYGON\\(\\(", "", .) %>%
-            gsub ("\\)\\)", "", .) %>%
-            strsplit (split = ',')
-        indx_na <- rev (which (is.na (gt_p)))
+#' Get all multipolygons from a 'geojson' object
+#'
+#' See Issue #195
+#'
+#' @param obj A 'geojson' object
+#' @return List of multipolygon matrices
+#' @noRd
+get_geotext_multipoly <- function (obj) {
+
+    . <- NULL # suppress R CMD check note
+
+    indx_multi <- grep ("MULTIPOLYGON", obj$geotext)
+    gt_mp <- NULL
+
+    # nocov start
+    # TODO: Test this
+    if (length (indx_multi) > 0) {
+        gt_mp <- obj$geotext [indx_multi] %>%
+            gsub ("MULTIPOLYGON\\(\\(\\(", "", .) %>%
+            gsub ("\\)\\)\\)", "", .) %>%
+            strsplit (split = ",")
+        indx_na <- rev (which (is.na (gt_mp)))
         for (i in indx_na)
-            gt_p [[i]] <- NULL
-
-        # points and linestrings may be present in result, and will be prepended
-        # by sf-standard prefixes, while (multi)polygons will have been stripped
-        # to numeric values only.
-        # TDOD: Do the following lines need to be repeated for _mp?
-        indx <- which (vapply (gt_p, function (i)
-                               substring (i [1], 1, 1) %in% c ("L", "P"), logical (1)))
-        if (length (indx) > 0)
-            gt_p <- gt_p [-indx]
-
-        if (length (gt_p) > 0)
-            gt_p <- lapply (gt_p, function (i) get1bdypoly (i))
-        # Extract all multipolygon components (see issue #195)
-        if (length (gt_mp) > 0)
-            gt_mp <- lapply (gt_mp, function (i) get1bdypoly (i))
-
-        gt <- c (gt_p, gt_mp)
-        # multipolys below are not strict SF MULTIPOLYGONs, rather just cases
-        # where nominatim returns lists of multiple items
-        if (length (gt) == 0)
-        {
-            message ('No polygonal boundary for ', place_name)
-            ret <- bb_mat
-        } else if (length (gt) == 1)
-        {
-                ret <- gt [[1]]
-        } else
-        {
-            ret <- gt
-        }
-    } else
-    {
-        stop (paste0 ('format_out not recognised; please specify one of ',
-                      '[data.frame, matrix, string, polygon]'))
+            gt_mp [[i]] <- NULL
     }
+    # nocov end
 
-    if (format_out == "sf_polygon") {
-        if (!is.null (gt_p))
-            gt_p <- lapply (gt_p, function (i)
-                            mat2sf_poly (i, pname = place_name))
-        if (!is.null (gt_mp))
-            gt_mp <- lapply (gt_mp, function (i)
-                             mat2sf_multipoly (list (i), mpname = place_name))
+    if (length (gt_mp) > 0)
+        gt_mp <- lapply (gt_mp, function (i) get1bdypoly (i))
 
-        if (is.null (gt_p) & is.null (gt_mp))
-            stop ("Query returned no polygons")
-        else if (is.null (gt_mp))
-            ret <- do.call (rbind, gt_p)
-        else if (is.null (gt_p))
-            ret <- do.call (rbind, gt_mp)
-        else
-            ret <- list ("polygon" = do.call (rbind, gt_p),
-                         "multipolygon" = do.call (rbind, gt_mp))
-    }
-
-    return (ret)
+    return (gt_mp)
 }
 
 #' get1bdypoly
@@ -312,10 +340,8 @@ getbb <- function(place_name,
 #' @return Equivalent list of coordinate matrices
 #'
 #' @noRd
-get1bdypoly <- function (p)
-{
-    rm_bracket <- function (i)
-    {
+get1bdypoly <- function (p) {
+    rm_bracket <- function (i) {
         vapply (i, function (j) gsub ("\\)", "", j),
                 character (1), USE.NAMES = FALSE)
     }
@@ -326,8 +352,7 @@ get1bdypoly <- function (p)
 
     ret <- list ()
     i <- grep ("\\)", p)
-    while (length (i) > 0)
-    {
+    while (length (i) > 0) {
         ret [[length (ret) + 1]] <- rm_bracket (p [1:i [1]])
         p <- p [(i [1] + 1):length (p)]
         i <- grep ("\\)", p)
@@ -335,10 +360,8 @@ get1bdypoly <- function (p)
     ret [[length (ret) + 1]] <- rm_bracket (p)
 
     ret <- lapply (ret, function (i)
-                   apply (do.call (rbind, strsplit (i, split = ' ')),
+                   apply (do.call (rbind, strsplit (i, split = " ")),
                           2, as.numeric))
-    if (length (ret) == 1)
-        ret <- ret [[1]]
 
     return (ret)
 }
@@ -350,8 +373,7 @@ get1bdypoly <- function (p)
 #'
 #' @return A list that can be converted into a simple features geometry
 #' @noRd
-mat2sf_poly <- function (mat, pname)
-{
+mat2sf_poly <- function (mat, pname) {
   if (nrow(mat) == 2) {
     x <- c(mat[1, 1], mat[1, 2], mat[1, 2], mat[1, 1], mat[1, 1])
     y <- c(mat[2, 2], mat[2, 2], mat[2, 1], mat[2, 1], mat[2, 2])
@@ -384,8 +406,7 @@ mat2sf_poly <- function (mat, pname)
 #'
 #' @return A list that can be converted into a simple features geometry
 #' @noRd
-mat2sf_multipoly <- function (x, mpname)
-{
+mat2sf_multipoly <- function (x, mpname) {
     # get bbox from matrices
     bb <- as.vector (t (apply (do.call (rbind, x [[1]]), 2, range)))
     names (bb) <- c ("xmin", "ymin", "xmax", "ymax")
@@ -405,4 +426,26 @@ mat2sf_multipoly <- function (x, mpname)
     names (xsf) <- "geometry"
     attr (xsf, "sf_column") <- "geometry"
     return (xsf)
+}
+
+bb_as_sf_poly <- function (gt_p, gt_mp, place_name) {
+
+    if (!is.null (gt_p))
+        gt_p <- lapply (gt_p, function (i)
+                        mat2sf_poly (i, pname = place_name))
+    if (!is.null (gt_mp))
+        gt_mp <- lapply (gt_mp, function (i)
+                         mat2sf_multipoly (list (i), mpname = place_name))
+
+    if (is.null (gt_p) & is.null (gt_mp))
+        stop ("Query returned no polygons")
+    else if (is.null (gt_mp))
+        ret <- do.call (rbind, gt_p)
+    else if (is.null (gt_p))
+        ret <- do.call (rbind, gt_mp)
+    else
+        ret <- list ("polygon" = do.call (rbind, gt_p),
+                     "multipolygon" = do.call (rbind, gt_mp))
+
+    return (ret)
 }

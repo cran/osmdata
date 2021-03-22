@@ -1,6 +1,7 @@
 ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
 Afra
 andrew
+ANGLEUNIT
 api
 applicationCategory
 appveyor
@@ -16,6 +17,7 @@ BugReports
 Bux
 cancelled
 casacazaz
+cgi
 cgiar
 changelogs
 CharacterMatrix
@@ -42,6 +44,7 @@ COUNTRELATION
 countWay
 COUNTWAY
 covr
+coz
 cph
 cpp
 cran
@@ -63,6 +66,7 @@ dev
 developmentStatus
 devtools
 df
+di
 Dian
 dir
 doi
@@ -83,11 +87,13 @@ favour
 fileSize
 Finkelstein
 firmt
+fn
 followin
 fstream
 funder
 gcc
 GDAL
+GEOGCRS
 geospatial
 Geospatial
 getSizes
@@ -104,6 +110,7 @@ http
 https
 httr
 hypertidy
+ie
 ifdef
 incollection
 ing
@@ -128,11 +135,13 @@ jsonlite
 Kalicinski
 keyset
 knitr
+kumi
 kv
 labelled
 latitutdes
 LazyData
 len
+LENGTHUNIT
 LIBS
 licence
 Licence
@@ -163,6 +172,7 @@ md
 memb
 membs
 MERCHANTABILITY
+metre
 multigeometry
 multilinestring
 Multilinestring
@@ -200,6 +210,7 @@ NumericMatrix
 NumericVector
 nway
 nways
+oapi
 ODbL
 odm
 ofstream
@@ -242,6 +253,7 @@ pragma
 pratice
 pre
 preload
+PRIMEM
 programmingLanguage
 proj
 ptList
@@ -282,22 +294,26 @@ retrive
 returnn
 RHUB
 rmarkdown
+rnode
 RobinLovelace
 ropensci
 rowi
 rowname
 roxygen
 RoxygenNote
+rrel
 Rscript
 rspm
 RSPM
 rstats
 rstudio
+ru
 Rudis
 runif
 runtimePlatform
 rvest
 rw
+rway
 rwi
 salzburg
 sameAs
@@ -324,6 +340,7 @@ srtmdata
 ss
 sstream
 stod
+stoll
 str
 strcmp
 stringsAsFactors
@@ -336,6 +353,7 @@ SystemRequirements
 tempList
 testthat
 tibble
+tlsvl
 traverseNode
 TRAVERSENODE
 traverseRelation
@@ -371,8 +389,10 @@ wayList
 wayname
 waynames
 waySizes
+WGS
 wi
 wj
+wkt
 www
 xmax
 xmin
