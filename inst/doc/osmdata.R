@@ -18,10 +18,10 @@ q <- opq(bbox = c(51.1, 0.1, 51.2, 0.2))
 q <- opq (bbox = c (51.2867602, -0.510375, 51.6918741, 0.3340155)) %>%
     add_osm_feature(key = 'highway', value = 'motorway')
 
-## ----features, eval=FALSE-----------------------------------------------------
+## ----available-features, eval=FALSE-------------------------------------------
 #  head (available_features ())
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ----available-features-results, echo=FALSE-----------------------------------
 c ("4wd only", "abandoned", "abutters", "access", "addr", "addr:city")
 
 ## ----workflow, eval = FALSE---------------------------------------------------
@@ -85,6 +85,11 @@ q <- opq(bbox = c(102.5417638, 24.8915153, 102.8617638, 25.2115153)) %>%
     add_osm_feature(key = 'natural', value = 'water') %>%
     add_osm_feature(key = 'name:en', value = 'Dian', value_exact = FALSE)
 
+## ----add_osm_features---------------------------------------------------------
+q <- opq(bbox = 'Kunming, China') %>%
+    add_osm_features(features = c ("\"natural\"=\"water\"",
+                                   "\"name:en\"=\"Dian\""))
+
 ## ----kunming3, eval = FALSE---------------------------------------------------
 #  dat1 <- opq(bbox = 'Kunming, China') %>%
 #      add_osm_feature(key = 'natural', value = 'water') %>%
@@ -94,44 +99,11 @@ q <- opq(bbox = c(102.5417638, 24.8915153, 102.8617638, 25.2115153)) %>%
 #      osmdata_sf ()
 #  dat <- c (dat1, dat2)
 
-## ---- eval = FALSE------------------------------------------------------------
-#  unlist (lapply (dat1, nrow) [4:8])
-#  unlist (lapply (dat2, nrow) [4:8])
-#  unlist (lapply (dat, nrow) [4:8])
-
-## ---- echo = FALSE------------------------------------------------------------
-dat1 <- c (51399, 186, 905, 0, 47)
-dat2 <- c (4473, 55, 4, 1, 3)
-dat <- c (53777, 238, 908, 1, 49)
-names (dat1) <- names (dat2) <- names (dat) <- c ('osm_points', 'osm_lines',
-                                                  'osm_polygons',
-                                                  'osm_multilines',
-                                                  'osm_multipolygons')
-dat1 [c (1:3, 5)]
-dat2
-dat
-
-## ---- eval = FALSE------------------------------------------------------------
-#  unlist (lapply (osmdata_sf (q), nrow) [4:8])
-
-## ---- echo = FALSE------------------------------------------------------------
-dat <- c (2087, 3, 1, 0, 1)
-names (dat1) <- names (dat2) <- names (dat) <- c ('osm_points', 'osm_lines',
-                                                  'osm_polygons',
-                                                  'osm_multilines',
-                                                  'osm_multipolygons')
-dat
-
 ## ----kunming4, eval = FALSE---------------------------------------------------
-#  q <- opq(bbox = 'Kunming, China') %>%
-#      add_osm_feature(key = 'natural', value = 'water') %>%
-#      add_osm_feature(key = 'name:en', value = 'Dian', value_exact = FALSE)
-
-## ---- eval = FALSE------------------------------------------------------------
-#  q <- opq(bbox = 'Kunming, China') %>%
-#      add_osm_feature(key = 'natural', value = 'water') %>%
-#      add_osm_feature(key = 'name', value = 'dian', key_exact = FALSE,
-#                  value_exact = FALSE, match_case = FALSE)
+#  add_osm_feature(key = 'name', value = 'dian',
+#                  key_exact = FALSE,
+#                  value_exact = FALSE,
+#                  match_case = FALSE)
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  osmdata_sf(opq_string(q))

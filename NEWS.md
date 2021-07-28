@@ -1,10 +1,19 @@
-0.1.4.00X
+0.1.5.00X
+===================
+
+Major changes:
+
+- New function `add_osm_features` to enable OR-combinations of features in
+  single queries.
+
+0.1.5
 ===================
 
 Minor changes:
 
 - Bug fix in `getbb()` via #232, thanks to @changwoo-lee
 - hard-code WKT string for EPSG:4326, to avoid obsolete proj4strings (#218)
+- bug fix in `print` method via #236; thanks to @odeleongt 
 
 0.1.4
 ===================

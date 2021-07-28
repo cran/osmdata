@@ -1,7 +1,7 @@
 Package: osmdata
 Title: Import 'OpenStreetMap' Data as Simple Features or Spatial
         Objects
-Version: 0.1.5
+Version: 0.1.6
 Authors@R: 
     c(person(given = "Mark",
              family = "Padgham",
@@ -52,11 +52,10 @@ BugReports: https://github.com/ropensci/osmdata/issues
 Depends: R (>= 3.2.4)
 Imports: curl, httr, jsonlite, lubridate, magrittr, methods, Rcpp (>=
         0.12.4), rvest, sp, tibble, utils, xml2
-Suggests: knitr, raster, rmarkdown, sf, testthat
+Suggests: knitr, markdown, raster, rmarkdown, sf, testthat
 LinkingTo: Rcpp
 VignetteBuilder: knitr
 Encoding: UTF-8
-LazyData: true
 NeedsCompilation: yes
 RoxygenNote: 7.1.1
 SystemRequirements: C++11
@@ -64,7 +63,7 @@ X-schema.org-applicationCategory: Data Access
 X-schema.org-isPartOf: https://ropensci.org
 X-schema.org-keywords: open0street0map, openstreetmap, overpass0API,
         OSM
-Packaged: 2021-03-22 11:13:53 UTC; smexus
+Packaged: 2021-07-27 06:39:10 UTC; smexus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
@@ -77,4 +76,4 @@ Author: Mark Padgham [aut, cre],
   Finkelstein Noam [ctb, cph] (Author of included stub.R code),
   Bartnik Lukasz [ctb, cph] (Author of included stub.R code)
 Repository: CRAN
-Date/Publication: 2021-03-22 12:10:02 UTC
+Date/Publication: 2021-07-28 10:10:03 UTC

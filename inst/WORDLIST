@@ -13,10 +13,12 @@ Bartnik
 bbox
 booktitle
 bool
+bootswatch
 BugReports
 Bux
 cancelled
 casacazaz
+cerr
 cgi
 cgiar
 changelogs
@@ -24,6 +26,7 @@ CharacterMatrix
 CharacterVector
 charset
 checkUserInterrupt
+chk
 ci
 CMD
 codecov
@@ -31,6 +34,7 @@ codemeta
 codeRepository
 Coliban
 colour
+compileAttributes
 ComputerLanguage
 config
 const
@@ -43,6 +47,7 @@ countRelation
 COUNTRELATION
 countWay
 COUNTWAY
+cout
 covr
 coz
 cph
@@ -92,10 +97,14 @@ followin
 fstream
 funder
 gcc
+gcda
+gcno
 GDAL
 GEOGCRS
 geospatial
 Geospatial
+gert
+getbb
 getSizes
 GETSIZES
 gh
@@ -104,8 +113,10 @@ Gilardi
 GIScience
 github
 givenName
+grepl
 hashFiles
 howpublished
+href
 http
 https
 httr
@@ -185,6 +196,7 @@ multipolygon
 multipolygonal
 multistring
 multistrings
+navbar
 ncol
 ndi
 nedges
@@ -273,10 +285,13 @@ RawNode
 RawRelation
 RawWay
 rbegin
+Rcerr
 rcmdcheck
+Rcout
 rcpp
 Rcpp
 RCpp
+RcppExport
 Rds
 readme
 README
@@ -294,13 +309,19 @@ retrive
 returnn
 RHUB
 rmarkdown
+rngScope
+RNGScope
 rnode
 RobinLovelace
+RObject
 ropensci
+Rostream
+ROSTREAM
 rowi
 rowname
 roxygen
 RoxygenNote
+rprojroot
 rrel
 Rscript
 rspm
@@ -322,6 +343,7 @@ saveRDS
 sc
 ScholarlyArticle
 sessioninfo
+SEXP
 sfc
 sfg
 shortjournal
@@ -339,6 +361,7 @@ srtm
 srtmdata
 ss
 sstream
+stdout
 stod
 stoll
 str
@@ -346,6 +369,7 @@ strcmp
 stringsAsFactors
 stringstream
 struct
+stSEXP
 sudo
 sysreq
 sysreqs
@@ -372,6 +396,7 @@ unclosed
 uncomment
 UniqueVals
 unname
+usr
 vals
 vec
 vectorized
@@ -389,6 +414,7 @@ wayList
 wayname
 waynames
 waySizes
+Weverything
 WGS
 wi
 wj

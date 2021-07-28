@@ -12,7 +12,7 @@
 <meta name="author" content="Mark Padgham" />
 <meta name="author" content="Robin Lovelace" />
 
-<meta name="date" content="2021-03-22" />
+<meta name="date" content="2021-07-27" />
 
 <title>1. osmdata</title>
 
@@ -250,12 +250,12 @@ div.tocify {
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
 <div class="row">
-<div class="col-sm-12 col-md-4 col-lg-3">
+<div class="col-xs-12 col-sm-4 col-md-3">
 <div id="TOC" class="tocify">
 </div>
 </div>
 
-<div class="toc-content col-sm-12 col-md-8 col-lg-9">
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
 
 
 
@@ -267,7 +267,7 @@ div.tocify {
 <h1 class="title toc-ignore">1. osmdata</h1>
 <h4 class="author">Mark Padgham</h4>
 <h4 class="author">Robin Lovelace</h4>
-<h4 class="date">2021-03-22</h4>
+<h4 class="date">2021-07-27</h4>
 
 </div>
 
@@ -359,7 +359,12 @@ x &lt;- opq(bbox = bb) %&gt;%
     add_osm_feature(key = &#39;natural&#39;, value = &#39;water&#39;) %&gt;%
     add_osm_feature(key = &#39;name:en&#39;, value = &#39;Dian&#39;, value_exact = FALSE)</code></pre>
 <p>Each successive call to <code>add_osm_feature()</code> <strong>adds</strong> features to a query. This query is thus a request for all bodies of natural water <strong>and</strong> those with English names that include ‘Dian.’ The requested data may be extracted through calling one of the <code>osmdata_xml/sp/sf()</code> functions.</p>
-<p>Single queries are always constructed through <strong>adding</strong> features, and therefore correspond to logical <strong>AND</strong> operations: natural water bodies <strong>AND</strong> those whose names include ‘Dian.’ The equivalent <strong>OR</strong> combination requires extracting separate data sets and combining then with the inbuilt <code>c</code> operator of <code>osmdata</code>. The following code demonstrates this with <code>osmdata_sf()</code>:</p>
+<p>Single queries are always constructed through <strong>adding</strong> features, and therefore correspond to logical <strong>AND</strong> operations: natural water bodies <strong>AND</strong> those whose names include ‘Dian.’ The equivalent <strong>OR</strong> combination can be extracted with the <a href="https://docs.ropensci.org/osmdata/reference/add_osm_features.html"><code>add_osm_features()</code> function</a>. The following query represents the OR-equivalent of the above query, requesting data on both all natural features with the value of <code>&quot;water&quot;</code> OR all features whose English name is <code>&quot;Dian&quot;</code>.</p>
+<pre class="r"><code>q &lt;- opq(bbox = &#39;Kunming, China&#39;) %&gt;%
+    add_osm_features(features = c (&quot;\&quot;natural\&quot;=\&quot;water\&quot;&quot;,
+                                   &quot;\&quot;name:en\&quot;=\&quot;Dian\&quot;&quot;))</code></pre>
+<p>Note that the <code>&quot;=&quot;</code> symbols here requests features whose values exactly match the given values. Other “filter” symbols are possible, as described in the <a href="https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#By_tag_.28has-kv.29">overpass query language definition</a>, including symbols for negation (<code>!=</code>), or approximate matching (<code>~</code>).</p>
+<p>Passing this query to <a href="https://docs.ropensci.org/osmdata/reference/osmdata_sf.html"><code>osmdata_sf()</code></a> will return identical data to the following way to explicitly construct an OR query through using the inbuilt <code>c</code> operator of <code>osmdata</code>.</p>
 <pre class="r"><code>dat1 &lt;- opq(bbox = &#39;Kunming, China&#39;) %&gt;%
     add_osm_feature(key = &#39;natural&#39;, value = &#39;water&#39;) %&gt;%
     osmdata_sf ()
@@ -367,36 +372,17 @@ dat2 &lt;- opq(bbox = &#39;Kunming, China&#39;) %&gt;%
     add_osm_feature(key = &#39;name:en&#39;, value = &#39;Dian&#39;, value_exact = FALSE) %&gt;%
     osmdata_sf ()
 dat &lt;- c (dat1, dat2)</code></pre>
-<p>The following code extracted numbers of objects returned in each case (where the fourth-to-eighth items of an <code>osmdata</code> object are those containing the actual spatial data)</p>
-<pre class="r"><code>unlist (lapply (dat1, nrow) [4:8])
-unlist (lapply (dat2, nrow) [4:8])
-unlist (lapply (dat, nrow) [4:8])</code></pre>
-<pre><code>##        osm_points         osm_lines      osm_polygons osm_multipolygons 
-##             51399               186               905                47</code></pre>
-<pre><code>##        osm_points         osm_lines      osm_polygons    osm_multilines 
-##              4473                55                 4                 1 
-## osm_multipolygons 
-##                 3</code></pre>
-<pre><code>##        osm_points         osm_lines      osm_polygons    osm_multilines 
-##             53777               238               908                 1 
-## osm_multipolygons 
-##                49</code></pre>
-<p>The number of resultant objects is less than the sum of the individual components because the <code>c</code> operator only combines unique objects. There are thus, for example, 53,777 points corresponding to objects in Kunming, China that are <strong>either</strong> natural waterbodies <strong>or</strong> that include ‘Dian’ in their English name. Compare this with the result of the equivalent <code>AND</code> operation</p>
-<pre class="r"><code>unlist (lapply (osmdata_sf (q), nrow) [4:8])</code></pre>
-<pre><code>##        osm_points         osm_lines      osm_polygons    osm_multilines 
-##              2087                 3                 1                 0 
-## osm_multipolygons 
-##                 1</code></pre>
-<p>And there are, for example, the considerably lower number of 2,087 points describing objects in Kunming that are <strong>both</strong> natural waterbodies <strong>and</strong> that include ‘Dian’ in their English name.</p>
-<p>Both <code>key</code> and <code>value</code> fields may be matched either exactly or approximately. The previous query is repeated here for convenience:</p>
-<pre class="r"><code>q &lt;- opq(bbox = &#39;Kunming, China&#39;) %&gt;%
-    add_osm_feature(key = &#39;natural&#39;, value = &#39;water&#39;) %&gt;%
-    add_osm_feature(key = &#39;name:en&#39;, value = &#39;Dian&#39;, value_exact = FALSE)</code></pre>
-<p>In addition to <code>value_exact</code>, <code>add_osm_feature</code> also offers the additional two options of <code>key_exact</code> and <code>match_case</code>. The former functions just like <code>value_exact</code>, but is applied to the specified <code>key</code> parameter, while <code>match_case</code> (default <code>TRUE</code>) specifies whether case should also be matched. These options allow the above query to be rewritten,</p>
-<pre class="r"><code>q &lt;- opq(bbox = &#39;Kunming, China&#39;) %&gt;%
-    add_osm_feature(key = &#39;natural&#39;, value = &#39;water&#39;) %&gt;%
-    add_osm_feature(key = &#39;name&#39;, value = &#39;dian&#39;, key_exact = FALSE,
-                value_exact = FALSE, match_case = FALSE)</code></pre>
+<p>While the “filter” symbols may be explicitly specified in <a href="https://docs.ropensci.org/osmdata/reference/add_osm_features.html">the <code>add_osm_features()</code> function</a>, the single-feature version of <a href="https://docs.ropensci.org/osmdata/reference/add_osm_feature.html"><code>add_osm_feature()</code> function</a> has several logical parameters to control matching without needing to remember precise overpass syntax:</p>
+<ul>
+<li><code>key_exact</code> can be set to <code>FALSE</code> to approximately match given keys;</li>
+<li><code>value_exact</code> can be set to <code>FALSE</code> to approximately match given values; and</li>
+<li><code>match_case</code> can be set to <code>FALSE</code> to match keys and values in both lower and upper case forms.</li>
+</ul>
+<p>The previous query with <code>key = &#39;name:end&#39;</code> and <code>value = &#39;Dian&#39;</code> could thus be replaced by the following:</p>
+<pre class="r"><code>add_osm_feature(key = &#39;name&#39;, value = &#39;dian&#39;,
+                key_exact = FALSE,
+                value_exact = FALSE,
+                match_case = FALSE)</code></pre>
 </div>
 <div id="extracting-osm-data-from-a-query" class="section level3">
 <h3>2.2 Extracting <code>OSM</code> data from a query</h3>
@@ -720,6 +706,9 @@ $(document).ready(function () {
 
 <script>
 $(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
 
     // move toc-ignore selectors from section div to header
     $('div.section.toc-ignore')
