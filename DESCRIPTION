@@ -1,45 +1,24 @@
 Package: osmdata
 Title: Import 'OpenStreetMap' Data as Simple Features or Spatial
         Objects
-Version: 0.1.6
-Authors@R: 
-    c(person(given = "Mark",
-             family = "Padgham",
-             role = c("aut", "cre"),
-             email = "mark.padgham@email.com"),
-      person(given = "Bob",
-             family = "Rudis",
-             role = "aut"),
-      person(given = "Robin",
-             family = "Lovelace",
-             role = "aut"),
-      person(given = "Maëlle",
-             family = "Salmon",
-             role = "aut"),
-      person(given = "Andrew",
-             family = "Smith",
-             role = "ctb"),
-      person(given = "James",
-             family = "Smith",
-             role = "ctb"),
-      person(given = "Andrea",
-             family = "Gilardi",
-             role = "ctb"),
-      person(given = "Enrico",
-             family = "Spinielli",
-             role = "ctb"),
-      person(given = "Marcin",
-             family = "Kalicinski",
-             role = c("ctb", "cph"),
-             comment = "Author of included RapidXML code"),
-      person(given = "Finkelstein",
-             family = "Noam",
-             role = c("ctb", "cph"),
-             comment = "Author of included stub.R code"),
-      person(given = "Bartnik",
-             family = "Lukasz",
-             role = c("ctb", "cph"),
-             comment = "Author of included stub.R code"))
+Version: 0.1.7
+Authors@R: c(
+    person("Mark", "Padgham", , "mark.padgham@email.com", role = c("aut", "cre")),
+    person("Bob", "Rudis", role = "aut"),
+    person("Robin", "Lovelace", role = "aut"),
+    person("Maëlle", "Salmon", role = "aut"),
+    person("Andrew", "Smith", role = "ctb"),
+    person("James", "Smith", role = "ctb"),
+    person("Andrea", "Gilardi", role = "ctb"),
+    person("Enrico", "Spinielli", role = "ctb"),
+    person("Anthony", "North", role = "ctb"),
+    person("Marcin", "Kalicinski", role = c("ctb", "cph"),
+           comment = "Author of included RapidXML code"),
+    person("Finkelstein", "Noam", role = c("ctb", "cph"),
+           comment = "Author of included stub.R code"),
+    person("Bartnik", "Lukasz", role = c("ctb", "cph"),
+           comment = "Author of included stub.R code")
+  )
 Maintainer: Mark Padgham <mark.padgham@email.com>
 Description: Download and import of 'OpenStreetMap' ('OSM') data as 'sf'
     or 'sp' objects.  'OSM' data are extracted from the 'Overpass' web
@@ -57,13 +36,13 @@ LinkingTo: Rcpp
 VignetteBuilder: knitr
 Encoding: UTF-8
 NeedsCompilation: yes
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 SystemRequirements: C++11
 X-schema.org-applicationCategory: Data Access
 X-schema.org-isPartOf: https://ropensci.org
 X-schema.org-keywords: open0street0map, openstreetmap, overpass0API,
         OSM
-Packaged: 2021-07-27 06:39:10 UTC; smexus
+Packaged: 2021-10-07 10:50:35 UTC; smexus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
@@ -72,8 +51,9 @@ Author: Mark Padgham [aut, cre],
   James Smith [ctb],
   Andrea Gilardi [ctb],
   Enrico Spinielli [ctb],
+  Anthony North [ctb],
   Marcin Kalicinski [ctb, cph] (Author of included RapidXML code),
   Finkelstein Noam [ctb, cph] (Author of included stub.R code),
   Bartnik Lukasz [ctb, cph] (Author of included stub.R code)
 Repository: CRAN
-Date/Publication: 2021-07-28 10:10:03 UTC
+Date/Publication: 2021-10-07 11:40:02 UTC

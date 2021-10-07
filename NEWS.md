@@ -1,4 +1,11 @@
-0.1.5.00X
+0.1.7
+===================
+
+Minor changes:
+
+- `add_osm_feature` bug fix to revert AND behaviour (#240 thanks to @anthonynorth)
+
+0.1.6
 ===================
 
 Major changes:
