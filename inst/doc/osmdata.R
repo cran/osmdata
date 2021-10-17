@@ -85,10 +85,20 @@ q <- opq(bbox = c(102.5417638, 24.8915153, 102.8617638, 25.2115153)) %>%
     add_osm_feature(key = 'natural', value = 'water') %>%
     add_osm_feature(key = 'name:en', value = 'Dian', value_exact = FALSE)
 
-## ----add_osm_features---------------------------------------------------------
-q <- opq(bbox = 'Kunming, China') %>%
-    add_osm_features(features = c ("\"natural\"=\"water\"",
-                                   "\"name:en\"=\"Dian\""))
+## ----add_osm_features-fakey, eval = FALSE-------------------------------------
+#  q <- opq(bbox = 'Kunming, China') %>%
+#      add_osm_features(features = c ("\"natural\"=\"water\"",
+#                                     "\"name:en\"=\"Dian\""))
+
+## ----add_osm_features, echo = FALSE-------------------------------------------
+q <- list (
+    bbox = "24.388848,102.1697441,26.548485,103.6683522",
+    prefix = "[out:xml][timeout:25];\n(\n",
+    suffix = ");\n(._;>;);\nout body;",
+    features = c ("[\"natural\"=\"water\"]", "[\"name:en\"=\"Dian\"]")
+    )
+attr(q, "class") <- c ("list", "overpass_query")
+attr(q, "nodes_only") <- FALSE
 
 ## ----kunming3, eval = FALSE---------------------------------------------------
 #  dat1 <- opq(bbox = 'Kunming, China') %>%

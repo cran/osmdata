@@ -1,6 +1,6 @@
-00bdb0b948d18062c02682f6e41a451a *DESCRIPTION
+65a4aca49cb3e79ff63015ccc4de537e *DESCRIPTION
 0cca92055c2260729cf9193c433af8af *NAMESPACE
-588827081e9936778bb630974f6fc0ab *NEWS.md
+12182295269a84778e439f087d59c58b *NEWS.md
 8c3d5b44f7af948e66dc727d02cfe523 *R/RcppExports.R
 e57de4c7c0e5e69e9f32d49f8d930ee4 *R/elevation.R
 32dc10e66b2b6f233782fd3f8c9e3be9 *R/features.R
@@ -23,13 +23,13 @@ fa18128de2fd0d8337a2249f71575aed *cleanup
 01dae3dfab9b1cbb035cd129e1d81c94 *inst/CITATION
 9231ce7e2903c626a3fbade9516e2d8b *inst/doc/osm-sf-translation.R
 34583a1091310ff8d8051e482d410910 *inst/doc/osm-sf-translation.Rmd
-4a477c754ef5ff6f5d2cb2a207516bf6 *inst/doc/osm-sf-translation.html
+af069f686446b73aa36004b84f5ca049 *inst/doc/osm-sf-translation.html
 5b0150d166eac9b4db44863403845926 *inst/doc/osmdata-sc.R
 25b8e49406ad8886cee824def361419e *inst/doc/osmdata-sc.Rmd
-685dcdc023af4a480b047da6f847f784 *inst/doc/osmdata-sc.html
-6c8fb086ab8ec67f4eb2b335d89ad67e *inst/doc/osmdata.R
-72c552e590dd4c01861f6b9d0ef8ceb4 *inst/doc/osmdata.Rmd
-4c9b0a62e5f3fe986a7a1f61a2aac43c *inst/doc/osmdata.html
+e59df53b8cc68d516a121d2b3fa3713e *inst/doc/osmdata-sc.html
+b0336213a0a4bf2c56a83bfc005ca5cd *inst/doc/osmdata.R
+66e5dcd948946c3f28359969bf2c01b5 *inst/doc/osmdata.Rmd
+b262b3dbbb264e9a5d06a5808fd26946 *inst/doc/osmdata.html
 14f33c66111b1b93ad0de3a77b1c95ad *inst/figures/logo.png
 82cb678a638ab9eab0cd467346f7f161 *man/add_osm_feature.Rd
 5bab3ff10d9fcdc1b6e230fd60b75bb0 *man/add_osm_features.Rd
@@ -92,7 +92,7 @@ dc43fae6f7d7fd9b2dbce926655b632d *tests/stub.R
 157129b65ee944ff99dc2ab7b97ddda8 *tests/testthat/test-elevation.R
 fc0de1657092672f23d6e8b6bc2795b0 *tests/testthat/test-extract.R
 77f859c255ee4b8fec30b38d1cc27139 *tests/testthat/test-features.R
-d16e477a38916a1b6e0cefc4ca2c0d70 *tests/testthat/test-getbb.R
+ea5a8cff7bb45be117500cdd053c9518 *tests/testthat/test-getbb.R
 84d6e44bf5b0f8e29409162a5c560ea8 *tests/testthat/test-osmdata.R
 08b19c07d2299e381c6adf2fc392077b *tests/testthat/test-sc-osm.R
 4f17966f271690c5b79c8970bbf8b9d9 *tests/testthat/test-sf-construction.R
@@ -104,4 +104,5 @@ f4f022a4555e5bf783fc7ada5487f6dc *tests/valgrind-test.R
 34583a1091310ff8d8051e482d410910 *vignettes/osm-sf-translation.Rmd
 6e4c67115db3f236349bf6ba4c6729e5 *vignettes/osmdata-refs.bib
 25b8e49406ad8886cee824def361419e *vignettes/osmdata-sc.Rmd
-72c552e590dd4c01861f6b9d0ef8ceb4 *vignettes/osmdata.Rmd
+66e5dcd948946c3f28359969bf2c01b5 *vignettes/osmdata.Rmd
+a9c92cbd4a9663b0924e8ea5c53f37b8 *vignettes/osmdata.md
