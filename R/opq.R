@@ -34,6 +34,7 @@
 #' Note in particular the comment that queries with arbitrarily large `memsize`
 #' are likely to be rejected.
 #'
+#' @family queries
 #' @export
 #'
 #' @examples
@@ -103,8 +104,9 @@ check_datetime <- function (x) {
         substring (x, 11, 11) != "T" &
         substring (x, 14, 14) != ":" &
         substring (x, 17, 17) != ":" &
-        substring (x, 20, 20) != "Z")
-        stop ("x is not is ISO8601 format ('YYYY-MM-DDThh:mm:ssZ')")
+        substring (x, 20, 20) != "Z") {
+        stop ("datetime must be in ISO8601 format ('YYYY-MM-DDThh:mm:ssZ')")
+    }
     YY <- substring (x, 1, 4) # nolint
     MM <- substring (x, 6, 7) # nolint
     DD <- substring (x, 9, 10) # nolint
@@ -194,6 +196,7 @@ paste_features <- function (key, value, key_pre = "", bind = "=",
 #' `add_osm_features()` with only one feature is logically equivalent to
 #' `add_osm_feature()`.
 #'
+#' @family queries
 #' @export
 #'
 #' @examples
@@ -283,6 +286,7 @@ add_osm_feature <- function (opq,
 #' @references <https://wiki.openstreetmap.org/wiki/Map_Features>
 #' @seealso [add_osm_feature]
 #'
+#' @family queries
 #' @export
 #'
 #' @examples
@@ -333,7 +337,9 @@ add_osm_features <- function (opq,
 
 #' Add a feature specified by OSM ID to an Overpass query
 #'
-#' @param id One or more official OSM identifiers (long-form integers)
+#' @param id One or more official OSM identifiers (long-form integers), which
+#' must be entered as either a character or *numeric* value (because R does not
+#' support long-form integers).
 #' @param type Type of object; must be either `node`, `way`, or `relation`
 #' @param open_url If `TRUE`, open the OSM page of the specified object in web
 #' browser. Multiple objects (`id` values) will be opened in multiple pages.
@@ -344,9 +350,10 @@ add_osm_features <- function (opq,
 #'
 #' @note Extracting elements by ID requires explicitly specifying the type of
 #' element. Only elements of one of the three given types can be extracted in a
-#' single query, but the results of multiple types can neverthelss be combined
+#' single query, but the results of multiple types can nevertheless be combined
 #' with the \link{c} operation of \link{osmdata}.
 #'
+#' @family queries
 #' @export
 #'
 #' @examples
@@ -369,15 +376,28 @@ opq_osm_id <- function (id = NULL, type = NULL, open_url = FALSE) {
         stop ("type must be specified: one of node, way, or relation")
     type <- match.arg (tolower (type), c ("node", "way", "relation"))
 
+    if (is.null (id))
+        stop ("id must be specified.")
+    if (!(is.character (id) | storage.mode (id) == "double"))
+        stop ("id must be character or numeric.")
+    if (length (id) != 1L)
+        stop ("Only a single id may be entered.")
+
+    if (!is.character (id)) {
+        id <- paste0 (id)
+    }
+
     opq <- opq (1:4)
     opq$bbox <- NULL
     opq$features <- NULL
     opq$id <- list (type = type, id = id)
 
     if (open_url) {
+        # nocov start
         u <- paste0 ("https://openstreetmap.org/", type [1], "/", id)
         for (i in u)
             browseURL (i)
+        # nocov end
     }
 
     opq
@@ -411,10 +431,21 @@ opq_osm_id <- function (id = NULL, type = NULL, open_url = FALSE) {
 #'     opq_string () %>%
 #'     osmdata_sf ()
 #' }
+#' @family queries
 #' @export
-opq_enclosing <- function (lon, lat, key = NULL, value = NULL,
+opq_enclosing <- function (lon = NULL, lat = NULL,
+                           key = NULL, value = NULL,
                            enclosing = "relation", timeout = 25) {
+
     enclosing <- match.arg (tolower (enclosing), c ("relation", "way"))
+
+    if (is.null (lon) | is.null (lat)) {
+        stop ("'lon' and 'lat' must be provided.")
+    }
+    if (!(is.numeric (lon) & is.numeric (lat) &
+          length (lon) == 1L & length (lat) == 1L)) {
+        stop ("'lon' and 'lat' must both be single numeric values.")
+    }
 
     bbox <- bbox_to_string (c (lon, lat, lon, lat))
     timeout <- format (timeout, scientific = FALSE)
@@ -437,6 +468,56 @@ opq_enclosing <- function (lon, lat, key = NULL, value = NULL,
     return (res)
 }
 
+#' opq_around
+#'
+#' Find all features around a given point, and optionally match specific
+#' 'key'-'value' pairs. This function is \emph{not} intended to be combined with
+#' \link{add_osm_feature}, rather is only to be used in the sequence
+#' \link{opq_around} -> \link{osmdata_xml} (or other extraction function). See
+#' examples for how to use.
+#'
+#' @param radius Radius in metres around the point for which data should be
+#' extracted. Queries with  large values for this parameter may fail.
+#' @inheritParams opq_enclosing
+#'
+#' @examples
+#' \dontrun{
+#' # Get all benches ("amenity=bench") within 100m of a particular point
+#' lat <- 53.94542
+#' lon <- -2.52017
+#' key <- "amenity"
+#' value <- "bench"
+#' radius <- 100
+#' x <- opq_around (lon, lat, radius, key, value) %>%
+#'     osmdata_sf ()
+#' }
+#' @family queries
+#' @export
+opq_around <- function (lon, lat, radius = 15,
+                        key = NULL, value = NULL, timeout = 25) {
+
+    timeout <- format (timeout, scientific = FALSE)
+    prefix <- paste0 ("[out:xml][timeout:", timeout, "];(")
+    suffix <- ");\n(._;>;);\nout;"
+
+    kv <- NULL
+    if (!is.null (key)) {
+        if (!is.null (value)) {
+            kv <- paste0 ("[", key, "=", value, "]")
+        } else {
+            kv <- paste0 ("[", key, "]")
+        }
+    }
+
+    nodes <- paste0 ("node(around:", radius, ",", lat, ", ", lon, ")", kv, ";")
+    ways <- paste0 ("way(around:", radius, ",", lat, ", ", lon, ")", kv, ";")
+    rels <- paste0 ("relation(around:", radius, ",", lat, ", ", lon, ")", kv, ";")
+
+    res <- paste0 (prefix, nodes, ways, rels, suffix)
+
+    return (res)
+}
+
 #' Convert an overpass query into a text string
 #'
 #' Convert an osmdata query of class opq to a character string query to
@@ -446,6 +527,7 @@ opq_enclosing <- function (lon, lat, key = NULL, value = NULL,
 #' @return Character string to be submitted to the overpass API
 #'
 #' @export
+#' @family queries
 #' @aliases opq_to_string
 #'
 #' @examples

@@ -66,10 +66,21 @@ test_that ("add feature", {
     qry2 <- add_osm_feature (qry, key = "highway", value = "primary")
     qry3 <- add_osm_feature (qry, key = "highway",
                              value = c ("primary", "tertiary"))
+    qry4 <- add_osm_feature (qry, key = "highway", value = "!primary")
+    qry5 <- add_osm_feature (qry, key = "highway", value = "!primary",
+                             match_case = FALSE)
     expect_identical (qry1$features, " [\"highway\"]")
     expect_identical (qry2$features, " [\"highway\"=\"primary\"]")
     expect_identical (qry3$features,
                       " [\"highway\"~\"^(primary|tertiary)$\"]")
+    expect_identical (qry4$features, " [\"highway\"!=\"primary\"]")
+    expect_identical (qry5$features, " [\"highway\"!=\"primary\",i]")
+
+    bbox <- c(-0.118, 51.514, -0.115, 51.517)
+    qry <- opq (bbox = bbox)
+    bbox2 <- bbox + c (0.01, 0.01, -0.01, -0.01)
+    qry6 <- add_osm_feature (qry, bbox = bbox2, key = "highway", value = "!primary")
+    expect_true (!identical (qry$bbox, qry6$bbox))
           })
 
 test_that ("make_query", {
@@ -148,4 +159,31 @@ test_that ("query-no-quiet", {
         expect_message (x <- osmdata_sc (qry, quiet = FALSE),
                         "Issuing query to Overpass API")
     }
+})
+
+test_that ("add_osm_features", {
+
+    qry <- opq (bbox = c(-0.118, 51.514, -0.115, 51.517))
+    expect_error (
+        qry <- add_osm_features (qry),
+        "features must be provided")
+
+    qry$bbox <- NULL
+    expect_error (
+        qry <- add_osm_features (qry, features = "a"),
+        "Bounding box has to either be set in opq or must be set here")
+
+    qry <- opq (bbox = c(-0.118, 51.514, -0.115, 51.517))
+    expect_error (
+        qry <- add_osm_features (qry, features = "a"),
+        "features must be enclosed in escape-delimited quotations \\(see example\\)")
+
+    bbox <- c (-0.118, 51.514, -0.115, 51.517)
+    bbox_mod <- bbox + c (-0.001, -0.001, 0.001, 0.001)
+    qry0 <- opq (bbox = bbox)
+    qry1 <- add_osm_features (qry0, features = "\"amenity\"=\"restaurant\"")
+    qry2 <- add_osm_features (qry0, features = "\"amenity\"=\"restaurant\"",
+                              bbox = bbox_mod)
+    expect_false (identical (qry1$bbox, qry2$bbox))
+
 })

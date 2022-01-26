@@ -12,7 +12,7 @@
 <meta name="author" content="Mark Padgham" />
 <meta name="author" content="Robin Lovelace" />
 
-<meta name="date" content="2021-10-17" />
+<meta name="date" content="2022-01-26" />
 
 <title>1. osmdata</title>
 
@@ -267,7 +267,7 @@ div.tocify {
 <h1 class="title toc-ignore">1. osmdata</h1>
 <h4 class="author">Mark Padgham</h4>
 <h4 class="author">Robin Lovelace</h4>
-<h4 class="date">2021-10-17</h4>
+<h4 class="date">2022-01-26</h4>
 
 </div>
 
@@ -287,10 +287,10 @@ div.tocify {
 <p>OpenStreetMap (OSM) data and can convert the results to a variety of formats, including both Simple Features (typically of class <code>sf</code>) and Spatial objects (e.g. <code>SpatialPointsDataFrame</code>), as defined by the packages <a href="https://cran.r-project.org/package=sf"><code>sf</code></a> and <a href="https://cran.r-project.org/package=sp"><code>sp</code></a> packages respectively.</p>
 <p><code>overpass</code> is a C++ library that serves OSM data over the web. All <code>overpass</code> queries begin with a bounding box, defined in <code>osmdata</code> with the function <code>opq()</code>:</p>
 <pre class="r"><code>q &lt;- opq(bbox = c(51.1, 0.1, 51.2, 0.2))</code></pre>
-<p>The following sub-section provides more detail on bounding boxes. Following the initial <code>opq()</code> call, <code>osmdata</code> queries are built by adding one or more ‘features,’ which are specified in terms of <code>key-value</code> pairs. For example, all paths, ways, and roads are designated in OSM with <code>key=highway</code>, so that a query all motorways in greater London (UK) can be constructed as follows:</p>
+<p>The following sub-section provides more detail on bounding boxes. Following the initial <code>opq()</code> call, <code>osmdata</code> queries are built by adding one or more ‘features’, which are specified in terms of <code>key-value</code> pairs. For example, all paths, ways, and roads are designated in OSM with <code>key=highway</code>, so that a query all motorways in greater London (UK) can be constructed as follows:</p>
 <pre class="r"><code>q &lt;- opq(bbox = &#39;greater london uk&#39;) %&gt;%
     add_osm_feature(key = &#39;highway&#39;, value = &#39;motorway&#39;)</code></pre>
-<p>A detailed description of features is provided at the <a href="https://wiki.openstreetmap.org/wiki/Category:Keys">OSM wiki</a>, or the <code>osmdata</code> function <code>available_features()</code> can be used to retrive the comprehensive list of feature keys currently used in OSM.</p>
+<p>A detailed description of features is provided at the <a href="https://wiki.openstreetmap.org/wiki/Map_Features">OSM wiki</a>, or the <code>osmdata</code> function <code>available_features()</code> can be used to retrieve the comprehensive list of feature keys currently used in OSM.</p>
 <pre class="r"><code>head (available_features ())</code></pre>
 <pre><code>## [1] &quot;4wd only&quot;  &quot;abandoned&quot; &quot;abutters&quot;  &quot;access&quot;    &quot;addr&quot;      &quot;addr:city&quot;</code></pre>
 <p>There are two primary <code>osmdata</code> functions for obtaining data from a query: <code>osmdata_sf()</code> and <code>osmdata_sp()</code>, which return data in <a href="https://cran.r-project.org/package=sf">Simple Features (<code>sf</code>)</a> and <a href="https://cran.r-project.org/package=sp">Spatial (<code>sp</code>)</a> formats, respectively. The typical workflow for extracting OSM data with <code>osmdata</code> thus consists of the three lines:</p>
@@ -358,8 +358,8 @@ x &lt;- opq(bbox = bb) %&gt;%
 <pre class="r"><code>q &lt;- opq(bbox = &#39;Kunming, China&#39;) %&gt;%
     add_osm_feature(key = &#39;natural&#39;, value = &#39;water&#39;) %&gt;%
     add_osm_feature(key = &#39;name:en&#39;, value = &#39;Dian&#39;, value_exact = FALSE)</code></pre>
-<p>Each successive call to <code>add_osm_feature()</code> <strong>adds</strong> features to a query. This query is thus a request for all bodies of natural water <strong>and</strong> those with English names that include ‘Dian.’ The requested data may be extracted through calling one of the <code>osmdata_xml/sp/sf()</code> functions.</p>
-<p>Single queries are always constructed through <strong>adding</strong> features, and therefore correspond to logical <strong>AND</strong> operations: natural water bodies <strong>AND</strong> those whose names include ‘Dian.’ The equivalent <strong>OR</strong> combination can be extracted with the <a href="https://docs.ropensci.org/osmdata/reference/add_osm_features.html"><code>add_osm_features()</code> function</a>. The following query represents the OR-equivalent of the above query, requesting data on both all natural features with the value of <code>&quot;water&quot;</code> OR all features whose English name is <code>&quot;Dian&quot;</code>.</p>
+<p>Each successive call to <code>add_osm_feature()</code> <strong>adds</strong> features to a query. This query is thus a request for all bodies of natural water <strong>and</strong> those with English names that include ‘Dian’. The requested data may be extracted through calling one of the <code>osmdata_xml/sp/sf()</code> functions.</p>
+<p>Single queries are always constructed through <strong>adding</strong> features, and therefore correspond to logical <strong>AND</strong> operations: natural water bodies <strong>AND</strong> those whose names include ‘Dian’. The equivalent <strong>OR</strong> combination can be extracted with the <a href="https://docs.ropensci.org/osmdata/reference/add_osm_features.html"><code>add_osm_features()</code> function</a>. The following query represents the OR-equivalent of the above query, requesting data on both all natural features with the value of <code>&quot;water&quot;</code> OR all features whose English name is <code>&quot;Dian&quot;</code>.</p>
 <pre class="r"><code>q &lt;- opq(bbox = &#39;Kunming, China&#39;) %&gt;%
     add_osm_features(features = c (&quot;\&quot;natural\&quot;=\&quot;water\&quot;&quot;,
                                    &quot;\&quot;name:en\&quot;=\&quot;Dian\&quot;&quot;))</code></pre>

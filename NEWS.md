@@ -1,4 +1,19 @@
-0.1.7.00X
+0.1.9
+===================
+
+Major changes:
+
+- New function `opq_around` to query features within a specified radius
+  *around* a defined location; thanks to @barryrowlingson via #199 and
+  @maellecoursonnais via #238
+- New vignette on splitting large queries thanks to @Machin6 (via #262)
+
+Minor changes:
+
+- New dependency on `reproj` package, so that `trim_osmdata()` can be applied
+  to re-projected coordinates.
+
+0.1.8
 ===================
 
 Minor changes:

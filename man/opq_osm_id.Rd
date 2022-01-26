@@ -7,7 +7,9 @@
 opq_osm_id(id = NULL, type = NULL, open_url = FALSE)
 }
 \arguments{
-\item{id}{One or more official OSM identifiers (long-form integers)}
+\item{id}{One or more official OSM identifiers (long-form integers), which
+must be entered as either a character or \emph{numeric} value (because R does not
+support long-form integers).}
 
 \item{type}{Type of object; must be either \code{node}, \code{way}, or \code{relation}}
 
@@ -23,7 +25,7 @@ Add a feature specified by OSM ID to an Overpass query
 \note{
 Extracting elements by ID requires explicitly specifying the type of
 element. Only elements of one of the three given types can be extracted in a
-single query, but the results of multiple types can neverthelss be combined
+single query, but the results of multiple types can nevertheless be combined
 with the \link{c} operation of \link{osmdata}.
 }
 \examples{
@@ -44,3 +46,16 @@ dat <- c (dat1, dat2) # The node and way data combined
 \references{
 \url{https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#By_element_id}
 }
+\seealso{
+Other queries: 
+\code{\link{add_osm_features}()},
+\code{\link{add_osm_feature}()},
+\code{\link{bbox_to_string}()},
+\code{\link{getbb}()},
+\code{\link{opq_around}()},
+\code{\link{opq_enclosing}()},
+\code{\link{opq_string}()},
+\code{\link{opq}()},
+\code{\link{overpass_status}()}
+}
+\concept{queries}
