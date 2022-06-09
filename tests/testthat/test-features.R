@@ -1,61 +1,78 @@
-has_internet <- curl::has_internet ()
+
+# Note: the html files produced by these calls, and stored by `httptest2`, are
+# huge (> 1MB each), so have to be "post-processeed" here to reduce them to a
+# small sample only. Post-process of features is done in the test call; tags are
+# done via separate fn defined below.
 
 test_all <- (identical (Sys.getenv ("MPADGE_LOCAL"), "true") |
-             identical (Sys.getenv ("GITHUB_WORKFLOW"), "test-coverage"))
+    identical (Sys.getenv ("GITHUB_WORKFLOW"), "test-coverage"))
 
-source ("../stub.R")
+set_overpass_url ("https://overpass-api.de/api/interpreter")
 
-# Mock tests as discussed by Noam Ross here:
-# https://discuss.ropensci.org/t/best-practices-for-testing-api-packages/460
-# and demonstrated in detail by Gabor Csardi here:
-# https://github.com/MangoTheCat/blog-with-mock/blob/master/Blogpost1.md
-# Note that file can be downloaded in configure file, but this produces a very
-# large file in the installed package (>2MB), whereas this read_html version
-# yields a file <1/10th the size.
-get_local <- FALSE
-if (get_local) {
+test_that ("available_features", {
 
-    #trace ( curl::curl_fetch_memory, exit = function() { })
-    url_ftrs <- "https://wiki.openstreetmap.org/wiki/Map_Features"
-    cfm_output_af <- NULL
-    trace(
-          curl::curl_fetch_memory,
-          exit = function() {
-              cfm_output_af <<- returnValue()
-          }
-          )
-    res <- httr::GET (url_ftrs)
-    untrace (curl::curl_fetch_memory)
-    save (cfm_output_af, file = "../cfm_output_af.rda")
+    expect_error (available_features (1), "unused argument")
+
+    post_process <- !dir.exists ("mock_features")
+    f <- with_mock_dir ("mock_features", {
+        available_features ()
+    })
+
+    if (post_process) {
+        fname <- list.files ("mock_features",
+            full.names = TRUE,
+            recursive = TRUE
+        ) [1]
+        x <- xml2::read_html (fname)
+        nodes_all <- rvest::html_nodes (x, "td")
+        nodes_sample <- nodes_all [1:20]
+        writeLines (as.character (nodes_sample), fname)
+    }
+
+    expect_is (f, "character")
+    expect_true (length (f) > 1L)
+})
+
+
+post_process_tags <- function (dir_name, sample_index = 1:10, feature = NULL) {
+
+    fname <- list.files (dir_name,
+        full.names = TRUE,
+        recursive = TRUE
+    ) [1]
+    x <- xml2::read_html (fname)
+    nodes_all <- rvest::html_nodes (x, "div[class='taglist']")
+    if (!is.null (feature)) {
+        # see features.R/available_tags() for details:
+        nodes_sample <- rvest::html_nodes (
+            x,
+            sprintf ("a[title^='Tag:%s']", feature)
+        )
+    } else {
+        nodes_sample <- nodes_all [sample_index]
+    }
+    writeLines (as.character (nodes_sample), fname)
 }
 
-context ("features.R")
-test_that ("available_features", {
-               expect_error (available_features (1), "unused argument")
-               if (!has_internet) {
-                   expect_message (available_features (),
-                                   "No internet connection")
-               } else {
-                   if (!test_all) {
-                       load ("../cfm_output_af.rda")
-                       stub (available_features, "httr::GET", function (x)
-                             cfm_output_af$content)
-                   }
-                   expect_is (available_features (), "character")
-               }
-          })
-
 test_that ("available_tags", {
-               expect_error (available_tags ("highway", 1), "unused argument")
-               if (!has_internet) {
-                   expect_message (available_tags (), "No internet connection")
-               } else {
-                   if (!test_all) {
-                       load ("../cfm_output_af.rda")
-                       stub (available_tags, "httr::GET", function (x)
-                             cfm_output_af$content)
-                   }
-                   expect_that (length (available_tags ("junk")), equals (0))
-                   expect_is (available_tags ("highway"), "character")
-               }
-          })
+
+    expect_error (available_tags ("highway", 1), "unused argument")
+    post_process <- !dir.exists ("mock_tags_fail")
+    tags <- with_mock_dir ("mock_tags_fail", {
+        available_tags ("junk")
+    })
+    if (post_process) {
+        post_process_tags ("mock_tags_fail", 1:10)
+    }
+    expect_length (tags, 0L)
+
+    post_process <- !dir.exists ("mock_tags")
+    tags <- with_mock_dir ("mock_tags", {
+        available_tags ("highway")
+    })
+    if (post_process) {
+        post_process_tags ("mock_tags", feature = "highway")
+    }
+    expect_is (tags, "character")
+    expect_true (length (tags) > 1L)
+})

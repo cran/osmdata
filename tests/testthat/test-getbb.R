@@ -1,120 +1,136 @@
 has_internet <- curl::has_internet ()
 
 test_all <- (identical (Sys.getenv ("MPADGE_LOCAL"), "true") |
-             identical (Sys.getenv ("GITHUB_WORKFLOW"), "test-coverage"))
+    identical (Sys.getenv ("GITHUB_WORKFLOW"), "test-coverage"))
 
-source ("../stub.R")
-
-get_local <- FALSE
-if (get_local) {
-    # vcr code, for when it eventually appears on CRAN:
-    #bb_test <- getbb ("Salzburg")
-    #saveRDS (bb_test,
-    #         file = "./tests/testthat/bb_test.Rds")
-
-    # Equivalent code using internal "stub.R" function
-    stub1 <- function (query) {
-
-        base_url <- "https://nominatim.openstreetmap.org"
-        the_url <- httr::modify_url (base_url, query = query)
-        cfm_output <- NULL
-        trace(
-              curl::curl_fetch_memory,
-              exit = function() {
-                  cfm_output <<- returnValue()
-              })
-        res <- httr::GET (the_url)
-        class (cfm_output) <- "response"
-        untrace (curl::curl_fetch_memory)
-        return (cfm_output)
-    }
-
-    list (q = "Salzburg", viewbox = NULL, format = "json",
-          featuretype = "settlement", key = NULL, limit = 10) %>%
-        stub1 () -> cfm_output_bb
-    save (cfm_output_bb, file = "../cfm_output_bb1.rda")
-    list (q = "Salzburg", viewbox = NULL, format = "json",
-          polygon_text = 1,
-          featuretype = "settlement", key = NULL, limit = 10) %>%
-        stub1 () -> cfm_output_bb
-    save (cfm_output_bb, file = "../cfm_output_bb2.rda")
-}
-
-context ("bbox")
+set_overpass_url ("https://overpass-api.de/api/interpreter")
 
 test_that ("bbox", {
-  expect_error (bbox_to_string (), "bbox must be provided")
-  #expect_error (bbox_to_string ("a"), "bbox must be numeric")
-  expect_error (bbox_to_string (1:3), "bbox must contain four elements")
-  expect_error (bbox_to_string (TRUE), "bbox must be numeric")
-  expect_message (bbox_to_string (1:5),
-                              "only the first four elements of bbox used")
+
+    expect_error (bbox_to_string (), "bbox must be provided")
+    # expect_error (bbox_to_string ("a"), "bbox must be numeric")
+    expect_error (bbox_to_string (1:3), "bbox must contain four elements")
+    expect_error (bbox_to_string (TRUE), "bbox must be numeric")
+    expect_message (
+        bbox_to_string (1:5),
+        "only the first four elements of bbox used"
+    )
 })
 
 test_that ("getbb-place_name", {
-               if (has_internet) {
-                   if (!test_all) {
-                       load("../cfm_output_bb1.rda")
-                       stub (getbb, "httr::GET", function (x) cfm_output_bb)
-                   }
-                   res <- getbb (place_name = "Salzburg")
-                   expect_is (res, "matrix")
-                   expect_length (res, 4)
-                   res_l <- getbb (place_name = list ("Salzburg"))
-                   expect_identical (res, res_l)
-                   res <- getbb (place_name = "Salzburg", format_out = "string")
-                   expect_is (res, "character")
 
-                   expect_silent (res <- getbb (place_name = "Salzburg",
-                                                featuretype = "state"))
-                   expect_output (res <- getbb (place_name = "Salzburg",
-                                                silent = FALSE))
-                   expect_silent (res <- getbb (place_name = "Salzburg",
-                                                format_out = "data.frame"))
-                   expect_is (res, "data.frame")
-                   expect_error (res <- getbb (place_name = "Salzburg",
-                                               format_out = "no format"),
-                                 "format_out not recognised")
-               }
-          })
+    res0 <- with_mock_dir ("mock_bb", {
+        getbb (place_name = "Salzburg")
+    })
+    expect_is (res0, "matrix")
+    expect_length (res0, 4)
 
-skip_on_cran ()
+    res1 <- with_mock_dir ("mock_bb_str", {
+        getbb (place_name = "Salzburg", format_out = "string")
+    })
+    expect_is (res1, "character")
+
+    expect_silent (
+        res2 <- with_mock_dir ("mock_bb_state", {
+            getbb (place_name = "Salzburg", featuretype = "state")
+        })
+    )
+    range0 <- apply (res0, 1, function (i) diff (range (i)))
+    range2 <- apply (res2, 1, function (i) diff (range (i)))
+    expect_true (all (range2 > range0))
+
+    expect_output (
+        res0 <- with_mock_dir ("mock_bb", {
+            getbb (place_name = "Salzburg", silent = FALSE)
+        })
+    )
+    expect_silent (
+        res4 <- with_mock_dir ("mock_bb_df", {
+            getbb (place_name = "Salzburg", format_out = "data.frame")
+        })
+    )
+    expect_is (res4, "data.frame")
+    expect_true (nrow (res4) > 1L)
+
+    expect_error (
+        res5 <- with_mock_dir ("mock_bb_nope", {
+            getbb (place_name = "Salzburg", format_out = "no format")
+        }),
+        "format_out not recognised"
+    )
+})
+
+# Note that the polygon calls produce large mock files which are reduced with
+# post-processing routines. See `test-features.R` for explanations.
+post_process_polygons <- function (dir_name, min_polys = 2) {
+
+    fname <- list.files (
+        dir_name,
+        full.names = TRUE,
+        recursive = TRUE
+    ) [1]
+    j <- jsonlite::fromJSON (fname)
+    sizes <- vapply (
+        j$geotext,
+        object.size,
+        numeric (1L),
+        USE.NAMES = FALSE
+    )
+    # include smallest objects, but ensure at least 2 polygons:
+    ord <- order (sizes)
+    n <- 5
+    while (length (which (j$osm_type [ord [seq (n)]] != "node")) < min_polys) {
+        n <- n + 1
+    }
+    j <- j [ord [seq (n)], ]
+    jsonlite::write_json (j, path = fname, pretty = TRUE)
+}
 
 test_that ("getbb-polygon", {
-               if (has_internet) {
-                   if (!test_all) {
-                       load("../cfm_output_bb2.rda")
-                       stub (getbb, "httr::GET", function (x) cfm_output_bb)
-                   }
-                   res <- getbb (place_name = "Salzburg",
-                                 format_out = "polygon")
-                   expect_is (res, "list")
-                   expect_true (all (lapply (res, nrow) > 2))
-                   expect_true (all (vapply (res, function (i)
-                                             methods::is (i, "matrix"),
-                                             logical (1))))
 
-                   expect_silent (res_str <- bbox_to_string (res [[1]]))
-                   expect_is (res_str, "character")
+    post_process <- !dir.exists ("mock_bb_poly")
+    res <- with_mock_dir ("mock_bb_poly", {
+        getbb (place_name = "Salzburg", format_out = "polygon")
+    })
+    if (post_process) {
+        post_process_polygons ("mock_bb_poly", min_polys = 2L)
+    }
 
-                   res <- getbb (place_name = "Salzburg",
-                                 format_out = "sf_polygon")
-                   expect_is (res, "sf")
-                   expect_is (res$geometry, "sfc_POLYGON")
-                   expect_true (length (res$geometry) > 1)
-               }
-          })
+    expect_is (res, "list")
+    expect_true (all (lapply (res, nrow) > 2))
+    expect_true (all (vapply (
+        res, function (i) {
+            methods::is (i, "matrix")
+        },
+        logical (1)
+    )))
+
+    expect_silent (res_str <- bbox_to_string (res [[1]]))
+    expect_is (res_str, "character")
+
+    post_process <- !dir.exists ("mock_bb_sf")
+    res <- with_mock_dir ("mock_bb_sf", {
+        getbb (place_name = "Salzburg", format_out = "sf_polygon")
+    })
+    if (post_process) {
+        post_process_polygons ("mock_bb_sf", min_polys = 2L)
+    }
+    expect_is (res, "sf")
+    expect_is (res$geometry, "sfc_POLYGON")
+    expect_true (length (res$geometry) > 1)
+})
 
 test_that ("bbox-to-string", {
-               bb <- cbind (1:2, 3:4)
-               expect_is (bbox_to_string (bb), "character")
-               rownames (bb) <- c ("x", "y")
-               colnames (bb) <- c ("min", "max")
-               expect_is (bbox_to_string (bb), "character")
-               rownames (bb) <- c ("coords.x1", "coords.x2")
-               colnames (bb) <- c ("min", "max")
-               expect_is (bbox_to_string (bb), "character")
-               bb <- 1:4
-               names (bb) <- c ("left", "bottom", "right", "top")
-               expect_is (bbox_to_string (bb), "character")
-          })
+
+    bb <- cbind (1:2, 3:4)
+    expect_is (bbox_to_string (bb), "character")
+    rownames (bb) <- c ("x", "y")
+    colnames (bb) <- c ("min", "max")
+    expect_is (bbox_to_string (bb), "character")
+    rownames (bb) <- c ("coords.x1", "coords.x2")
+    colnames (bb) <- c ("min", "max")
+    expect_is (bbox_to_string (bb), "character")
+    bb <- 1:4
+    names (bb) <- c ("left", "bottom", "right", "top")
+    expect_is (bbox_to_string (bb), "character")
+})

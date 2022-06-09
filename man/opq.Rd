@@ -53,7 +53,7 @@ Build an Overpass query
 }
 \note{
 See
-\url{https://wiki.openstreetmap.org/wiki/Overpass_API#Resource_management_options_.28osm-script.29}
+/url{https://wiki.openstreetmap.org/wiki/Overpass_API#Resource_management_options_.28osm-script.29}
 for explanation of \code{timeout} and \code{memsize} (or \code{maxsize} in overpass terms).
 Note in particular the comment that queries with arbitrarily large \code{memsize}
 are likely to be rejected.
@@ -61,16 +61,16 @@ are likely to be rejected.
 \examples{
 \dontrun{
 q <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
-            opq () \%>\%
-            add_osm_feature("amenity", "restaurant") \%>\%
-            add_osm_feature("amenity", "pub")
+    opq () \%>\%
+    add_osm_feature ("amenity", "restaurant") \%>\%
+    add_osm_feature ("amenity", "pub")
 osmdata_sf (q) # all objects that are restaurants AND pubs (there are none!)
 q1 <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
-                opq () \%>\%
-                add_osm_feature("amenity", "restaurant")
+    opq () \%>\%
+    add_osm_feature ("amenity", "restaurant")
 q2 <- getbb ("portsmouth", display_name_contains = "United States") \%>\%
-                opq () \%>\%
-                add_osm_feature("amenity", "pub")
+    opq () \%>\%
+    add_osm_feature ("amenity", "pub")
 c (osmdata_sf (q1), osmdata_sf (q2)) # all restaurants OR pubs
 
 # Use nodes_only to retrieve single point data only, such as for central

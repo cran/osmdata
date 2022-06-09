@@ -1,3 +1,15 @@
+0.1.10
+===================
+
+Major changes:
+
+- Changed httr dependency for httr2 (#272)
+- Removed two authors of code formerly including for stubbing results; which is now done via `httptest2` package.
+
+Minor changes:
+
+- Moved jsonlite from Imports to Suggests (now only used in tests).
+
 0.1.9
 ===================
 

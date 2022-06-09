@@ -4,22 +4,21 @@ has_internet <- curl::has_internet ()
 skip_if (!has_internet)
 
 test_all <- (identical (Sys.getenv ("MPADGE_LOCAL"), "true") |
-             identical (Sys.getenv ("GITHUB_WORKFLOW"), "test-coverage"))
+    identical (Sys.getenv ("GITHUB_WORKFLOW"), "test-coverage"))
 skip_if (!test_all)
+
+set_overpass_url ("https://overpass-api.de/api/interpreter")
 
 require (sf)
 
-source ("../stub.R")
-
 test_that ("unname", {
 
-    qry <- opq (bbox = c(-0.118, 51.514, -0.115, 51.517))
+    qry <- opq (bbox = c (-0.116, 51.516, -0.115, 51.517))
     qry <- add_osm_feature (qry, key = "highway")
 
-    load ("../overpass_query_result.rda")
-    stub (osmdata_xml, "overpass_query", function (x, ...)
-          overpass_query_result)
-    res <- osmdata_sf (qry)
+    res <- with_mock_dir ("mock_unname", {
+        osmdata_sf (qry)
+    })
 
     expect_true (all (nzchar (rownames (res$osm_points))))
     m_l <- as.matrix (res$osm_lines$geometry [[1]])

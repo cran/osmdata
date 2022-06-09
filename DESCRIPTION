@@ -1,7 +1,7 @@
 Package: osmdata
 Title: Import 'OpenStreetMap' Data as Simple Features or Spatial
         Objects
-Version: 0.1.9
+Version: 0.1.10
 Authors@R: c(
     person("Mark", "Padgham", , "mark.padgham@email.com", role = c("aut", "cre")),
     person("Bob", "Rudis", role = "aut"),
@@ -14,11 +14,7 @@ Authors@R: c(
     person("Anthony", "North", role = "ctb"),
     person("Martin", "Machyna", role = "ctb"),
     person("Marcin", "Kalicinski", role = c("ctb", "cph"),
-           comment = "Author of included RapidXML code"),
-    person("Finkelstein", "Noam", role = c("ctb", "cph"),
-           comment = "Author of included stub.R code"),
-    person("Bartnik", "Lukasz", role = c("ctb", "cph"),
-           comment = "Author of included stub.R code")
+           comment = "Author of included RapidXML code")
   )
 Maintainer: Mark Padgham <mark.padgham@email.com>
 Description: Download and import of 'OpenStreetMap' ('OSM') data as 'sf'
@@ -30,20 +26,21 @@ URL: https://docs.ropensci.org/osmdata/ (website)
         https://github.com/ropensci/osmdata/ (devel)
 BugReports: https://github.com/ropensci/osmdata/issues
 Depends: R (>= 3.2.4)
-Imports: curl, httr, jsonlite, lubridate, magrittr, methods, Rcpp (>=
-        0.12.4), reproj, rvest, sp, tibble, utils, xml2
-Suggests: knitr, markdown, raster, rmarkdown, sf, testthat
+Imports: curl, httr2, lubridate, magrittr, methods, Rcpp (>= 0.12.4),
+        reproj, rvest, sp, tibble, utils, xml2
+Suggests: httptest2, jsonlite, knitr, markdown, raster, rmarkdown, sf,
+        testthat
 LinkingTo: Rcpp
 VignetteBuilder: knitr
 Encoding: UTF-8
 NeedsCompilation: yes
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 SystemRequirements: C++11
 X-schema.org-applicationCategory: Data Access
 X-schema.org-isPartOf: https://ropensci.org
 X-schema.org-keywords: open0street0map, openstreetmap, overpass0API,
         OSM
-Packaged: 2022-01-26 12:01:05 UTC; smexus
+Packaged: 2022-06-09 09:37:31 UTC; smexus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
@@ -54,8 +51,6 @@ Author: Mark Padgham [aut, cre],
   Enrico Spinielli [ctb],
   Anthony North [ctb],
   Martin Machyna [ctb],
-  Marcin Kalicinski [ctb, cph] (Author of included RapidXML code),
-  Finkelstein Noam [ctb, cph] (Author of included stub.R code),
-  Bartnik Lukasz [ctb, cph] (Author of included stub.R code)
+  Marcin Kalicinski [ctb, cph] (Author of included RapidXML code)
 Repository: CRAN
-Date/Publication: 2022-01-26 14:32:43 UTC
+Date/Publication: 2022-06-09 11:10:06 UTC
