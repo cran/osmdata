@@ -1,12 +1,14 @@
 Package: osmdata
 Title: Import 'OpenStreetMap' Data as Simple Features or Spatial
         Objects
-Version: 0.1.10
+Version: 0.2.0
 Authors@R: c(
     person("Mark", "Padgham", , "mark.padgham@email.com", role = c("aut", "cre")),
     person("Bob", "Rudis", role = "aut"),
     person("Robin", "Lovelace", role = "aut"),
     person("Maëlle", "Salmon", role = "aut"),
+    person("Joan", "Maspons", role = "aut",
+           comment = c(ORCID="0000-0003-2286-8727")),
     person("Andrew", "Smith", role = "ctb"),
     person("James", "Smith", role = "ctb"),
     person("Andrea", "Gilardi", role = "ctb"),
@@ -14,7 +16,9 @@ Authors@R: c(
     person("Anthony", "North", role = "ctb"),
     person("Martin", "Machyna", role = "ctb"),
     person("Marcin", "Kalicinski", role = c("ctb", "cph"),
-           comment = "Author of included RapidXML code")
+           comment = "Author of included RapidXML code"),
+    person("Eli", "Pousson", , "eli.pousson@gmail.com", role = c("ctb"),
+           comment = c(ORCID = "0000-0001-8280-1706"))
   )
 Maintainer: Mark Padgham <mark.padgham@email.com>
 Description: Download and import of 'OpenStreetMap' ('OSM') data as 'sf'
@@ -27,30 +31,31 @@ URL: https://docs.ropensci.org/osmdata/ (website)
 BugReports: https://github.com/ropensci/osmdata/issues
 Depends: R (>= 3.2.4)
 Imports: curl, httr2, lubridate, magrittr, methods, Rcpp (>= 0.12.4),
-        reproj, rvest, sp, tibble, utils, xml2
+        reproj, rvest, tibble, utils, xml2
 Suggests: httptest2, jsonlite, knitr, markdown, raster, rmarkdown, sf,
-        testthat
+        sp, testthat
 LinkingTo: Rcpp
 VignetteBuilder: knitr
 Encoding: UTF-8
 NeedsCompilation: yes
-RoxygenNote: 7.2.0
-SystemRequirements: C++11
+RoxygenNote: 7.2.3
 X-schema.org-applicationCategory: Data Access
 X-schema.org-isPartOf: https://ropensci.org
 X-schema.org-keywords: open0street0map, openstreetmap, overpass0API,
         OSM
-Packaged: 2022-06-09 09:37:31 UTC; smexus
+Packaged: 2023-02-09 14:04:59 UTC; smexus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
   Maëlle Salmon [aut],
+  Joan Maspons [aut] (<https://orcid.org/0000-0003-2286-8727>),
   Andrew Smith [ctb],
   James Smith [ctb],
   Andrea Gilardi [ctb],
   Enrico Spinielli [ctb],
   Anthony North [ctb],
   Martin Machyna [ctb],
-  Marcin Kalicinski [ctb, cph] (Author of included RapidXML code)
+  Marcin Kalicinski [ctb, cph] (Author of included RapidXML code),
+  Eli Pousson [ctb] (<https://orcid.org/0000-0001-8280-1706>)
 Repository: CRAN
-Date/Publication: 2022-06-09 11:10:06 UTC
+Date/Publication: 2023-02-09 14:30:02 UTC
