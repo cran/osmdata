@@ -1,7 +1,7 @@
 Package: osmdata
 Title: Import 'OpenStreetMap' Data as Simple Features or Spatial
         Objects
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person("Mark", "Padgham", , "mark.padgham@email.com", role = c("aut", "cre")),
     person("Bob", "Rudis", role = "aut"),
@@ -43,7 +43,7 @@ X-schema.org-applicationCategory: Data Access
 X-schema.org-isPartOf: https://ropensci.org
 X-schema.org-keywords: open0street0map, openstreetmap, overpass0API,
         OSM
-Packaged: 2023-02-09 14:04:59 UTC; smexus
+Packaged: 2023-02-24 09:13:20 UTC; smexus
 Author: Mark Padgham [aut, cre],
   Bob Rudis [aut],
   Robin Lovelace [aut],
@@ -58,4 +58,4 @@ Author: Mark Padgham [aut, cre],
   Marcin Kalicinski [ctb, cph] (Author of included RapidXML code),
   Eli Pousson [ctb] (<https://orcid.org/0000-0001-8280-1706>)
 Repository: CRAN
-Date/Publication: 2023-02-09 14:30:02 UTC
+Date/Publication: 2023-02-24 12:30:02 UTC
