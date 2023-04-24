@@ -197,7 +197,7 @@ test_that ("date", {
         "name:ca", "natural", "prominence"
     )
     expect_named (x, cols)
-    expect_named (x_no_call, cols)
+    # expect_named (x_no_call, cols) # include osm_center_lat/lon columns
     expect_s3_class (x, "data.frame")
     expect_s3_class (x_no_call, "data.frame")
 
@@ -219,6 +219,38 @@ test_that ("date", {
     )
     expect_null (meta_l$meta_overpass_call$datetime_from)
     expect_null (meta_l$meta_no_call$query_type)
+})
+
+test_that ("out tags center", {
+    # q <- getbb ("Franja de Ponent", featuretype = "relation") %>%
+    bb <- rbind (c (-0.73, 1.27), c (40.63, 42.63))
+    rownames (bb) <- c ("x", "y")
+    colnames (bb) <- c ("min", "max")
+    q <- opq (bb, out = "tags center") %>%
+        add_osm_feature ("amenity", "community_centre")
+
+    osm_tags_center <- test_path ("fixtures", "osm-tags_center.osm")
+    doc <- xml2::read_xml (osm_tags_center)
+
+    expect_silent (x <- osmdata_data_frame (opq_string_intern (q), doc))
+    expect_silent (x_no_call <- osmdata_data_frame (doc = doc))
+
+    cols <- c (
+        "osm_type", "osm_id", "osm_center_lat", "osm_center_lon", "addr:city",
+        "addr:housenumber", "addr:postcode", "addr:street", "amenity",
+        "building", "building:colour", "building:levels", "building:material",
+        "community_centre", "community_centre:for", "name", "name:ca",
+        "old_name", "operator", "roof:material", "roof:shape", "sport", "type",
+        "website", "wikidata", "wikipedia"
+    )
+    expect_named (x, cols)
+    expect_named (x_no_call, cols)
+    expect_s3_class (x, "data.frame")
+    expect_s3_class (x_no_call, "data.frame")
+    expect_type (x$osm_center_lat, "double")
+    expect_type (x$osm_center_lon, "double")
+    expect_true (!any (is.na (x$osm_center_lat)))
+    expect_true (!any (is.na (x$osm_center_lon)))
 })
 
 test_that ("out meta & diff", {
@@ -247,7 +279,7 @@ test_that ("out meta & diff", {
         "name:ca", "natural", "prominence"
     )
     expect_named (x, cols)
-    expect_named (x_no_call, cols)
+    # expect_named (x_no_call, cols) # include osm_center_lat/lon columns
     expect_s3_class (x, "data.frame")
     expect_s3_class (x_no_call, "data.frame")
 
@@ -332,6 +364,57 @@ test_that ("out meta & adiff", {
     )
 })
 
+test_that ("out tags center & adiff", {
+    # q <- getbb ("Franja de Ponent", featuretype = "relation") %>%
+    bb <- rbind (c (-0.73, 1.27), c (40.63, 42.63))
+    rownames (bb) <- c ("x", "y")
+    colnames (bb) <- c ("min", "max")
+    q <- opq (
+        bb,
+        out = "tags center",
+        datetime = "2017-11-07T00:00:00Z",
+        datetime2 = "2020-11-07T00:00:00Z",
+        adiff = TRUE,
+        timeout = 50
+    ) %>%
+        add_osm_feature ("amenity", "community_centre")
+
+    osm_tags_center <- test_path ("fixtures", "osm-tags_center-adiff.osm")
+    doc <- xml2::read_xml (osm_tags_center)
+
+    expect_silent (x <- osmdata_data_frame (opq_string_intern (q), doc))
+    expect_silent (x_no_call <- osmdata_data_frame (doc = doc))
+
+    cols <- c (
+        "osm_type", "osm_id", "osm_center_lat", "osm_center_lon",
+        "adiff_action", "adiff_date", "adiff_visible", "alt_name", "amenity",
+        "building", "building:levels", "community_centre:for", "designation",
+        "heritage", "heritage:operator", "name", "name:ca", "name:en",
+        "name:es", "social_facility:for"
+    )
+    expect_named (x, cols)
+    expect_named (x_no_call, cols)
+    expect_s3_class (x, "data.frame")
+    expect_s3_class (x_no_call, "data.frame")
+    expect_type (x$osm_center_lat, "double")
+    expect_type (x$osm_center_lon, "double")
+    ## BUG in overpass?? modified objects without tags have no center
+    # expect_true (!any (
+    #     is.na (x$osm_center_lat) &
+    #     is.na (x$osm_center_lon) &
+    #     x$adiff_action != "delete" &
+    #     x$adiff_date == min (x$adiff_date)
+    # ))
+    # x[is.na (x$osm_center_lat) & x$adiff_action != "delete" & x$adiff_date != max (x$adiff_date), 1:10]
+    # x[x$osm_id == "383342026", ]
+    # expect_true (!any (
+    #     is.na (x_no_call$osm_center_lat) &
+    #     is.na (x_no_call$osm_center_lon) &
+    #     x_no_call$adiff_action != "delete" &
+    #     x_no_call$adiff_date == "old"
+    # ))
+})
+
 test_that ("adiff2", {
     # q <- getbb ("Perpinyà", featuretype = "relation")
     bb <- rbind (c (2.82, 2.98), c (42.65, 42.75))
@@ -379,6 +462,40 @@ test_that ("adiff2", {
         meta_l$meta_overpass_call$datetime_from,
         attr (q, "datetime")
     )
+})
+
+test_that ("out:csv", {
+    # q <- getbb ("Catalan Countries", format_out = "osm_type_id") %>%
+    q <- opq (bbox = "relation(id:11747082)", out = "tags center", osm_type = "relation", timeout = 50) %>%
+        add_osm_feature ("admin_level", "7") %>%
+        add_osm_feature ("boundary", "administrative") %>%
+        opq_csv (fields = c ("name", "::type", "::id", "::lat", "::lon"))
+
+    with_mock_dir ("mock_csv", {
+        x <- osmdata_data_frame (q)
+    })
+    expect_is (x, "data.frame")
+    r <- lapply (x, expect_is, "character")
+
+    # Test quotes and NAs
+    # qqoutes <- getbb ("Barcelona", format_out = "osm_type_id") %>%
+    qqoutes <- opq (bbox = "relation(id:347950)", osm_types = "nwr", out = "tags") %>%
+        opq_csv (fields = c ("name", "::id", "no_exists", "amenity")) %>%
+        add_osm_feature (
+            key = "name", value = "\\\"|,|Pont",
+            value_exact = FALSE
+        )
+
+    with_mock_dir ("mock_csv_quotes", {
+        xquotes <- osmdata_data_frame (qqoutes)
+    })
+    expect_is (xquotes, "data.frame")
+    r <- lapply (xquotes, expect_is, "character")
+    r <- lapply (xquotes, function (v) expect_false (any (v %in% ""))) # NAs
+
+    # OP values containing `,` | `"` get quoted with `"`. `"` in values -> `""`
+    expect_false (any (grepl ("^\".+,", xquotes$name))) # case specific
+    expect_false (any (grepl ("\"\".+,", xquotes$name)))
 })
 
 test_that ("non-valid key names", {

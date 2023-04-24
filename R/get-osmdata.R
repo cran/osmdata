@@ -59,8 +59,9 @@ get_overpass_version <- function (doc) {
 
 #' Check for not implemented queries in overpass call
 #'
-#' Detects adiff queries and out meta/ids/tags which are not implemented for
-#' osmdata_* functions except for osmdata_xml and osmdata_data_frame.
+#' Detects adiff, out meta/ids/tags and out:csv queries which are not
+#' implemented for osmdata_* functions except for osmdata_xml (no out:csv) and
+#' osmdata_data_frame.
 #'
 #' @param obj Initial \link{osmdata} object
 #'
@@ -68,23 +69,37 @@ get_overpass_version <- function (doc) {
 #'
 #' @noRd
 check_not_implemented_queries <- function (obj) {
-    if (!is.null (obj$overpass_call)){
+    if (!is.null (obj$overpass_call)) {
 
         if (grepl ("; out (tags|ids)( center)*;$", obj$overpass_call)) {
             stop (
                 "Queries returning no geometries (out tags/ids) not accepted. ",
-                'Use queries with `out="body"` or `out="skel"` instead.'
+                'Use queries with `out="body"` or `out="skel"` instead. ',
+                "Alternatively, you can retrieve the results with osmdata_xml ",
+                "or osmdata_data_frame.",
+                call. = FALSE
             )
         }
 
         if (grepl ("\\[adiff:", obj$overpass_call)) {
-            stop ("adiff queries not yet implemented.")
+            stop (
+                "adiff queries not yet implemented. Alternatively, you can ",
+                "retrieve the results with osmdata_xml or ",
+                "osmdata_data_frame.",
+                call. = FALSE
+            )
+        }
+
+        if (grepl ("\\[out:csv", obj$overpass_call)) {
+            stop ("out:csv queries only work with osmdata_data_frame.")
         }
 
         if (grepl ("out meta;$", obj$overpass_call)) {
             warning (
-                "`out meta` queries not yet implemented. ",
-                "Metadata fields will be missing."
+                "`out meta` queries not yet implemented. Metadata fields will ",
+                "be missing. Alternatively, you can retrieve the results with ",
+                "osmdata_xml or osmdata_data_frame.",
+                call. = FALSE
             )
         }
 
@@ -164,11 +179,15 @@ fill_overpass_data <- function (obj, doc, quiet = TRUE, encoding = "UTF-8") {
 
 get_metadata <- function (obj, doc) {
 
-    meta <- list (
-        timestamp = get_timestamp (doc),
-        OSM_version = get_osm_version (doc),
-        overpass_version = get_overpass_version (doc)
-    )
+    if (inherits (doc, "xml_document")) {
+        meta <- list (
+            timestamp = get_timestamp (doc),
+            OSM_version = get_osm_version (doc),
+            overpass_version = get_overpass_version (doc)
+        )
+    } else {
+        meta <- list ()
+    }
 
     q <- obj$overpass_call
 
@@ -193,7 +212,8 @@ get_metadata <- function (obj, doc) {
             }
             meta$datetime_from <- x [2]
             meta$datetime_to <- x [4]
-            if (!is_datetime (meta$datetime_to)) { # adiff opq without datetime2
+            if (!is_datetime (meta$datetime_to) &
+                inherits(doc, "xml_document")) { # adiff opq without datetime2
                 meta$datetime_to <- xml2::xml_text (xml2::xml_find_all (
                     doc,
                     "//meta/@osm_base"
@@ -219,7 +239,11 @@ get_metadata <- function (obj, doc) {
             meta$datetime_to <- attr (q, "datetime2")
 
             if (grepl ("adiff", q$prefix) ||
-                "action" %in% xml2::xml_name (xml2::xml_children (doc))) {
+                (
+                    inherits(doc, "xml_document") &&
+                    "action" %in% xml2::xml_name (xml2::xml_children (doc))
+                )
+            ) {
                 meta$query_type <- "adiff"
             } else {
                 meta$query_type <- "diff"
@@ -228,7 +252,11 @@ get_metadata <- function (obj, doc) {
         } else if (!is.null (attr (q, "datetime"))) {
 
             if (grepl ("adiff", q$prefix) ||
-                "action" %in% xml2::xml_name (xml2::xml_children (doc))) {
+                (
+                    inherits(doc, "xml_document") &&
+                    "action" %in% xml2::xml_name (xml2::xml_children (doc))
+                )
+            ) {
                 meta$datetime_from <- attr (q, "datetime")
                 meta$datetime_to <- xml2::xml_text (xml2::xml_find_all (
                     doc,
@@ -242,7 +270,7 @@ get_metadata <- function (obj, doc) {
 
         }
 
-    } else { # is.null (q)
+    } else if (inherits(doc, "xml_document")) { # is.null (q)
 
         if ("action" %in% xml2::xml_name (xml2::xml_children (doc))) {
             osm_actions <- xml2::xml_find_all (doc, ".//action")
@@ -292,6 +320,26 @@ get_meta_from_cpp_output <- function (res, what = "points") {
     this <- this [, which (has_data), drop = FALSE]
     if (ncol (this) > 0L) {
         colnames (this) <- paste0 ("osm", colnames (this))
+    }
+
+    return (as.data.frame (this))
+}
+
+
+#' Extract the center matrices from `rcpp_osmdata_df` output,
+#' convert to df, and return only columns with data.
+#'
+#' The "center" components returns from `rcpp_osmdata_df()` are all named with
+#' underscore prefixes. These are prepended here with "osm_center" to provide
+#' standardised names.
+#' @noRd
+get_center_from_cpp_output <- function (res, what = "points") {
+
+    this <- res [[paste0 (what, "_center")]]
+    has_data <- apply (this, 2, function (i) any (!is.na (i)))
+    this <- this [, which (has_data), drop = FALSE]
+    if (ncol (this) > 0L) {
+        colnames (this) <- paste0 ("osm_center", colnames (this))
     }
 
     return (as.data.frame (this))

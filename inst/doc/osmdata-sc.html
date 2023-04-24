@@ -11,7 +11,7 @@
 
 <meta name="author" content="Mark Padgham" />
 
-<meta name="date" content="2023-02-24" />
+<meta name="date" content="2023-04-21" />
 
 <title>2. Elevation data and OSM: The osmdata_sc function</title>
 
@@ -1506,7 +1506,7 @@ border-radius: 0px;
 <h1 class="title toc-ignore">2. Elevation data and OSM: The osmdata_sc
 function</h1>
 <h4 class="author">Mark Padgham</h4>
-<h4 class="date">2023-02-24</h4>
+<h4 class="date">2023-04-21</h4>
 
 </div>
 
@@ -1584,7 +1584,7 @@ is demonstrated with the following lines:</p>
 ##  8 -96.2  41.3 133898328
 ##  9 -96.3  41.3 133898340
 ## 10 -96.3  41.3 133898342
-## # … with 345,229 more rows</code></pre>
+## # ℹ 345,229 more rows</code></pre>
 <p>Incorporating elevation data is then as simple as</p>
 <pre class="r"><code>dat &lt;- osm_elevation (dat, elev_file = &quot;/path/to/elevation/data/filename.tiff&quot;)</code></pre>
 <pre><code>## Loading required namespace: raster
@@ -1605,7 +1605,7 @@ is demonstrated with the following lines:</p>
 ##  8 -96.2  41.3   359 133898328
 ##  9 -96.3  41.3   358 133898340
 ## 10 -96.3  41.3   358 133898342
-## # … with 345,229 more rows</code></pre>
+## # ℹ 345,229 more rows</code></pre>
 <div id="example-usage-of-elevation-data" class="section level3">
 <h3>Example usage of elevation data</h3>
 <p>The <a href="https://github.com/hypertidy/silicate"><code>silicate</code></a>
@@ -1635,7 +1635,7 @@ edges</code></pre>
 ##  8 1903265646 1903265714 dSVFPNDFty  -96.2   41.3  -96.2   41.3   352
 ##  9 1903265714 1903265659 uc8L3jGR87  -96.2   41.3  -96.2   41.3   352
 ## 10 1903265659 1903265702 MpjXnvIvcF  -96.2   41.3  -96.2   41.3   352
-## # … with 376,360 more rows</code></pre>
+## # ℹ 376,360 more rows</code></pre>
 <p>Those data can then be submitted directly to <a href="https://github.com/SymbolixAU/mapdeck"><code>mapdeck</code></a> to
 generate an interactive plot with the following code:</p>
 <pre class="r"><code>library (mapdeck)

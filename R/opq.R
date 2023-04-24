@@ -210,7 +210,7 @@ paste_features <- function (key, value, key_pre = "", bind = "=",
 
     } else {
 
-        if (length (value) > 1) {
+        if (length (value) > 1 || !match_case) {
 
             # convert to OR'ed regex:
             value <- paste (value, collapse = "|")
@@ -594,6 +594,7 @@ check_features <- function (features) {
 
 #' Add a feature specified by OSM ID to an Overpass query
 #'
+#' @inheritParams opq
 #' @param id One or more official OSM identifiers (long-form integers), which
 #'      must be entered as either a character or *numeric* value (because R does
 #'      not support long-form integers). id can also be a character string
@@ -636,7 +637,9 @@ check_features <- function (features) {
 #'     opq_string () %>%
 #'     osmdata_sf ()
 #' }
-opq_osm_id <- function (id = NULL, type = NULL, open_url = FALSE) {
+opq_osm_id <- function (id = NULL, type = NULL, open_url = FALSE,
+                        out = "body", datetime = NULL, datetime2 = NULL,
+                        adiff = FALSE, timeout = 25, memsize) {
     if (is.null (type)) {
         if (is.null (id)) {
             stop (
@@ -669,7 +672,11 @@ opq_osm_id <- function (id = NULL, type = NULL, open_url = FALSE) {
         id <- as.character (id)
     }
 
-    opq <- opq (1:4)
+    opq <- opq (
+        bbox = 1:4, out = out, datetime = datetime, datetime2 = datetime2,
+        adiff = adiff, timeout = timeout, memsize = memsize
+    )
+
     opq$bbox <- NULL
     opq$features <- NULL
     opq$osm_types <- NULL
@@ -808,6 +815,77 @@ opq_around <- function (lon, lat, radius = 15,
     return (res)
 }
 
+#' Transform an Overpass query to return the result in a csv format
+#'
+#' @param q A opq string or an object of class `overpass_query` constructed with
+#'     \link{opq} or alternative opq builders (+ \link{add_osm_feature}/s).
+#' @param fields a character vector with the field names.
+#' @param header if \code{FALSE}, do not ask for column names.
+#'
+#' @return The `overpass_query` or string with the prefix changed to
+#'     return a csv.
+#'
+#' @details The output format `csv`, ask for results in csv. See
+#'  [CSV output mode](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#CSV_output_mode)
+#'  for details. To get the data, use \link{osmdata_data_frame}.
+#'
+#' @note csv queries that reach the timeout will return a 0 row data.frame
+#'    without any warning. Increase `timeout` in `q` if you don't see the
+#'    expected result.
+#'
+#' @family queries
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' q <- getbb ("Catalan Countries", format_out = "osm_type_id") %>%
+#'     opq (out = "tags center", osm_type = "relation", timeout = 100) %>%
+#'     add_osm_feature ("admin_level", "7") %>%
+#'     add_osm_feature ("boundary", "administrative") %>%
+#'     opq_csv (fields = c("name", "::type", "::id", "::lat", "::lon"))
+#' comarques <- osmdata_data_frame (q) # without timeout parameter, 0 rows
+#'
+#' qid<- opq_osm_id (
+#'     type = "relation",
+#'     id = c ("341530", "1809102", "1664395", "343124"),
+#'     out = "tags"
+#' ) %>%
+#'     opq_csv (fields = c ("name", "name:ca"))
+#' cities <- osmdata_data_frame (qid)
+#' }
+opq_csv <- function (q, fields, header = TRUE) {
+
+    if (!inherits (q, c("overpass_query", "character"))) {
+        stop ("q must be an overpass query or a character string.")
+    }
+    if (!inherits (fields, "character")) {
+        stop ("fields must be a character vector.")
+    }
+
+    fields <- vapply(fields, function (x) {
+        if (substr(x, 1, 2) != "::") {
+            x <- paste0("\"", x, "\"")
+        }
+        return (x)
+    }, FUN.VALUE = character(1), USE.NAMES = FALSE)
+    fields <- paste (fields, collapse=", ")
+
+    csv_prefix <- paste0 (
+        "[out:csv(", fields,
+        if (!header) "; false",
+        # if (!missing (sep)) paste0("; \"", sep, "\""),
+        ")]"
+    )
+
+    if (inherits (q, "overpass_query")) {
+        q$prefix <- gsub ("\\[out:xml\\]", csv_prefix, q$prefix)
+    } else { # q is an opq_string
+        q <- gsub ("\\[out:xml\\]", csv_prefix, q)
+    }
+
+    return (q)
+}
+
 #' Convert an overpass query into a text string
 #'
 #' Convert an osmdata query of class opq to a character string query to
@@ -877,10 +955,20 @@ opq_string_intern <- function (opq, quiet = TRUE) {
 
         } else {
 
+            types_features <- expand.grid (
+                osm_types=opq$osm_types,
+                features=features,
+                stringsAsFactors = FALSE
+            )
+
             if (!map_to_area) {
                 features <-  c (sprintf ("  %s %s (%s);\n",
-                                         opq$osm_types, features, opq$bbox)
+                                         types_features$osm_types,
+                                         types_features$features,
+                                         opq$bbox
+                                )
                 )
+
             } else {
                 opq$prefix <- gsub ("\n$", "", opq$prefix)
                 search_area <- paste0 (
@@ -889,7 +977,10 @@ opq_string_intern <- function (opq, quiet = TRUE) {
                 )
                 features <- c (
                     search_area,
-                    sprintf ("  %s %s (area.searchArea);\n", opq$osm_types, features)
+                    sprintf ("  %s %s (area.searchArea);\n",
+                             types_features$osm_types,
+                             types_features$features
+                    )
                 )
             }
         }

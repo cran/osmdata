@@ -41,7 +41,7 @@ test_that ("add feature", {
     )
     qry4 <- add_osm_feature (qry, key = "highway", value = "!primary")
     qry5 <- add_osm_feature (qry,
-        key = "highway", value = "!primary",
+        key = "highway", value = "primary",
         match_case = FALSE
     )
     expect_identical (qry1$features, "[\"highway\"]")
@@ -51,7 +51,7 @@ test_that ("add feature", {
         "[\"highway\"~\"^(primary|tertiary)$\"]"
     )
     expect_identical (qry4$features, "[\"highway\"!=\"primary\"]")
-    expect_identical (qry5$features, "[\"highway\"!=\"primary\",i]")
+    expect_identical (qry5$features, "[\"highway\"~\"^(primary)$\",i]")
 
     bbox <- c (-0.118, 51.514, -0.115, 51.517)
     qry <- opq (bbox = bbox)
@@ -64,13 +64,13 @@ test_that ("add feature", {
     )
     expect_true (!identical (qry$bbox, qry6$bbox))
 
-    qry7 <- opq ("Vinçà") %>%
+    qry7 <- opq ("relation(id:74310)") %>% # "Vinçà"
         add_osm_feature (key = c("name", "!name:ca"))
-    qry8 <- opq ("el Carxe") %>%
+    qry8 <- opq ("relation(id:11755232)") %>% # "el Carxe"
         add_osm_feature (key = "natural", value = "peak") %>%
         add_osm_feature (key = "!ele")
     expect_warning(
-        qry9 <- opq ("el Carxe") %>%
+        qry9 <- opq ("relation(id:11755232)") %>% # "el Carxe"
             add_osm_feature (key = "!ele")%>%
             add_osm_feature (key = "natural", value = "peak"),
         "The query will request objects whith only a negated key "
@@ -182,6 +182,25 @@ test_that ("not implemented queries", {
     expect_warning (
         osmdata_sc (q = qmeta, doc = doc),
         "`out meta` queries not yet implemented."
+    )
+
+    qcsv <- opq (bbox = c (1.8374527, 41.5931579, 1.8384799, 41.5936434)) %>%
+        opq_csv(fields = c("name"))
+    expect_error (
+        osmdata_xml (q = qcsv),
+        "out:csv queries only work with osmdata_data_frame()."
+    )
+    expect_error (
+        osmdata_sp (q = qcsv),
+        "out:csv queries only work with osmdata_data_frame()."
+    )
+    expect_error (
+        osmdata_sf (q = qcsv),
+        "out:csv queries only work with osmdata_data_frame()."
+    )
+    expect_error (
+        osmdata_sc (q = qcsv),
+        "out:csv queries only work with osmdata_data_frame()."
     )
 
 })
